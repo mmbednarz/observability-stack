@@ -1,0 +1,739 @@
+{
+  "uid": "start",
+  "title": "Start – WEBCON Observability",
+  "description": "Ekran domowy: stan WEBCON w skrócie, odnośniki do dashboardów i dokumentacji, aktywne alerty.",
+  "tags": [
+    "webcon",
+    "start"
+  ],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "links": [
+    {
+      "title": "Dokumentacja",
+      "type": "link",
+      "icon": "doc",
+      "url": "{{DOCS_URL}}/docs/README.md",
+      "tooltip": "Dokumentacja stosu (GitHub)",
+      "keepTime": false,
+      "includeVars": false,
+      "targetBlank": true,
+      "asDropdown": false,
+      "tags": []
+    }
+  ],
+  "templating": {
+    "list": []
+  },
+  "panels": [
+    {
+      "type": "text",
+      "title": "",
+      "id": 1,
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 10
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "## Stos obserwowalności WEBCON\n\nMetryki, ślady i logi z **Portalu** i **Serwisu** WEBCON oraz metryki **SQL Server** i **Windows**. Kafelki poniżej: stan WEBCON z ostatnich 30 minut (\uD83D\uDFE2 OK · \uD83D\uDFE1 uwaga · \uD83D\uDD34 problem). Kliknij kafelek, aby przejść do szczegółów.\n\n| Dashboard | Kiedy otworzyć |\n|---|---|\n| [**WEBCON – Wydajność**](/d/webcon-performance) | wolny Portal, formularz albo przejście ścieżki – **gdzie** WEBCON traci czas (reguły, źródła danych, akcje, SQL, Serwis) |\n| [**WEBCON – Utrzymanie**](/d/webcon-operations) | przegląd tygodnia: TOP 10 akcji i ścieżek, zadania użytkowników, błędy zewnętrznych API |\n| [**SQL Server – WEBCON**](/d/sqlserver-webcon) | czy baza danych jest wąskim gardłem (oczekiwania, blokady, I/O, pamięć) |\n| [**Windows – obciążenie hosta**](/d/windows-host) | CPU, pamięć, dyski, procesy serwera |\n| [**WEBCON – Dostępność i zaległości**](/d/webcon-availability) | czy Portal odpowiada (health, certyfikat) i czy w bazie nie rosną zaległości: timeouty, akcje cykliczne, maile |\n| [**Alerty**](/alerting/list) | reguły alertów i ich stan |\n\n**Pierwszy raz?** [Grafana w 10 minut]({{DOCS_URL}}/docs/uzytkownik/01-grafana-w-10-minut.md) · [Scenariusze: od objawu do przyczyny]({{DOCS_URL}}/docs/uzytkownik/08-scenariusze.md) · [Pojęcia (p95, ślad, span)]({{DOCS_URL}}/docs/uzytkownik/02-pojecia.md) · [Cała dokumentacja]({{DOCS_URL}}/docs/README.md)\n\n<small>Projekt nieoficjalny – nie jest produktem WEBCON; bez wsparcia i gwarancji (licencja MIT).</small>"
+      }
+    },
+    {
+      "type": "stat",
+      "title": "p95 HTTP Portalu",
+      "description": "Percentyl 95 czasu odpowiedzi Portalu (bez health check), zakres = interwał wykresu.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job=\"Portal\",http_route!~\"/?health.*\"}[$__rate_interval])))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "decimals": 2,
+          "noValue": "brak ruchu"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 2,
+      "gridPos": {
+        "x": 0,
+        "y": 10,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Błędy 5xx",
+      "description": "Udział odpowiedzi 5xx w żądaniach wybranych usług.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * sum(rate(http_server_request_duration_seconds_count{job=~\"Portal|WebCon.WorkFlow\",http_response_status_code=~\"5..\"}[$__rate_interval]) or vector(0)) / sum(rate(http_server_request_duration_seconds_count{job=~\"Portal|WebCon.WorkFlow\"}[$__rate_interval]))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "decimals": 2,
+          "noValue": "brak ruchu"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 3,
+      "gridPos": {
+        "x": 8,
+        "y": 10,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "p95 przejścia ścieżki",
+      "description": "Percentyl 95 czasu przejścia ścieżki (histogram WEBCON).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (le) (rate({__name__=~\"webcon_(workflow_form_paths?_transition_times|elements_management_path_transitions_times)(_milliseconds)?_bucket\",job=~\"Portal|WebCon.WorkFlow\"}[$__rate_interval])))",
+          "legendFormat": "",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 2000
+              },
+              {
+                "color": "red",
+                "value": 5000
+              }
+            ]
+          },
+          "noValue": "brak przejść"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 4,
+      "gridPos": {
+        "x": 16,
+        "y": 10,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Przejścia udane",
+      "description": "Udane / wszystkie przejścia w zakresie dashboardu.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * sum(increase({__name__=~\"webcon_(workflow_form_success_path_transitions|elements_management_path_transitions_success)_total\",job=~\"Portal|WebCon.WorkFlow\"}[$__range])) / sum(increase({__name__=~\"webcon_(workflow_form_path_transitions|elements_management_path_transitions_all)_total\",job=~\"Portal|WebCon.WorkFlow\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 95
+              },
+              {
+                "color": "green",
+                "value": 99
+              }
+            ]
+          },
+          "decimals": 1,
+          "noValue": "brak przejść",
+          "mappings": [
+            {
+              "type": "special",
+              "options": {
+                "match": "nan",
+                "result": {
+                  "text": "brak przejść",
+                  "color": "text",
+                  "index": 0
+                }
+              }
+            },
+            {
+              "type": "special",
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "brak przejść",
+                  "color": "text",
+                  "index": 1
+                }
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 5,
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Serwis żyje",
+      "description": "Czy w ostatnich 5 min były spany heartbeat Serwisu (webcon.service.heartbeat).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(traces_spanmetrics_calls_total{service=\"WebCon.WorkFlow\",span_name=\"webcon.service.heartbeat\"}[5m])) or vector(0)",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "range",
+              "options": {
+                "result": {
+                  "color": "green",
+                  "text": "TAK"
+                },
+                "from": 0.5,
+                "to": 1000000000000.0
+              }
+            },
+            {
+              "type": "range",
+              "options": {
+                "result": {
+                  "color": "red",
+                  "text": "NIE"
+                },
+                "from": -1,
+                "to": 0.5
+              }
+            }
+          ]
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 6,
+      "gridPos": {
+        "x": 8,
+        "y": 14,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Błędy kolejki Serwisu",
+      "description": "Elementy kolejki, których przetwarzanie się nie powiodło (zakres dashboardu).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(webcon_service_queue_item_error_total{webcon_db_id=~\".*\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "0"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 7,
+      "gridPos": {
+        "x": 16,
+        "y": 14,
+        "w": 8,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Wydajność",
+          "url": "/d/webcon-performance?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Portal dostępny",
+      "description": "Sonda /health Portalu (adresy z powiązań IIS): odpowiedź 200 i stan Healthy w ostatnim pomiarze.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min(probe_success{job=\"integrations/blackbox\",probe=\"portal\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "1": {
+                  "color": "green",
+                  "text": "TAK",
+                  "index": 0
+                },
+                "0": {
+                  "color": "red",
+                  "text": "NIE",
+                  "index": 1
+                }
+              }
+            }
+          ],
+          "noValue": "brak sondy"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 8,
+      "gridPos": {
+        "x": 0,
+        "y": 18,
+        "w": 12,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Dostępność i zaległości",
+          "url": "/d/webcon-availability?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Zaległości w bazie",
+      "description": "Przeterminowane timeouty + akcje cykliczne z błędem + nowe (30 min) maile po co najmniej 3 nieudanych próbach - odczyt z bazy treści.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(webcon_db_timeouts_overdue) + sum(webcon_db_recurrent_actions_overdue) + clamp_min(sum(webcon_db_mails{attempts!~\"0|1|2\"}) - (sum(webcon_db_mails{attempts!~\"0|1|2\"} offset 30m) or sum(webcon_db_mails{attempts!~\"0|1|2\"})), 0)",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              }
+            ]
+          },
+          "mappings": [],
+          "noValue": "brak danych z bazy"
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto",
+        "colorMode": "background",
+        "reduceOptions": {
+          "fields": "",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        }
+      },
+      "id": 9,
+      "gridPos": {
+        "x": 12,
+        "y": 18,
+        "w": 12,
+        "h": 4
+      },
+      "links": [
+        {
+          "title": "WEBCON – Dostępność i zaległości",
+          "url": "/d/webcon-availability?${__url_time_range}"
+        }
+      ]
+    },
+    {
+      "type": "alertlist",
+      "title": "Aktywne alerty",
+      "description": "Alerty w stanie Firing i Pending. Szczegóły: Alerting → Alert rules; znaczenie reguł: dokumentacja „Alerty”.",
+      "id": 20,
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 8
+      },
+      "options": {
+        "viewMode": "list",
+        "groupMode": "default",
+        "groupBy": [],
+        "maxItems": 20,
+        "sortOrder": 1,
+        "dashboardAlerts": false,
+        "alertName": "",
+        "alertInstanceLabelFilter": "",
+        "showInstances": true,
+        "stateFilter": {
+          "firing": true,
+          "pending": true,
+          "noData": false,
+          "normal": false,
+          "error": true
+        },
+        "folder": null
+      }
+    }
+  ]
+}

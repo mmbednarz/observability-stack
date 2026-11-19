@@ -1,0 +1,229 @@
+# Reguły alertów stosu obserwowalności (projekt: docs/projekt/projekt-alerty.md).
+# Plik generowany przez Install-ObservabilityStack.ps1. Reguły provisionowane są tylko do odczytu w UI Grafany.
+# Awaria Prometheusa / Loki = błąd zapytania w każdej regule (execErrState: Error -> alert DatasourceError).
+apiVersion: 1
+groups:
+  - orgId: 1
+    name: Stos
+    folder: Stos obserwowalności – alerty
+    interval: 1m
+    rules:
+      - uid: stack-o1-component-down
+        title: O1 Komponent stosu nie odpowiada
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: up{job=~"observability/.*"}
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [1] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.job }} ({{ $labels.instance }}) nie odpowiada"
+          description: Prometheus nie może pobrać metryk komponentu od 5 min. Sprawdź usługę obs-* (Get-Service obs-*) i logi w {{LOGS_DIR}}.
+
+      - uid: stack-o2-host-silent
+        title: O2 Host przestał wysyłać metryki
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # hosty widoczne w ciągu 24 h, bez metryk od 10 min (stos, agenci zdalni)
+              expr: |-
+                max by (instance) (last_over_time(windows_os_info[24h]))
+                unless on(instance) max by (instance) (last_over_time(windows_os_info[10m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.instance }}: brak metryk hosta od ponad 10 min"
+          description: Host wysyłał metryki w ciągu ostatnich 24 h. Dla VM stosu oznacza to zwykle zatrzymany obs-alloy (wtedy O1 milczy - to Alloy zbiera up). Na hoście agenta sprawdź usługę obs-alloy (Dziennik zdarzeń Application, źródło Alloy) i łączność z portem 9999 stosu. Alert znika sam 24 h po wyłączeniu hosta.
+          __dashboardUid__: windows-host
+          __panelId__: "2"
+
+      - uid: stack-o3-webcon-silent
+        title: O3 Brak telemetrii Serwisu WEBCON
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # tylko Serwis - Portal pod IIS może być zatrzymany przez idle timeout puli aplikacji
+              expr: |-
+                max by (job) (last_over_time(target_info{job="WebCon.WorkFlow"}[24h]))
+                unless on(job) max by (job) (last_over_time(target_info{job="WebCon.WorkFlow"}[15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: critical }
+        annotations:
+          summary: Serwis WEBCON nie wysyła telemetrii od ponad 15 min
+          description: Brak metryk OTLP Serwisu (były w ciągu 24 h). Sprawdź usługę „WebCon WorkFlow Service”, sekcję OpenTelemetry w appsettings i Alloy (lokalny lub agent na hoście WEBCON).
+
+      - uid: stack-o4-tempo-errors
+        title: O4 Tempo - błędy zapytań
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum by (route) (increase(tempo_request_duration_seconds_count{status_code=~"5..",route!="ready"}[15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "Tempo {{ $labels.route }}: {{ humanize $values.B.Value }} odpowiedzi 5xx w 15 min"
+          description: Błędy zapytań Tempo. „reading parquet file metadata” = uszkodzony indeks bloków - procedura naprawy w README (usunięcie index.json.gz i index.pb.zst). Uruchom Test-ObservabilityStack.ps1.
+
+      - uid: stack-o5-tempo-series-near-limit
+        title: O5 Tempo - spanmetrics blisko limitu serii
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: max(tempo_metrics_generator_registry_active_series / on(instance, tenant) tempo_metrics_generator_registry_max_active_series)
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0.8] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "Tempo metrics-generator: {{ humanizePercentage $values.B.Value }} limitu max_active_series"
+          description: Liczba serii spanmetrics zbliża się do max_active_series (tempo.yaml). Po przekroczeniu nowe serie są odrzucane (alert O5b).
+
+      - uid: stack-o5b-tempo-series-limited
+        title: O5b Tempo - spanmetrics odrzuca serie
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum(increase(tempo_metrics_generator_registry_series_limited_total[15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: critical }
+        annotations:
+          summary: "Tempo metrics-generator odrzucił {{ humanize $values.B.Value }} serii w 15 min"
+          description: Przekroczony max_active_series - dashboardy oparte o traces_spanmetrics_* mają niepełne dane.
+
+      - uid: stack-o6-alloy-dropped
+        title: O6 Alloy - odrzucona lub niewysłana telemetria
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # błędy muszą trwać 10 min (for) - pojedynczy restart backendu przy instalacji nie alarmuje
+              # każda metryka osobno: increase({__name__=~...}) zdejmuje nazwę metryki i serie o tych samych
+              # etykietach kolidują (błąd "vector cannot contain metrics with the same labelset")
+              expr: |-
+                (sum(increase(otelcol_receiver_refused_spans_total[5m])) or vector(0))
+                + (sum(increase(otelcol_receiver_refused_log_records_total[5m])) or vector(0))
+                + (sum(increase(otelcol_receiver_refused_metric_points_total[5m])) or vector(0))
+                + (sum(increase(otelcol_exporter_send_failed_spans_total[5m])) or vector(0))
+                + (sum(increase(otelcol_exporter_send_failed_log_records_total[5m])) or vector(0))
+                + (sum(increase(otelcol_exporter_send_failed_metric_points_total[5m])) or vector(0))
+                + (sum(increase(prometheus_remote_storage_samples_failed_total[5m])) or vector(0))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "Alloy: {{ humanize $values.B.Value }} odrzuconych / niewysłanych rekordów w 5 min"
+          description: Alloy odrzuca telemetrię (memory_limiter) albo nie może jej wysłać do Tempo / Loki / Prometheusa od 10 min. Szczegóły - UI Alloy http://127.0.0.1:12345 i Dziennik zdarzeń Application (źródło Alloy).
+
+      - uid: stack-o7-data-disk
+        title: O7 Mało miejsca na dysku danych stosu
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min(100 * windows_logical_disk_free_bytes{instance=~"(?i){{STACK_HOST}}([.].*)?",volume="{{DATA_VOLUME}}"} / windows_logical_disk_size_bytes{instance=~"(?i){{STACK_HOST}}([.].*)?",volume="{{DATA_VOLUME}}"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [15] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{DATA_VOLUME}} (dane stosu): wolne {{ humanize $values.B.Value }}% (próg 15%)"
+          description: Na woluminie z {{DATA_DIR}} zostało mniej niż 15% miejsca. Zmniejsz retencję (-RetentionTracesDays / -RetentionLogsDays) lub powiększ dysk.
+          __dashboardUid__: windows-host
+          __panelId__: "21"

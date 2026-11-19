@@ -1,0 +1,85 @@
+# Grafana Tempo 2.10.x - tryb monolityczny, storage lokalny.
+# Plik generowany przez Install-ObservabilityStack.ps1.
+stream_over_http_enabled: true
+
+server:
+  http_listen_address: 127.0.0.1
+  http_listen_port: 3200
+  grpc_listen_address: 127.0.0.1
+  grpc_listen_port: 9097
+  log_level: info
+
+# Memberlist na niestandardowym porcie (7946 bywa zajęty) i tylko localhost
+memberlist:
+  bind_addr: ["127.0.0.1"]
+  bind_port: 7947
+  join_members: []
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: 127.0.0.1:14317
+
+ingester:
+  max_block_duration: 5m
+
+# TraceQL metrics (tabele "Gdzie ucieka czas", rankingi 7 dni w "WEBCON – Utrzymanie") - domyślny limit zakresu to 3 h.
+# 169h zamiast 168h: początek zakresu jest wyrównywany w dół do kroku, więc "ostatnie 7 dni" przekracza 168h.
+query_frontend:
+  metrics:
+    max_duration: 169h
+
+compactor:
+  compaction:
+    block_retention: {{RETENTION_TRACES}}
+
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+      environment: "{{ENVIRONMENT}}"
+  storage:
+    path: {{DATA_FWD}}/tempo/generator/wal
+    remote_write:
+      - url: http://127.0.0.1:9090/api/v1/write
+        send_exemplars: true
+  traces_storage:
+    path: {{DATA_FWD}}/tempo/generator/traces
+  processor:
+    service_graphs:
+      dimensions: []
+    span_metrics:
+      # service.name, span.name, span.kind, status.code są wymiarami domyślnymi.
+      # Akcje i ścieżki (rankingi 7 dni w "WEBCON – Utrzymanie"): atrybuty występują tylko na spanach akcji / przejść,
+      # więc pozostałe serie się nie mnożą (~28 serii na używaną akcję / ścieżkę: 2 usługi × 14). Na "workflow.execute"
+      # Alloy zmienia nazwę webcon.path.id na webcon.workflow.path.id (inaczej 2× więcej serii na ścieżkę).
+      # Reguły i źródła danych - TraceQL metrics.
+      dimensions: ["webcon.db.id", "webcon.service.role.name", "webcon.action.id", "webcon.action.name", "webcon.path.id"]
+      # Kubełki dobrane do progów dashboardów (p95 1/3 s, przejścia 2/5 s) – 9 zamiast domyślnych 14 (potęgi 2 od 2 ms),
+      # 14 zamiast 19 serii na kombinację etykiet (calls, size, count, sum, 10 × bucket). Poniżej 10 ms bez rozróżnienia.
+      histogram_buckets: [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 15]
+    local_blocks:
+      filter_server_spans: false
+      # Bloki generatora (replicationFactor 1) w storage - na nich działają zapytania TraceQL metrics po danych historycznych
+      # (rankingi 7 dni). Nie wyłączać, mimo incydentu z indeksem (2026-11-03) - uszkodzenie wykrywa Test-ObservabilityStack.ps1.
+      flush_to_storage: true
+
+storage:
+  trace:
+    backend: local
+    wal:
+      path: {{DATA_FWD}}/tempo/wal
+    local:
+      path: {{DATA_FWD}}/tempo/blocks
+
+overrides:
+  defaults:
+    metrics_generator:
+      processors: [service-graphs, span-metrics, local-blocks]
+      # Bezpiecznik kardynalności: po przekroczeniu generator nie tworzy nowych serii (istniejące są aktualizowane)
+      max_active_series: 200000
+
+usage_report:
+  reporting_enabled: false

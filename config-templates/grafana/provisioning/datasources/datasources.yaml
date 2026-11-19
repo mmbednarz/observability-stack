@@ -1,0 +1,111 @@
+# Datasources z korelacją: metryki (exemplary) -> ślady -> logi.
+# Plik generowany przez Install-ObservabilityStack.ps1. Znak $ w provisioningu zapisujemy jako $$.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://127.0.0.1:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      prometheusType: Prometheus
+      timeInterval: 15s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: tempo
+        - name: traceID
+          datasourceUid: tempo
+
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://127.0.0.1:3200
+    editable: false
+    jsonData:
+      streamingEnabled:
+        search: true
+        # Grafana 12.4 + Tempo 2.10: instant quantile_over_time przez streaming zwraca pusty wynik
+        # (tabele TraceQL w dashboardzie WEBCON – Wydajność); bez streamingu działa
+        metrics: false
+      nodeGraph:
+        enabled: true
+      serviceMap:
+        datasourceUid: prometheus
+      search:
+        hide: false
+      traceQuery:
+        timeShiftEnabled: true
+        spanStartTimeShift: -10m
+        spanEndTimeShift: 10m
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        filterByTraceID: true
+        filterBySpanID: false
+        customQuery: false
+        tags:
+          - key: service.name
+            value: service_name
+      tracesToMetrics:
+        datasourceUid: prometheus
+        spanStartTimeShift: -5m
+        spanEndTimeShift: 5m
+        tags:
+          - key: service.name
+            value: service
+        queries:
+          - name: Request rate
+            query: sum(rate(traces_spanmetrics_calls_total{$$__tags}[5m]))
+          - name: Latency p95
+            query: histogram_quantile(0.95, sum by (le) (rate(traces_spanmetrics_latency_bucket{$$__tags}[5m])))
+
+  - name: Loki
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://127.0.0.1:3100
+    editable: false
+    jsonData:
+      maxLines: 5000
+      derivedFields:
+        # OTLP (Portal) i Serwis (regex w Alloy) - trace_id w structured metadata
+        - name: trace_id
+          matcherType: label
+          matcherRegex: trace_id
+          datasourceUid: tempo
+          url: "$${__value.raw}"
+          urlDisplayLabel: Otwórz ślad
+        # Fallback - TraceId w treści linii
+        - name: TraceId (treść)
+          matcherType: regex
+          matcherRegex: "(?i)trace_?id[\"'=: ]+([0-9a-f]{32})"
+          datasourceUid: tempo
+          url: "$${__value.raw}"
+          urlDisplayLabel: Otwórz ślad
+
+# @@BEGIN WEBCONSQL
+  # Baza treści WEBCON - stan bieżący (aktywne zadania, nazwy ścieżek) dla dashboardu WEBCON – Utrzymanie.
+  # Login tylko do odczytu z SELECT na 5 tabelach (sql/grant-webcon-reader-permissions.sql), nie login exportera.
+  - name: WEBCON SQL
+    uid: webcon-sql
+    type: mssql
+    access: proxy
+    url: "{{WEBCONSQL_URL}}"
+    user: "{{WEBCONSQL_LOGIN}}"
+    editable: false
+    jsonData:
+      database: "{{WEBCONSQL_DATABASE}}"
+      encrypt: "{{WEBCONSQL_ENCRYPT}}"
+      tlsSkipVerify: {{WEBCONSQL_TLS_SKIP_VERIFY}}
+      maxOpenConns: 5
+      maxIdleConns: 2
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: $__file{{{SECRETS_FWD}}/grafana-sql-reader.txt}
+# @@END WEBCONSQL

@@ -1,0 +1,14 @@
+# Dashboardy z plików: podkatalogi = foldery w Grafanie.
+# Plik generowany przez Install-ObservabilityStack.ps1.
+apiVersion: 1
+
+providers:
+  - name: observability
+    orgId: 1
+    type: file
+    disableDeletion: false
+    allowUiUpdates: true
+    updateIntervalSeconds: 60
+    options:
+      path: {{CONFIG_FWD}}/grafana/dashboards
+      foldersFromFilesStructure: true

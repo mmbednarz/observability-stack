@@ -1,0 +1,411 @@
+# Konfiguracja zapytań prometheus.exporter.mssql (query_config).
+# Plik generowany przez Install-ObservabilityStack.ps1 z config-templates/alloy/mssql-queries.yaml.
+# query_config ZASTĘPUJE domyślne metryki exportera - sekcja "Domyślne" to kopia konfiguracji domyślnej Alloy 1.17
+# (nie usuwaj: używa jej dashboard WEBCON). Własne metryki - sekcja "Rozszerzenia".
+# Wymagane uprawnienia loginu: VIEW SERVER STATE, VIEW ANY DEFINITION (sql/grant-sql-exporter-permissions.sql).
+collector_name: mssql_standard
+
+metrics:
+  # =====================================================================
+  # Domyślne (Alloy 1.17 prometheus.exporter.mssql)
+  # =====================================================================
+  - metric_name: mssql_local_time_seconds
+    type: gauge
+    help: 'Local time in seconds since epoch (Unix time).'
+    values: [unix_time]
+    query: |
+      SELECT DATEDIFF(second, '19700101', GETUTCDATE()) AS unix_time
+  - metric_name: mssql_connections
+    type: gauge
+    help: 'Number of active connections.'
+    key_labels:
+      - db
+    values: [count]
+    query: |
+      SELECT DB_NAME(sp.dbid) AS db, COUNT(sp.spid) AS count
+      FROM sys.sysprocesses sp
+      GROUP BY DB_NAME(sp.dbid)
+  - metric_name: mssql_deadlocks_total
+    type: counter
+    help: 'Number of lock requests that resulted in a deadlock.'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Number of Deadlocks/sec' AND instance_name = '_Total'
+  - metric_name: mssql_user_errors_total
+    type: counter
+    help: 'Number of user errors.'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Errors/sec' AND instance_name = 'User Errors'
+  - metric_name: mssql_kill_connection_errors_total
+    type: counter
+    help: 'Number of severe errors that caused SQL Server to kill the connection.'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Errors/sec' AND instance_name = 'Kill Connection Errors'
+  - metric_name: mssql_page_life_expectancy_seconds
+    type: gauge
+    help: 'The minimum number of seconds a page will stay in the buffer pool on this node without references.'
+    values: [cntr_value]
+    query: |
+      SELECT top(1) cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Page life expectancy'
+  - metric_name: mssql_batch_requests_total
+    type: counter
+    help: 'Number of command batches received.'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Batch Requests/sec'
+  - metric_name: mssql_log_growths_total
+    type: counter
+    help: 'Number of times the transaction log has been expanded, per database.'
+    key_labels:
+      - db
+    values: [cntr_value]
+    query: |
+      SELECT rtrim(instance_name) AS db, cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE counter_name = 'Log Growths' AND instance_name <> '_Total'
+  # Zmiana względem domyślnej: LIKE '%:Buffer Manager' - instancja nazwana ma object_name 'MSSQL$<instancja>:Buffer Manager'
+  - metric_name: mssql_buffer_cache_hit_ratio
+    type: gauge
+    help: 'Ratio of requests that hit the buffer cache'
+    values: [BufferCacheHitRatio]
+    query: |
+      SELECT (a.cntr_value * 1.0 / NULLIF(b.cntr_value, 0)) * 100.0 as BufferCacheHitRatio
+      FROM sys.dm_os_performance_counters  a
+      JOIN  (SELECT cntr_value, OBJECT_NAME
+          FROM sys.dm_os_performance_counters
+          WHERE counter_name = 'Buffer cache hit ratio base'
+              AND RTRIM(OBJECT_NAME) LIKE '%:Buffer Manager') b ON  a.OBJECT_NAME = b.OBJECT_NAME
+      WHERE a.counter_name = 'Buffer cache hit ratio'
+      AND RTRIM(a.OBJECT_NAME) LIKE '%:Buffer Manager'
+  - metric_name: mssql_checkpoint_pages_sec
+    type: gauge
+    help: 'Checkpoint Pages Per Second'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value
+      FROM sys.dm_os_performance_counters
+      WHERE [counter_name] = 'Checkpoint pages/sec'
+  - metric_name: mssql_io_stall_seconds_total
+    type: counter
+    help: 'Stall time in seconds per database and I/O operation.'
+    key_labels:
+      - db
+    value_label: operation
+    values:
+      - read
+      - write
+    query_ref: mssql_io_stall
+  - metric_name: mssql_resident_memory_bytes
+    type: gauge
+    help: 'SQL Server resident memory size (AKA working set).'
+    values: [resident_memory_bytes]
+    query_ref: mssql_process_memory
+  - metric_name: mssql_virtual_memory_bytes
+    type: gauge
+    help: 'SQL Server committed virtual memory size.'
+    values: [virtual_memory_bytes]
+    query_ref: mssql_process_memory
+  - metric_name: mssql_available_commit_memory_bytes
+    type: gauge
+    help: 'SQL Server available to be committed memory size.'
+    values: [available_commit_limit_bytes]
+    query_ref: mssql_process_memory
+  - metric_name: mssql_memory_utilization_percentage
+    type: gauge
+    help: 'The percentage of committed memory that is in the working set.'
+    values: [memory_utilization_percentage]
+    query_ref: mssql_process_memory
+  - metric_name: mssql_page_fault_count_total
+    type: counter
+    help: 'The number of page faults that were incurred by the SQL Server process.'
+    values: [page_fault_count]
+    query_ref: mssql_process_memory
+  - metric_name: mssql_server_total_memory_bytes
+    type: gauge
+    help: 'SQL Server committed memory in the memory manager.'
+    values: [committed_memory_bytes]
+    query_ref: mssql_os_sys_info
+  - metric_name: mssql_server_target_memory_bytes
+    type: gauge
+    help: 'SQL Server target committed memory set for the memory manager.'
+    values: [committed_memory_target_bytes]
+    query_ref: mssql_os_sys_info
+  - metric_name: mssql_os_memory
+    type: gauge
+    help: 'OS physical memory, used and available.'
+    value_label: 'state'
+    values: [used, available]
+    query: |
+      SELECT
+        (total_physical_memory_kb - available_physical_memory_kb) * 1024 AS used,
+        available_physical_memory_kb * 1024 AS available
+      FROM sys.dm_os_sys_memory
+  - metric_name: mssql_os_page_file
+    type: gauge
+    help: 'OS page file, used and available.'
+    value_label: 'state'
+    values: [used, available]
+    query: |
+      SELECT
+        (total_page_file_kb - available_page_file_kb) * 1024 AS used,
+        available_page_file_kb * 1024 AS available
+      FROM sys.dm_os_sys_memory
+
+  # =====================================================================
+  # Rozszerzenia (stos obserwowalności WEBCON)
+  # =====================================================================
+
+  # Oczekiwania pogrupowane w kategorie (niska kardynalność); bez oczekiwań "w tle" (bezczynność, kolejki systemowe).
+  - metric_name: mssql_wait_time_seconds_total
+    type: counter
+    help: 'Czas oczekiwań wg kategorii (sys.dm_os_wait_stats), z wyłączeniem oczekiwań w tle.'
+    key_labels:
+      - category
+    values: [wait_s]
+    query_ref: obs_wait_stats
+  - metric_name: mssql_waiting_tasks_total
+    type: counter
+    help: 'Liczba oczekiwań wg kategorii (sys.dm_os_wait_stats).'
+    key_labels:
+      - category
+    values: [waiting_tasks]
+    query_ref: obs_wait_stats
+  - metric_name: mssql_signal_wait_time_seconds_total
+    type: counter
+    help: 'Część czasu oczekiwań spędzona w kolejce na CPU po zwolnieniu zasobu (signal wait) - presja CPU.'
+    key_labels:
+      - category
+    values: [signal_wait_s]
+    query_ref: obs_wait_stats
+
+  # Blokady
+  - metric_name: mssql_blocked_sessions
+    type: gauge
+    help: 'Liczba żądań zablokowanych przez inną sesję.'
+    values: [blocked]
+    query_ref: obs_blocking
+  - metric_name: mssql_blocked_wait_seconds_max
+    type: gauge
+    help: 'Najdłuższe bieżące oczekiwanie zablokowanego żądania (s).'
+    values: [max_wait_s]
+    query_ref: obs_blocking
+
+  # Aktywne żądania użytkowników
+  - metric_name: mssql_active_requests
+    type: gauge
+    help: 'Aktywne żądania użytkowników wg bazy i stanu (sys.dm_exec_requests).'
+    key_labels:
+      - db
+      - status
+    values: [requests]
+    query: |
+      SELECT CAST(DB_NAME(r.database_id) AS varchar(128)) AS db, CAST(r.status AS varchar(30)) AS status, COUNT(*) AS requests
+      FROM sys.dm_exec_requests r WITH (NOLOCK)
+      JOIN sys.dm_exec_sessions s WITH (NOLOCK) ON s.session_id = r.session_id
+      WHERE s.is_user_process = 1 AND r.session_id <> @@SPID
+      GROUP BY r.database_id, r.status
+
+  # I/O per baza (liczba operacji i bajty - do średniego opóźnienia razem z mssql_io_stall_seconds_total)
+  - metric_name: mssql_io_operations_total
+    type: counter
+    help: 'Liczba operacji I/O per baza i operacja (sys.dm_io_virtual_file_stats).'
+    key_labels:
+      - db
+    value_label: operation
+    values: [read, write]
+    query_ref: obs_io_ops
+  - metric_name: mssql_io_bytes_total
+    type: counter
+    help: 'Bajty I/O per baza i operacja (sys.dm_io_virtual_file_stats).'
+    key_labels:
+      - db
+    value_label: operation
+    values: [read, write]
+    query_ref: obs_io_bytes
+
+  # Rozmiar baz i logów
+  - metric_name: mssql_database_file_size_bytes
+    type: gauge
+    help: 'Rozmiar plików bazy wg typu (data/log), sys.master_files.'
+    key_labels:
+      - db
+      - type
+    values: [size_bytes]
+    query: |
+      SELECT CAST(DB_NAME(database_id) AS varchar(128)) AS db,
+             CASE type WHEN 1 THEN 'log' ELSE 'data' END AS type,
+             SUM(CAST(size AS bigint)) * 8192 AS size_bytes
+      FROM sys.master_files WITH (NOLOCK)
+      GROUP BY database_id, CASE type WHEN 1 THEN 'log' ELSE 'data' END
+  - metric_name: mssql_log_used_bytes
+    type: gauge
+    help: 'Zajęte miejsce w logu transakcji (Log File(s) Used Size).'
+    key_labels:
+      - db
+    values: [used_bytes]
+    query_ref: obs_log_space
+  - metric_name: mssql_log_size_bytes
+    type: gauge
+    help: 'Rozmiar logu transakcji (Log File(s) Size).'
+    key_labels:
+      - db
+    values: [size_bytes]
+    query_ref: obs_log_space
+
+  # Liczniki wydajności
+  - metric_name: mssql_sql_compilations_total
+    type: counter
+    help: 'Kompilacje zapytań (SQL Compilations/sec).'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:SQL Statistics' AND counter_name = 'SQL Compilations/sec'
+  - metric_name: mssql_sql_recompilations_total
+    type: counter
+    help: 'Rekompilacje zapytań (SQL Re-Compilations/sec).'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:SQL Statistics' AND counter_name = 'SQL Re-Compilations/sec'
+  - metric_name: mssql_lock_waits_total
+    type: counter
+    help: 'Żądania blokad, które musiały czekać (Lock Waits/sec, _Total).'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:Locks' AND counter_name = 'Lock Waits/sec' AND instance_name = '_Total'
+  - metric_name: mssql_lock_timeouts_total
+    type: counter
+    help: 'Przekroczenia czasu oczekiwania na blokadę (Lock Timeouts (timeout > 0)/sec).'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:Locks' AND counter_name = 'Lock Timeouts (timeout > 0)/sec' AND instance_name = '_Total'
+  - metric_name: mssql_memory_grants_pending
+    type: gauge
+    help: 'Zapytania czekające na przydział pamięci (Memory Grants Pending).'
+    values: [cntr_value]
+    query: |
+      SELECT cntr_value FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:Memory Manager' AND counter_name = 'Memory Grants Pending'
+  - metric_name: mssql_transactions_total
+    type: counter
+    help: 'Transakcje per baza (Transactions/sec).'
+    key_labels:
+      - db
+    values: [cntr_value]
+    query: |
+      SELECT CAST(RTRIM(instance_name) AS varchar(128)) AS db, cntr_value
+      FROM sys.dm_os_performance_counters WITH (NOLOCK)
+      WHERE RTRIM(object_name) LIKE '%:Databases' AND counter_name = 'Transactions/sec' AND instance_name <> '_Total'
+
+queries:
+  - query_name: mssql_io_stall
+    query: |
+      SELECT
+        cast(DB_Name(a.database_id) as varchar) AS [db],
+        sum(io_stall_read_ms) / 1000.0 AS [read],
+        sum(io_stall_write_ms) / 1000.0 AS [write]
+      FROM
+        sys.dm_io_virtual_file_stats(null, null) a
+      INNER JOIN sys.master_files b ON a.database_id = b.database_id AND a.file_id = b.file_id
+      GROUP BY a.database_id
+  - query_name: mssql_process_memory
+    query: |
+      SELECT
+        physical_memory_in_use_kb * 1024 AS resident_memory_bytes,
+        virtual_address_space_committed_kb * 1024 AS virtual_memory_bytes,
+        available_commit_limit_kb * 1024 AS available_commit_limit_bytes,
+        memory_utilization_percentage,
+        page_fault_count
+      FROM sys.dm_os_process_memory
+  - query_name: mssql_os_sys_info
+    query: |
+      SELECT
+        committed_kb * 1024 AS committed_memory_bytes,
+        committed_target_kb * 1024 AS committed_memory_target_bytes
+      FROM sys.dm_os_sys_info
+
+  # --- Rozszerzenia ---
+  - query_name: obs_wait_stats
+    query: |
+      WITH w AS (
+        SELECT wait_type, wait_time_ms, waiting_tasks_count, signal_wait_time_ms
+        FROM sys.dm_os_wait_stats WITH (NOLOCK)
+        WHERE waiting_tasks_count > 0
+          AND wait_type NOT IN (
+            'BROKER_EVENTHANDLER', 'BROKER_RECEIVE_WAITFOR', 'BROKER_TASK_STOP', 'BROKER_TO_FLUSH', 'BROKER_TRANSMITTER',
+            'CHECKPOINT_QUEUE', 'CHKPT', 'CLR_AUTO_EVENT', 'CLR_MANUAL_EVENT', 'CLR_SEMAPHORE', 'DIRTY_PAGE_POLL',
+            'DISPATCHER_QUEUE_SEMAPHORE', 'EXECSYNC', 'FSAGENT', 'FT_IFTS_SCHEDULER_IDLE_WAIT', 'FT_IFTSHC_MUTEX',
+            'KSOURCE_WAKEUP', 'LAZYWRITER_SLEEP', 'LOGMGR_QUEUE', 'MEMORY_ALLOCATION_EXT', 'ONDEMAND_TASK_QUEUE',
+            'PREEMPTIVE_OS_FLUSHFILEBUFFERS', 'PREEMPTIVE_XE_GETTARGETSTATE', 'PVS_PREALLOCATE', 'PWAIT_ALL_COMPONENTS_INITIALIZED',
+            'PWAIT_DIRECTLOGCONSUMER_GETNEXT', 'PWAIT_EXTENSIBILITY_CLEANUP_TASK', 'QDS_ASYNC_QUEUE',
+            'QDS_CLEANUP_STALE_QUERIES_TASK_MAIN_LOOP_SLEEP', 'QDS_PERSIST_TASK_MAIN_LOOP_SLEEP', 'QDS_SHUTDOWN_QUEUE',
+            'REDO_THREAD_PENDING_WORK', 'REQUEST_FOR_DEADLOCK_SEARCH', 'RESOURCE_QUEUE', 'SERVER_IDLE_CHECK',
+            'SLEEP_BPOOL_FLUSH', 'SLEEP_DBSTARTUP', 'SLEEP_DCOMSTARTUP', 'SLEEP_MASTERDBREADY', 'SLEEP_MASTERMDREADY',
+            'SLEEP_MASTERUPGRADED', 'SLEEP_MSDBSTARTUP', 'SLEEP_SYSTEMTASK', 'SLEEP_TASK', 'SLEEP_TEMPDBSTARTUP',
+            'SNI_HTTP_ACCEPT', 'SOS_WORK_DISPATCHER', 'SP_SERVER_DIAGNOSTICS_SLEEP', 'SQLTRACE_BUFFER_FLUSH',
+            'SQLTRACE_INCREMENTAL_FLUSH_SLEEP', 'SQLTRACE_WAIT_ENTRIES', 'UCS_SESSION_REGISTRATION', 'VDI_CLIENT_OTHER',
+            'WAIT_FOR_RESULTS', 'WAITFOR', 'WAITFOR_TASKSHUTDOWN', 'WAIT_XTP_RECOVERY', 'WAIT_XTP_HOST_WAIT',
+            'WAIT_XTP_OFFLINE_CKPT_NEW_LOG', 'WAIT_XTP_CKPT_CLOSE', 'XE_DISPATCHER_JOIN', 'XE_DISPATCHER_WAIT',
+            'XE_LIVE_TARGET_TVF', 'XE_TIMER_EVENT')
+          AND wait_type NOT LIKE 'HADR[_]%' AND wait_type NOT LIKE 'PARALLEL[_]REDO[_]%'
+          AND wait_type NOT LIKE 'SLEEP[_]%' AND wait_type NOT LIKE 'BROKER[_]%'
+      )
+      SELECT category, SUM(wait_time_ms) / 1000.0 AS wait_s, SUM(waiting_tasks_count) AS waiting_tasks, SUM(signal_wait_time_ms) / 1000.0 AS signal_wait_s
+      FROM (
+        SELECT wait_time_ms, waiting_tasks_count, signal_wait_time_ms,
+          CASE
+            WHEN wait_type LIKE 'LCK[_]%' THEN 'Blokady'
+            WHEN wait_type LIKE 'PAGEIOLATCH[_]%' THEN 'I/O danych'
+            WHEN wait_type IN ('WRITELOG', 'LOGBUFFER') OR wait_type LIKE 'LOG[_]RATE%' THEN 'I/O logu'
+            WHEN wait_type IN ('IO_COMPLETION', 'ASYNC_IO_COMPLETION', 'BACKUPIO') THEN 'I/O inne'
+            WHEN wait_type LIKE 'PAGELATCH[_]%' THEN 'Latch bufora'
+            WHEN wait_type LIKE 'LATCH[_]%' THEN 'Latch'
+            WHEN wait_type = 'SOS_SCHEDULER_YIELD' OR wait_type LIKE 'THREADPOOL%' THEN 'CPU'
+            WHEN wait_type LIKE 'CX%' OR wait_type IN ('EXCHANGE', 'EXECSYNC') THEN 'Równoległość'
+            WHEN wait_type = 'ASYNC_NETWORK_IO' THEN 'Sieć / klient'
+            WHEN wait_type IN ('RESOURCE_SEMAPHORE', 'RESOURCE_SEMAPHORE_QUERY_COMPILE', 'CMEMTHREAD') THEN 'Pamięć'
+            WHEN wait_type LIKE 'PREEMPTIVE[_]%' THEN 'Wywołania OS'
+            ELSE 'Inne'
+          END AS category
+        FROM w
+      ) x
+      GROUP BY category
+  - query_name: obs_blocking
+    query: |
+      SELECT COUNT(*) AS blocked, ISNULL(MAX(wait_time), 0) / 1000.0 AS max_wait_s
+      FROM sys.dm_exec_requests WITH (NOLOCK)
+      WHERE blocking_session_id <> 0
+  - query_name: obs_io_ops
+    query: |
+      SELECT CAST(DB_NAME(database_id) AS varchar(128)) AS db,
+             SUM(num_of_reads) AS [read], SUM(num_of_writes) AS [write]
+      FROM sys.dm_io_virtual_file_stats(NULL, NULL)
+      GROUP BY database_id
+  - query_name: obs_io_bytes
+    query: |
+      SELECT CAST(DB_NAME(database_id) AS varchar(128)) AS db,
+             SUM(num_of_bytes_read) AS [read], SUM(num_of_bytes_written) AS [write]
+      FROM sys.dm_io_virtual_file_stats(NULL, NULL)
+      GROUP BY database_id
+  - query_name: obs_log_space
+    query: |
+      SELECT CAST(RTRIM(u.instance_name) AS varchar(128)) AS db,
+             u.cntr_value * 1024 AS used_bytes, s.cntr_value * 1024 AS size_bytes
+      FROM sys.dm_os_performance_counters u WITH (NOLOCK)
+      JOIN sys.dm_os_performance_counters s WITH (NOLOCK)
+        ON s.object_name = u.object_name AND s.instance_name = u.instance_name AND s.counter_name = 'Log File(s) Size (KB)'
+      WHERE RTRIM(u.object_name) LIKE '%:Databases' AND u.counter_name = 'Log File(s) Used Size (KB)' AND u.instance_name <> '_Total'

@@ -1,0 +1,3268 @@
+{
+  "uid": "webcon-operations",
+  "title": "WEBCON – Utrzymanie",
+  "tags": [
+    "webcon",
+    "operations"
+  ],
+  "description": "Przegląd dzienny / tygodniowy dla utrzymania: host, wejścia do Portalu, TOP akcji i ścieżek, aktywne zadania, zewnętrzne API.",
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": {
+    "to": "now",
+    "from": "now-7d"
+  },
+  "links": [
+    {
+      "title": "WEBCON – Wydajność",
+      "icon": "dashboard",
+      "url": "/d/webcon-performance?${__url_time_range}",
+      "type": "link",
+      "targetBlank": false
+    },
+    {
+      "title": "Windows – obciążenie hosta",
+      "icon": "dashboard",
+      "url": "/d/windows-host?${__url_time_range}",
+      "type": "link",
+      "targetBlank": false
+    },
+    {
+      "title": "SQL Server",
+      "icon": "dashboard",
+      "url": "/d/sqlserver-webcon?${__url_time_range}",
+      "type": "link",
+      "targetBlank": false
+    },
+    {
+      "title": "Dokumentacja",
+      "type": "link",
+      "icon": "doc",
+      "url": "{{DOCS_URL}}/docs/uzytkownik/04-webcon-utrzymanie.md",
+      "tooltip": "Opis paneli i jak je czytać (GitHub)",
+      "keepTime": false,
+      "includeVars": false,
+      "targetBlank": true,
+      "asDropdown": false,
+      "tags": []
+    }
+  ],
+  "templating": {
+    "list": [
+      {
+        "name": "job",
+        "label": "Usługa",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "query": {
+          "refId": "job",
+          "query": "label_values(target_info{job=~\"Portal|WebCon.WorkFlow\"},job)"
+        },
+        "definition": "label_values(target_info{job=~\"Portal|WebCon.WorkFlow\"},job)",
+        "multi": true,
+        "includeAll": true,
+        "allValue": "Portal|WebCon.WorkFlow",
+        "current": {
+          "value": [
+            "$__all"
+          ],
+          "text": [
+            "All"
+          ]
+        },
+        "refresh": 2,
+        "sort": 1
+      },
+      {
+        "name": "exclude_ports",
+        "label": "Pomiń porty",
+        "type": "textbox",
+        "query": "4317|4318",
+        "current": {
+          "value": "4317|4318",
+          "text": "4317|4318"
+        },
+        "description": "Regex portów pomijanych w panelach zewnętrznych API (domyślnie eksport OTLP do Alloy – własna telemetria)."
+      },
+      {
+        "name": "exclude_hosts",
+        "label": "Pomiń hosty",
+        "type": "textbox",
+        "query": "localhost",
+        "current": {
+          "text": "localhost",
+          "value": "localhost"
+        },
+        "description": "Regex (bez rozróżniania wielkości liter) hostów pomijanych w panelach zewnętrznych API. Domyślnie localhost - komunikacja wewnętrzna WEBCON (Solr, moduły Serwisu). Nazwy hostów WEBCON (zmienna self_host) są pomijane zawsze."
+      },
+      {
+        "name": "self_host",
+        "label": "Hosty WEBCON",
+        "type": "query",
+        "hide": 2,
+        "datasource": {
+          "uid": "prometheus",
+          "type": "prometheus"
+        },
+        "query": {
+          "refId": "self_host",
+          "query": "label_values(target_info{job=~\"Portal|WebCon.WorkFlow\"},host_name)"
+        },
+        "definition": "label_values(target_info{job=~\"Portal|WebCon.WorkFlow\"},host_name)",
+        "multi": true,
+        "includeAll": true,
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "refresh": 2,
+        "description": "Nazwy hostów z Portalem / Serwisem (target_info) - wywołania do nich to ruch wewnętrzny (np. Portal -> Serwis :8002)."
+      }
+    ]
+  },
+  "annotations": {
+    "list": [
+      {
+        "enable": true,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "hide": true,
+        "builtIn": 1,
+        "type": "dashboard",
+        "name": "Annotations & Alerts",
+        "iconColor": "rgba(0, 211, 255, 1)"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Host",
+      "collapsed": false,
+      "panels": [],
+      "id": 1,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "type": "stat",
+      "title": "CPU – średnio",
+      "description": "Średnie obciążenie CPU w zakresie dashboardu (próbki 5 min).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "avg_over_time((100 * (1 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m]))))[$__range:5m])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 2,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "CPU – maksimum",
+      "description": "Najwyższe 5-minutowe obciążenie CPU w zakresie dashboardu.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max_over_time((100 * (1 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[5m]))))[$__range:5m])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 3,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Pamięć – maksimum",
+      "description": "Najwyższe zajęcie pamięci fizycznej w zakresie dashboardu.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max_over_time((100 * (1 - windows_memory_available_bytes / windows_memory_physical_total_bytes))[$__range:5m])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 4,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Najbardziej zajęty dysk",
+      "description": "Zajętość najbardziej zapełnionego woluminu (teraz).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(100 * (1 - windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"} / windows_logical_disk_size_bytes{volume!~\"HarddiskVolume.*\"}))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 5,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Wolne miejsce (min)",
+      "description": "Najmniej wolnego miejsca na woluminie (teraz).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "min(windows_logical_disk_free_bytes{volume!~\"HarddiskVolume.*\"})",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "bytes",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 6,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Opóźnienie dysku – maks.",
+      "description": "Najwyższe 5-minutowe średnie opóźnienie operacji I/O (odczyt + zapis) w zakresie, najgorszy wolumin. > 20 ms = dysk jest wąskim gardłem.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max_over_time((max((rate(windows_logical_disk_read_seconds_total{volume!~\"HarddiskVolume.*\"}[5m]) + rate(windows_logical_disk_write_seconds_total{volume!~\"HarddiskVolume.*\"}[5m])) / (rate(windows_logical_disk_reads_total{volume!~\"HarddiskVolume.*\"}[5m]) + rate(windows_logical_disk_writes_total{volume!~\"HarddiskVolume.*\"}[5m]) > 0)))[$__range:5m])",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "s",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.02
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 7,
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 1
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU i pamięć",
+      "description": "Obciążenie CPU i zajęcie pamięci fizycznej. Szczegóły: dashboard „Windows – obciążenie hosta”.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (1 - avg(rate(windows_cpu_time_total{mode=\"idle\"}[$__rate_interval])))",
+          "legendFormat": "CPU",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1m"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (1 - windows_memory_available_bytes / windows_memory_physical_total_bytes)",
+          "legendFormat": "pamięć",
+          "refId": "B",
+          "range": true,
+          "instant": false,
+          "interval": "1m"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "insertNulls": 3600000
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 1
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 8,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      }
+    },
+    {
+      "type": "row",
+      "title": "Portal – wejścia",
+      "collapsed": false,
+      "panels": [],
+      "id": 9,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Otwarcia strony głównej – dziś",
+      "description": "webcon.portal.open: otwarcia strony głównej Portalu od północy.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(webcon_portal_open_total{job=\"Portal\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "0"
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "timeFrom": "now/d",
+      "hideTimeOverride": false,
+      "id": 10,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 13
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Logowania – dziś",
+      "description": "aspnetcore.authentication.sign_ins od północy. Logowanie ≠ wizyta: użytkownik z zapamiętaną sesją nie loguje się ponownie. Jedno logowanie bywa raportowane dla kilku schematów uwierzytelniania – liczony jest maksymalny schemat na instancję.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(max by (instance) (increase(aspnetcore_authentication_sign_ins_total{job=\"Portal\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0,
+          "noValue": "0"
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "timeFrom": "now/d",
+      "hideTimeOverride": false,
+      "id": 11,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 13
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Unikalni użytkownicy (7 dni)",
+      "description": "webcon.portal.request.user.unique.recently: użytkownicy z ostatnich 7 dni, ale nie wcześniej niż od startu aplikacji (restart Portalu zeruje licznik). Ostatnia wartość w zakresie – bezczynny Portal (IIS) nie eksportuje metryk. Dziennej liczby unikalnych WEBCON nie udostępnia.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(last_over_time(webcon_portal_request_user_unique_recently{job=\"Portal\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 12,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 13
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Unikalni od startu Portalu",
+      "description": "webcon.portal.request.user.unique.since_start – od ostatniego startu procesu Portalu.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "max(last_over_time(webcon_portal_request_user_unique_since_start{job=\"Portal\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "justifyMode": "center",
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 13,
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 13
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Otwarcia i logowania dziennie",
+      "description": "Liczba na dobę (doby UTC).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(increase(webcon_portal_open_total{job=\"Portal\"}[$__interval] offset -$__interval))",
+          "legendFormat": "otwarcia strony głównej",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1d"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(max by (instance) (increase(aspnetcore_authentication_sign_ins_total{job=\"Portal\"}[$__interval] offset -$__interval)))",
+          "legendFormat": "logowania",
+          "refId": "B",
+          "range": true,
+          "instant": false,
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 14,
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      }
+    },
+    {
+      "type": "row",
+      "title": "Akcje – TOP 10",
+      "collapsed": false,
+      "panels": [],
+      "id": 15,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      }
+    },
+    {
+      "type": "table",
+      "title": "Akcje – TOP 10 według średniego czasu",
+      "description": "Span webcon.action.execute według ID akcji (WEBCON Designer Studio). Min i max – TraceQL metrics (ślady, retencja 8 dni). Liczba, średnia, mediana, p95 – spanmetrics (histogram, wartości przybliżone do kubełków). Mediana i p95 z histogramu spanmetrics (kubełki = potęgi 2) są przybliżone i mogą wypaść poza zakres Min–Max (min/max dokładne, z Tempo).",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (webcon_action_id, webcon_action_name) (increase(traces_spanmetrics_calls_total{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (webcon_action_id, webcon_action_name) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range])) / sum by (webcon_action_id, webcon_action_name) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "B",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (webcon_action_id, webcon_action_name, le) (increase(traces_spanmetrics_latency_bucket{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "C",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (webcon_action_id, webcon_action_name, le) (increase(traces_spanmetrics_latency_bucket{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "D",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.action.execute\" } | min_over_time(duration) by (span.webcon.action.id)",
+          "refId": "E",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.action.execute\" } | max_over_time(duration) by (span.webcon.action.id, name)",
+          "refId": "F",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "filter": {
+            "options": "/^\\{.*name=/",
+            "id": "byRefId"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.action.id",
+              "name"
+            ],
+            "valueLabel": "name"
+          }
+        },
+        {
+          "id": "labelsToFields",
+          "filter": {
+            "options": "/^(?![A-Z]$)(?!.*name=)/",
+            "id": "byRefId"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.action.id"
+            ]
+          }
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^(?![A-Z]$)(?!.*name=)/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^\\{.*name=/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^[A-D]$/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "time": true,
+              "Time": true
+            },
+            "renameByName": {
+              "span.webcon.action.id": "webcon_action_id",
+              "value": "min"
+            }
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\".*\"$",
+            "renamePattern": "max"
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "webcon_action_id",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "match": "any",
+            "filters": [
+              {
+                "fieldName": "Value #A",
+                "config": {
+                  "id": "isNull",
+                  "options": {}
+                }
+              }
+            ],
+            "type": "exclude"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #B",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 10
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "webcon_action_id": 0,
+              "webcon_action_name": 1,
+              "Value #A": 2,
+              "Value #B": 3,
+              "Value #C": 4,
+              "Value #D": 5,
+              "min": 6,
+              "max": 7
+            },
+            "renameByName": {
+              "webcon_action_id": "ID akcji",
+              "webcon_action_name": "Akcja",
+              "Value #A": "Liczba",
+              "Value #B": "Średnia",
+              "Value #C": "Mediana",
+              "Value #D": "p95",
+              "min": "Min",
+              "max": "Max"
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Liczba"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Średnia"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mediana"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID akcji"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"ID akcji\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Pokaż ślady"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "–"
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 16,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Akcje TOP 10 – średni czas dziennie",
+      "description": "Średni czas wykonania na dobę dla 10 akcji o najwyższej średniej w zakresie.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum by (webcon_action_id, webcon_action_name) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval)) / sum by (webcon_action_id, webcon_action_name) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval))) and on (webcon_action_id) topk(10, sum by (webcon_action_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)) / sum by (webcon_action_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.action.execute\",webcon_action_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)))",
+          "legendFormat": "{{webcon_action_name}} ({{webcon_action_id}})",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 17,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      }
+    },
+    {
+      "type": "row",
+      "title": "Ścieżki – TOP 10",
+      "collapsed": false,
+      "panels": [],
+      "id": 18,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      }
+    },
+    {
+      "type": "table",
+      "title": "Ścieżki – TOP 10 według średniego czasu przejścia",
+      "description": "Span webcon.elements_management.path.transitions według ID ścieżki; nazwy ścieżki, kroku, obiegu i procesu z bazy treści (źródło WEBCON SQL). Min i max – TraceQL metrics (ślady, retencja 8 dni). Liczba, średnia, mediana, p95 – spanmetrics (histogram, wartości przybliżone do kubełków). Mediana i p95 z histogramu spanmetrics (kubełki = potęgi 2) są przybliżone i mogą wypaść poza zakres Min–Max (min/max dokładne, z Tempo).",
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Mixed --"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (webcon_path_id) (increase(traces_spanmetrics_calls_total{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (webcon_path_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range])) / sum by (webcon_path_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range]))",
+          "legendFormat": "",
+          "refId": "B",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.5, sum by (webcon_path_id, le) (increase(traces_spanmetrics_latency_bucket{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "C",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (webcon_path_id, le) (increase(traces_spanmetrics_latency_bucket{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range])))",
+          "legendFormat": "",
+          "refId": "D",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.elements_management.path.transitions\" } | min_over_time(duration) by (span.webcon.path.id)",
+          "refId": "E",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.elements_management.path.transitions\" } | max_over_time(duration) by (span.webcon.path.id, name)",
+          "refId": "F",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        },
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "webcon-sql"
+          },
+          "refId": "G",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT CAST(p.PATH_ID AS varchar(20)) AS webcon_path_id, p.PATH_Name AS sciezka, s.STP_Name AS krok, w.WF_Name AS obieg, d.DEF_Name AS proces\nFROM dbo.WFAvaiblePaths p\nJOIN dbo.WFSteps s ON s.STP_ID = p.PATH_STPID\nJOIN dbo.WorkFlows w ON w.WF_ID = s.STP_WFID\nJOIN dbo.WFDefinitions d ON d.DEF_ID = w.WF_WFDEFID"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "filter": {
+            "options": "/^\\{.*name=/",
+            "id": "byRefId"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.path.id",
+              "name"
+            ],
+            "valueLabel": "name"
+          }
+        },
+        {
+          "id": "labelsToFields",
+          "filter": {
+            "options": "/^(?![A-Z]$)(?!.*name=)/",
+            "id": "byRefId"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.path.id"
+            ]
+          }
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^(?![A-Z]$)(?!.*name=)/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^\\{.*name=/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "merge",
+          "filter": {
+            "options": "/^[A-D]$/",
+            "id": "byRefId"
+          },
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "time": true,
+              "Time": true
+            },
+            "renameByName": {
+              "span.webcon.path.id": "webcon_path_id",
+              "value": "min"
+            }
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "^\".*\"$",
+            "renamePattern": "max"
+          }
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "webcon_path_id",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "filterByValue",
+          "options": {
+            "match": "any",
+            "filters": [
+              {
+                "fieldName": "Value #A",
+                "config": {
+                  "id": "isNull",
+                  "options": {}
+                }
+              }
+            ],
+            "type": "exclude"
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Value #B",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 10
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "webcon_path_id": 0,
+              "sciezka": 1,
+              "krok": 2,
+              "obieg": 3,
+              "proces": 4,
+              "Value #A": 5,
+              "Value #B": 6,
+              "Value #C": 7,
+              "Value #D": 8,
+              "min": 9,
+              "max": 10
+            },
+            "renameByName": {
+              "webcon_path_id": "ID ścieżki",
+              "sciezka": "Ścieżka",
+              "krok": "Krok",
+              "obieg": "Obieg",
+              "proces": "Proces",
+              "Value #A": "Liczba",
+              "Value #B": "Średnia",
+              "Value #C": "Mediana",
+              "Value #D": "p95",
+              "min": "Min",
+              "max": "Max"
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Liczba"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Średnia"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mediana"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID ścieżki"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.path.transitions%5C%22%20%26%26%20span.webcon.path.id%20%3D%20${__data.fields[\"ID ścieżki\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Pokaż ślady"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "–"
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 19,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 43
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Ścieżki TOP 10 – średni czas przejścia dziennie",
+      "description": "Średni czas przejścia na dobę dla 10 ścieżek o najwyższej średniej w zakresie (ID ścieżki – nazwy w tabeli wyżej).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(sum by (webcon_path_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval)) / sum by (webcon_path_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval))) and on (webcon_path_id) topk(10, sum by (webcon_path_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)) / sum by (webcon_path_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)))",
+          "legendFormat": "ścieżka {{webcon_path_id}}",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1d"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 80,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 20,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 52
+      }
+    },
+    {
+      "type": "row",
+      "title": "Zadania – stan bieżący",
+      "collapsed": false,
+      "panels": [],
+      "id": 21,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 60
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Aktywne zadania",
+      "description": "Stan bieżący z bazy treści (nie zależy od zakresu dashboardu).",
+      "datasource": {
+        "type": "mssql",
+        "uid": "webcon-sql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "webcon-sql"
+          },
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT COUNT(*) AS aktywne,\n       ISNULL(SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END), 0) AS przeterminowane\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "aktywne"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Aktywne"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "przeterminowane"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Przeterminowane"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/"
+        },
+        "orientation": "vertical",
+        "justifyMode": "center",
+        "colorMode": "background",
+        "textMode": "auto",
+        "graphMode": "none"
+      },
+      "id": 22,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 61
+      }
+    },
+    {
+      "type": "table",
+      "title": "Użytkownicy z największą liczbą aktywnych zadań",
+      "description": "Stan bieżący z ActiveTasks (niezakończone, nieusunięte). \"Grupowe\" = zadania przypisane do grupy (TSK_ToGroup) – login jest wtedy loginem grupy.",
+      "datasource": {
+        "type": "mssql",
+        "uid": "webcon-sql"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "mssql",
+            "uid": "webcon-sql"
+          },
+          "refId": "A",
+          "format": "table",
+          "rawQuery": true,
+          "editorMode": "code",
+          "rawSql": "SELECT TOP 10 TSK_UserName AS uzytkownik, TSK_User AS login, COUNT(*) AS zadania,\n       SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END) AS przeterminowane,\n       SUM(CASE WHEN TSK_ToGroup = 1 THEN 1 ELSE 0 END) AS grupowe\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0\nGROUP BY TSK_User, TSK_UserName\nORDER BY zadania DESC"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "przeterminowane": "Przeterminowane",
+              "grupowe": "Grupowe",
+              "zadania": "Zadania",
+              "uzytkownik": "Użytkownik",
+              "login": "Login"
+            }
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Przeterminowane"
+            },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 1
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "–"
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 23,
+      "gridPos": {
+        "h": 8,
+        "w": 18,
+        "x": 6,
+        "y": 61
+      }
+    },
+    {
+      "type": "row",
+      "title": "Zewnętrzne API wołane przez WEBCON",
+      "collapsed": false,
+      "panels": [],
+      "id": 24,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 69
+      }
+    },
+    {
+      "type": "table",
+      "title": "Serwery docelowe – TOP 10 według liczby wywołań",
+      "description": "Wywołania HTTP wychodzące z Portalu i Serwisu (http.client.request.duration): źródła danych i akcje REST/SOAP, Solr, uwierzytelnianie, licencje. Własna telemetria (porty z $exclude_ports) pominięta.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (serwer, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "legendFormat": "",
+          "refId": "B",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 * (sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) or (0 * sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))) / sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
+          "legendFormat": "",
+          "refId": "C",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "count by (serwer) (count by (serwer, job) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "legendFormat": "",
+          "refId": "D",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "serwer": 0,
+              "Value #A": 1,
+              "Value #B": 2,
+              "Value #C": 3,
+              "Value #D": 4
+            },
+            "renameByName": {
+              "serwer": "Serwer",
+              "Value #A": "Wywołania",
+              "Value #B": "p95",
+              "Value #C": "Błędy %",
+              "Value #D": "Usługi WEBCON"
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Wywołania",
+                "desc": true
+              }
+            ]
+          }
+        },
+        {
+          "id": "limit",
+          "options": {
+            "limitField": 10
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wywołania"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Błędy %"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 10
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          }
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 25,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 70
+      }
+    },
+    {
+      "type": "table",
+      "title": "Błędy według serwera i typu",
+      "description": "error.type: kod HTTP (4xx/5xx), connection_error (odmowa połączenia albo timeout połączenia TCP ~21 s – WEBCON nie rozróżnia, różni je tylko czas trwania) lub name_resolution_error (błąd DNS).",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (serwer, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) > 0",
+          "legendFormat": "",
+          "refId": "A",
+          "instant": true,
+          "range": false,
+          "format": "table"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "serwer": 0,
+              "error_type": 1,
+              "Value": 2
+            },
+            "renameByName": {
+              "serwer": "Serwer",
+              "error_type": "Typ błędu",
+              "Value": "Liczba"
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Liczba",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Liczba"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          }
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 26,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 70
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Wywołania na godzinę według serwera (TOP 10)",
+      "description": "Liczba wywołań HTTP na godzinę; 10 serwerów z największą liczbą wywołań w zakresie.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) and on (serwer) topk(10, sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "legendFormat": "{{serwer}}",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 27,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 79
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Błędy na godzinę według serwera i typu",
+      "description": "Wywołania zakończone błędem (error.type) na godzinę.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (serwer, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
+          "legendFormat": "{{serwer}} – {{error_type}}",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 0
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 28,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 79
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 czasu odpowiedzi według serwera (TOP 10)",
+      "description": "Percentyl 95 czasu wywołania HTTP w oknach godzinnych.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "histogram_quantile(0.95, sum by (serwer, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))) and on (serwer) topk(10, sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "legendFormat": "{{serwer}}",
+          "refId": "A",
+          "range": true,
+          "instant": false,
+          "interval": "1h"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [],
+        "defaults": {
+          "unit": "s",
+          "custom": {
+            "drawStyle": "line",
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "showPoints": "never",
+            "spanNulls": false,
+            "axisSoftMin": 0,
+            "insertNulls": 3600000
+          },
+          "color": {
+            "mode": "palette-classic"
+          },
+          "decimals": 3
+        }
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        },
+        "legend": {
+          "displayMode": "table",
+          "calcs": [
+            "mean",
+            "max",
+            "lastNotNull"
+          ],
+          "placement": "bottom",
+          "showLegend": true
+        }
+      },
+      "id": 29,
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 87
+      }
+    },
+    {
+      "type": "table",
+      "title": "Źródła danych według łącznego czasu",
+      "description": "Span webcon.data_source.data.load według ID i typu źródła. TraceQL metrics, zakres dashboardu. Ślad pokazuje wywołanie HTTP i serwer docelowy.",
+      "datasource": {
+        "type": "tempo",
+        "uid": "tempo"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.data_source.data.load\" } | quantile_over_time(duration, .95) by (span.webcon.data_source.id, span.webcon.data_source.type.name)",
+          "refId": "A",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.data_source.data.load\" } | count_over_time() by (span.webcon.data_source.id, span.webcon.data_source.type.name)",
+          "refId": "B",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        },
+        {
+          "datasource": {
+            "type": "tempo",
+            "uid": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ name = \"webcon.data_source.data.load\" } | sum_over_time(duration) by (span.webcon.data_source.id, span.webcon.data_source.type.name, name)",
+          "refId": "C",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        }
+      ],
+      "transformations": [
+        {
+          "filter": {
+            "id": "byRefId",
+            "options": "/p=0\\.95/"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.data_source.id",
+              "span.webcon.data_source.type.name",
+              "p"
+            ],
+            "valueLabel": "p"
+          },
+          "id": "labelsToFields"
+        },
+        {
+          "filter": {
+            "id": "byRefId",
+            "options": "/^\\{(?!.*p=0\\.95)name=|^\\{(?!.*p=0\\.95)[a-z]+=.*, name=/"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.data_source.id",
+              "span.webcon.data_source.type.name",
+              "name"
+            ],
+            "valueLabel": "name"
+          },
+          "id": "labelsToFields"
+        },
+        {
+          "filter": {
+            "id": "byRefId",
+            "options": "/^(?!.*p=0\\.95)(?!.*[{ ]name=)/"
+          },
+          "options": {
+            "mode": "columns",
+            "keepLabels": [
+              "span.webcon.data_source.id",
+              "span.webcon.data_source.type.name"
+            ]
+          },
+          "id": "labelsToFields"
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "time": true
+            }
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "renamePattern": "Łączny czas",
+            "regex": "^\".*\"$"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "0.95": "p95",
+              "value": "Wywołania",
+              "span.webcon.data_source.id": "ID źródła",
+              "span.webcon.data_source.type.name": "Typ"
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "indexByName": {
+              "ID źródła": 0,
+              "Typ": 1,
+              "Wywołania": 2,
+              "p95": 3,
+              "Łączny czas": 4
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Łączny czas",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "p95"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 3
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 1
+                    },
+                    {
+                      "color": "red",
+                      "value": 3
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Wywołania"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Łączny czas"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 1
+              },
+              {
+                "id": "unit",
+                "value": "s"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID źródła"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"ID źródła\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Pokaż ślady"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "mappings": [
+            {
+              "type": "regex",
+              "options": {
+                "result": {
+                  "text": "$1"
+                },
+                "pattern": "^\"(.*)\"$"
+              }
+            }
+          ]
+        }
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 30,
+      "gridPos": {
+        "h": 9,
+        "w": 24,
+        "x": 0,
+        "y": 95
+      }
+    },
+    {
+      "type": "table",
+      "title": "Źródła danych zakończone błędem",
+      "description": "Błędy pobierania danych ze źródeł (wyjątek \"Error getting data for DataSource\" w logach Portalu / Serwisu, po jednym rekordzie na błąd). Spany webcon.data_source.data.load nie mają statusu error - błąd widać tylko w spanie HTTP i w logu. Zakres dashboardu.",
+      "datasource": {
+        "uid": "loki",
+        "type": "loki"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "loki",
+            "type": "loki"
+          },
+          "refId": "A",
+          "expr": "sum by (zrodlo_id, zrodlo, service_name) (count_over_time({service_name=~\"$job\"} | exception_message=~\"(?s)Error getting data for DataSource.*\" | scope_name!=\"Serilog.AspNetCore.RequestLoggingMiddleware\" | line_format \"{{.exception_message}}\" | regexp \"DataSource name: (?P<zrodlo>.*?) ID: (?P<zrodlo_id>[0-9]+)\" [$__range]))",
+          "queryType": "instant",
+          "editorMode": "code"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "zrodlo_id": "ID źródła",
+              "service_name": "Usługa",
+              "zrodlo": "Źródło",
+              "Value": "Błędy",
+              "Value #A": "Błędy"
+            },
+            "indexByName": {
+              "zrodlo_id": 0,
+              "zrodlo": 1,
+              "service_name": 2,
+              "Value": 3,
+              "Value #A": 3
+            },
+            "excludeByName": {
+              "Time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Błędy",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "–"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Błędy"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 1,
+                      "color": "red"
+                    }
+                  ],
+                  "mode": "absolute"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID źródła"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Pokaż logi",
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22expr%22%3A%22%7Bservice_name%3D~%5C%22Portal%7CWebCon.WorkFlow%5C%22%7D%20%7C%20exception_message%3D~%5C%22%28%3Fs%29Error%20getting%20data%20for%20DataSource.%2A%20ID%3A%20${__data.fields[\"ID źródła\"]:percentencode}%5C%5C%5C%5Cb.%2A%5C%22%2C%22datasource%22%3A%7B%22uid%22%3A%22loki%22%2C%22type%22%3A%22loki%22%7D%2C%22refId%22%3A%22A%22%7D%5D%2C%22datasource%22%3A%22loki%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 31,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 104
+      }
+    },
+    {
+      "type": "table",
+      "title": "Akcje z błędem wywołania HTTP",
+      "description": "Akcje (webcon.action.execute), w których wywołanie HTTP zwróciło błąd (error.type: kod 4xx/5xx, błąd połączenia, DNS). Spany akcji nie mają statusu error - WEBCON może zakończyć akcję mimo błędu HTTP. Zapytanie strukturalne TraceQL: liczba przybliżona (pomija ślady niekompletne w Tempo). Zakres dashboardu.",
+      "datasource": {
+        "uid": "tempo",
+        "type": "tempo"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "uid": "tempo",
+            "type": "tempo"
+          },
+          "queryType": "traceql",
+          "query": "{ span.error.type != nil } < { name = \"webcon.action.execute\" } | count_over_time() by (span.webcon.action.id, span.webcon.action.name, resource.service.name)",
+          "refId": "A",
+          "metricsQueryType": "instant",
+          "limit": 50,
+          "spss": 3,
+          "tableType": "traces"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "keepLabels": [
+              "span.webcon.action.id",
+              "span.webcon.action.name",
+              "resource.service.name"
+            ],
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "value": "Błędy",
+              "span.webcon.action.id": "ID akcji",
+              "resource.service.name": "Usługa",
+              "span.webcon.action.name": "Akcja"
+            },
+            "indexByName": {
+              "span.webcon.action.id": 0,
+              "span.webcon.action.name": 1,
+              "resource.service.name": 2,
+              "value": 3
+            },
+            "excludeByName": {
+              "time": true
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "sort": [
+              {
+                "field": "Błędy",
+                "desc": true
+              }
+            ]
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "filterable": true
+          },
+          "noValue": "–"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Błędy"
+            },
+            "properties": [
+              {
+                "id": "decimals",
+                "value": 0
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "steps": [
+                    {
+                      "value": null,
+                      "color": "green"
+                    },
+                    {
+                      "value": 1,
+                      "color": "red"
+                    }
+                  ],
+                  "mode": "absolute"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Akcja"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "result": {
+                        "text": "$1"
+                      },
+                      "pattern": "^\"(.*)\"$"
+                    },
+                    "type": "regex"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Usługa"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "result": {
+                        "text": "$1"
+                      },
+                      "pattern": "^\"(.*)\"$"
+                    },
+                    "type": "regex"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "ID akcji"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Pokaż ślady",
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22datasource%22%3A%7B%22uid%22%3A%22tempo%22%2C%22type%22%3A%22tempo%22%7D%2C%22refId%22%3A%22A%22%2C%22query%22%3A%22%7B%20span.error.type%20%21%3D%20nil%20%7D%20%3C%20%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"ID akcji\"]:percentencode}%20%7D%22%7D%5D%2C%22datasource%22%3A%22tempo%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "show": false
+        },
+        "showHeader": true
+      },
+      "id": 32,
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 104
+      }
+    }
+  ]
+}

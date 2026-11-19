@@ -1,0 +1,415 @@
+// =====================================================================
+// Grafana Alloy - collector stosu obserwowalności WEBCON
+// Plik generowany przez Install-ObservabilityStack.ps1 (stos) lub Install-ObservabilityAgent.ps1 (agent na hoście
+// WEBCON / SQL) z config-templates/alloy/config.alloy. Bloki CENTRAL / AGENT wybierają wariant.
+// Nie edytuj wygenerowanej kopii - zmień szablon i uruchom instalator ponownie.
+// =====================================================================
+
+logging {
+  level  = "info"
+  format = "logfmt"
+}
+
+// ---------------------------------------------------------------------
+// OTLP - wejście z WEBCON Portal / Serwis
+// ---------------------------------------------------------------------
+otelcol.receiver.otlp "webcon" {
+  grpc {
+    endpoint = "{{OTLP_BIND}}:4317"
+  }
+  http {
+    endpoint = "{{OTLP_BIND}}:4318"
+  }
+  output {
+    metrics = [otelcol.processor.memory_limiter.default.input]
+    logs    = [otelcol.processor.memory_limiter.default.input]
+    traces  = [otelcol.processor.memory_limiter.default.input]
+  }
+}
+
+otelcol.processor.memory_limiter "default" {
+  check_interval = "1s"
+  limit          = "{{ALLOY_MEMORY_LIMIT}}"
+  output {
+    metrics = [otelcol.processor.transform.webcon_service_name.input]
+    logs    = [otelcol.processor.filter.webcon_log_duplicates.input]
+    traces  = [otelcol.processor.filter.sql_threshold.input]
+  }
+}
+
+// Odrzucanie zduplikowanych logów WEBCON (2026.2.5): każdy rekord przychodzi dodatkowo z zasobem bez nazwy usługi
+// (service.name = "unknown_service:WebCon.WorkFlow.Bootstrapper.exe" / "...ServiceModuleRunner.exe").
+// Kopie są identyczne (trace_id, span_id, observed_timestamp) z rekordami usług "Portal" / "WebCon.WorkFlow".
+otelcol.processor.filter "webcon_log_duplicates" {
+  error_mode = "ignore"
+  logs {
+    log_record = [
+      "IsMatch(resource.attributes[\"service.name\"], \"^unknown_service:WebCon[.]\")",
+    ]
+  }
+  output {
+    logs = [otelcol.processor.attributes.webcon_secrets.input]
+  }
+}
+
+// Odrzucanie krótkich spanów SQL (próg: {{SQL_THRESHOLD_TEXT}}).
+// Obejmuje: span WEBCON "SqlQuery" oraz spany SqlClient (db.system / db.system.name).
+// Próg 0 = zachowuj wszystkie spany SQL.
+otelcol.processor.filter "sql_threshold" {
+  error_mode = "ignore"
+  traces {
+    span = [
+      "(name == \"SqlQuery\" or attributes[\"db.system\"] != nil or attributes[\"db.system.name\"] != nil) and (end_time_unix_nano - start_time_unix_nano) < {{SQL_THRESHOLD_NS}}",
+    ]
+  }
+  output {
+    traces = [otelcol.processor.attributes.webcon_secrets.input]
+  }
+}
+
+// Usuwanie ze spanów atrybutu "webcon.db.cs" (dane połączenia z bazą).
+otelcol.processor.attributes "webcon_secrets" {
+  action {
+    key    = "webcon.db.cs"
+    action = "delete"
+  }
+  output {
+    logs   = [otelcol.processor.transform.webcon_service_name.input]
+    traces = [otelcol.processor.transform.webcon_cardinality.input]
+  }
+}
+
+// Ograniczenie kardynalności spanmetrics Tempo (wymiar webcon.path.id): span "workflow.execute" ma to samo ID ścieżki
+// co "path.transitions", co podwajało serie na ścieżkę. Dashboardy grupują ścieżki tylko po "path.transitions",
+// więc na "workflow.execute" atrybut dostaje inną nazwę – ID zostaje w śladzie, ale nie jest wymiarem metryk.
+otelcol.processor.transform "webcon_cardinality" {
+  error_mode = "ignore"
+  trace_statements {
+    context    = "span"
+    statements = [
+      "set(attributes[\"webcon.workflow.path.id\"], attributes[\"webcon.path.id\"]) where name == \"webcon.elements_management.workflow.execute\" and attributes[\"webcon.path.id\"] != nil",
+      "delete_key(attributes, \"webcon.path.id\") where name == \"webcon.elements_management.workflow.execute\"",
+    ]
+  }
+  output {
+    traces = [otelcol.processor.transform.webcon_service_name.input]
+  }
+}
+
+// Stałe nazwy usług WEBCON: "Portal" i "WebCon.WorkFlow" (dashboardy, alerty, spanmetrics) niezależnie od ServiceName
+// w appsettings WEBCON. Komponent wskazuje atrybut resource "webcon.component" (portal / service) ustawiany przez
+// scripts\Set-WebconTelemetry.ps1 (OTEL_RESOURCE_ATTRIBUTES). Oryginalna nazwa -> "webcon.service.name.original".
+// Rekordy "unknown_service:*" (duplikaty logów, zgłoszenie 02) bez zmian. Procesor jest idempotentny (agent + stos).
+// Bez znacznika: mapowanie po nazwie (-WebconPortalServiceName / -WebconServiceServiceName instalatora stosu).
+// Projekt: docs/projekt/projekt-nazwy-uslug-webcon.md
+otelcol.processor.transform "webcon_service_name" {
+  error_mode = "ignore"
+  metric_statements {
+    context    = "resource"
+    statements = [
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] != nil and attributes[\"webcon.service.name.original\"] == nil and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == \"portal\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == \"service\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      // @@BEGIN SERVICENAME_FALLBACK
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] == nil and attributes[\"webcon.service.name.original\"] == nil and (attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\" or attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\"",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\"",
+      // @@END SERVICENAME_FALLBACK
+    ]
+  }
+  log_statements {
+    context    = "resource"
+    statements = [
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] != nil and attributes[\"webcon.service.name.original\"] == nil and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == \"portal\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == \"service\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      // @@BEGIN SERVICENAME_FALLBACK
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] == nil and attributes[\"webcon.service.name.original\"] == nil and (attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\" or attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\"",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\"",
+      // @@END SERVICENAME_FALLBACK
+    ]
+  }
+  trace_statements {
+    context    = "resource"
+    statements = [
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] != nil and attributes[\"webcon.service.name.original\"] == nil and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == \"portal\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == \"service\" and not IsMatch(attributes[\"service.name\"], \"^unknown_service:\")",
+      // @@BEGIN SERVICENAME_FALLBACK
+      "set(attributes[\"webcon.service.name.original\"], attributes[\"service.name\"]) where attributes[\"webcon.component\"] == nil and attributes[\"webcon.service.name.original\"] == nil and (attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\" or attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\")",
+      "set(attributes[\"service.name\"], \"Portal\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_PORTAL_SERVICE_NAME}}\"",
+      "set(attributes[\"service.name\"], \"WebCon.WorkFlow\") where attributes[\"webcon.component\"] == nil and attributes[\"service.name\"] == \"{{WEBCON_SERVICE_SERVICE_NAME}}\"",
+      // @@END SERVICENAME_FALLBACK
+    ]
+  }
+  output {
+    metrics = [otelcol.processor.batch.default.input]
+    logs    = [otelcol.processor.batch.default.input]
+    traces  = [otelcol.processor.batch.default.input]
+  }
+}
+
+// @@BEGIN CENTRAL
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.prometheus.default.input]
+    logs    = [otelcol.exporter.otlphttp.loki.input]
+    traces  = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// ---------------------------------------------------------------------
+// Wyjścia
+// ---------------------------------------------------------------------
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "127.0.0.1:14317"
+    tls {
+      insecure = true
+    }
+  }
+}
+
+otelcol.exporter.prometheus "default" {
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+
+otelcol.exporter.otlphttp "loki" {
+  client {
+    endpoint = "http://127.0.0.1:3100/otlp"
+  }
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://127.0.0.1:3100/loki/api/v1/push"
+  }
+}
+// @@END CENTRAL
+
+// @@BEGIN AGENT
+// Agent: wszystkie sygnały OTLP (już przefiltrowane) do Alloy stosu centralnego - bez TLS, ruch ograniczony firewallem stosu
+otelcol.processor.batch "default" {
+  output {
+    metrics = [otelcol.exporter.otlp.central.input]
+    logs    = [otelcol.exporter.otlp.central.input]
+    traces  = [otelcol.exporter.otlp.central.input]
+  }
+}
+
+otelcol.exporter.otlp "central" {
+  client {
+    endpoint = "{{CENTRAL_OTLP}}"
+    tls {
+      insecure = true
+    }
+  }
+}
+// @@END AGENT
+
+// Stos: Prometheus lokalnie; agent: prometheus.receive_http w Alloy stosu (WAL w --storage.path przy niedostępności stosu)
+prometheus.remote_write "default" {
+  endpoint {
+    url                    = "{{REMOTE_WRITE_URL}}"
+    send_exemplars         = true
+    send_native_histograms = true
+  }
+}
+
+// @@BEGIN RECEIVE
+// ---------------------------------------------------------------------
+// Wejście remote write od agentów (metryki hostów WEBCON / SQL) - Prometheus zostaje na localhost
+// ---------------------------------------------------------------------
+prometheus.receive_http "agents" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = {{RECEIVE_PORT}}
+  }
+  forward_to = [prometheus.remote_write.default.receiver]
+}
+// @@END RECEIVE
+
+// ---------------------------------------------------------------------
+// Metryki hosta Windows (CPU, pamięć, dyski, sieć, IIS, procesy)
+// ---------------------------------------------------------------------
+prometheus.exporter.windows "host" {
+  enabled_collectors = [{{WINDOWS_COLLECTORS}}]
+
+  process {
+    include = "{{PROCESS_INCLUDE}}"
+  }
+}
+
+prometheus.scrape "host" {
+  targets         = prometheus.exporter.windows.host.targets
+  forward_to      = [prometheus.remote_write.default.receiver]
+  job_name        = "integrations/windows"
+  scrape_interval = "15s"
+}
+
+// @@BEGIN MSSQL
+// ---------------------------------------------------------------------
+// SQL Server - dedykowany login (connection string w pliku z ACL: SYSTEM + Administrators)
+// ---------------------------------------------------------------------
+local.file "mssql_conn" {
+  filename  = "{{SECRETS_DIR_ALLOY}}\\mssql.conn"
+  is_secret = true
+}
+
+// Zapytania exportera: domyślne Alloy + rozszerzenia (wait stats, blokady, I/O, rozmiar baz, liczniki) - mssql-queries.yaml
+local.file "mssql_queries" {
+  filename = "{{CONFIG_DIR_ALLOY}}\\alloy\\mssql-queries.yaml"
+}
+
+prometheus.exporter.mssql "webcon" {
+  connection_string = local.file.mssql_conn.content
+  query_config      = local.file.mssql_queries.content
+  timeout           = "20s"
+}
+
+prometheus.scrape "mssql" {
+  targets         = prometheus.exporter.mssql.webcon.targets
+  forward_to      = [prometheus.remote_write.default.receiver]
+  job_name        = "integrations/mssql"
+  scrape_interval = "30s"
+}
+// @@END MSSQL
+
+// @@BEGIN WEBCONDB
+// ---------------------------------------------------------------------
+// Metryki z bazy treści WEBCON (zaległości, kolejki) - osobna instancja exportera: błąd lub wolne zapytanie nie psuje
+// metryk serwera SQL. Ten sam login (mssql.conn) z uprawnieniami kolumnowymi: sql/grant-webcon-db-metrics.sql.
+// Projekt: docs/projekt/projekt-dostepnosc-i-metryki-bazy.md
+// ---------------------------------------------------------------------
+local.file "webcon_db_queries" {
+  filename = "{{CONFIG_DIR_ALLOY}}\\alloy\\webcon-db-queries.yaml"
+}
+
+prometheus.exporter.mssql "webcon_data" {
+  connection_string = local.file.mssql_conn.content
+  query_config      = local.file.webcon_db_queries.content
+  timeout           = "30s"
+}
+
+// Exporter nadaje celom job "integrations/mssql" (jak instancja "webcon") - bez relabel serie obu instancji
+// (w tym up) nakładałyby się (ten sam instance)
+discovery.relabel "mssql_webcon" {
+  targets = prometheus.exporter.mssql.webcon_data.targets
+  rule {
+    target_label = "job"
+    replacement  = "integrations/mssql-webcon"
+  }
+}
+
+prometheus.scrape "mssql_webcon" {
+  targets         = discovery.relabel.mssql_webcon.output
+  forward_to      = [prometheus.remote_write.default.receiver]
+  job_name        = "integrations/mssql-webcon"
+  scrape_interval = "60s"
+  scrape_timeout  = "30s"
+}
+// @@END WEBCONDB
+
+// @@BEGIN BLACKBOX
+// ---------------------------------------------------------------------
+// Dostępność: sondy HTTP. Portal WEBCON - adresy z powiązań IIS witryny Portalu, nagłówek "Host: localhost"
+// (WEBCON zwraca anonimowe /health tylko dla localhost), SNI / weryfikacja certyfikatu dla nazwy z powiązania
+// (moduł na nazwę hosta). Dodatkowe adresy (-ProbeUrl) - moduł http_2xx.
+// Projekt: docs/projekt/projekt-dostepnosc-i-metryki-bazy.md
+// ---------------------------------------------------------------------
+prometheus.exporter.blackbox "webcon" {
+  config = `
+modules:
+  http_2xx:
+    prober: http
+    timeout: 10s
+    http:
+      preferred_ip_protocol: ip4
+{{BLACKBOX_MODULES}}`
+{{BLACKBOX_TARGETS}}
+}
+
+// Alloy nadaje job "integrations/blackbox/<nazwa celu>" - jeden job dla wszystkich sond; instance = adres
+discovery.relabel "blackbox" {
+  targets = prometheus.exporter.blackbox.webcon.targets
+  rule {
+    target_label = "job"
+    replacement  = "integrations/blackbox"
+  }
+  // bez tej reguły instance = "prometheus.exporter.blackbox.webcon" (nadpisywane przy scrape)
+  rule {
+    source_labels = ["__param_target"]
+    target_label  = "instance"
+  }
+}
+
+prometheus.scrape "blackbox" {
+  targets         = discovery.relabel.blackbox.output
+  forward_to      = [prometheus.remote_write.default.receiver]
+  job_name        = "integrations/blackbox"
+  scrape_interval = "30s"
+  scrape_timeout  = "15s"
+}
+// @@END BLACKBOX
+
+// @@BEGIN SERVICELOGS
+// ---------------------------------------------------------------------
+// Logi Serilog WEBCON Serwis z plików - tylko dla wersji Serwisu bez eksportu logów przez OTLP (< 2026.2)
+// ---------------------------------------------------------------------
+local.file_match "webcon_service" {
+  path_targets = [{
+    "__path__"     = "{{SERVICE_LOG_GLOB}}",
+    "job"          = "webcon/service",
+    "service_name" = "webcon-service",
+  }]
+}
+
+loki.source.file "webcon_service" {
+  targets    = local.file_match.webcon_service.targets
+  forward_to = [loki.process.webcon_service.receiver]
+}
+
+loki.process "webcon_service" {
+  // Wpisy wieloliniowe (stack trace) - nowy wpis zaczyna się od daty
+  stage.multiline {
+    firstline     = "^\\d{4}-\\d{2}-\\d{2}"
+    max_wait_time = "3s"
+  }
+
+  // TraceId -> structured metadata (korelacja z Tempo)
+  stage.regex {
+    expression = "(?i)trace_?id[\"'=: ]+(?P<trace_id>[0-9a-f]{32})"
+  }
+  stage.structured_metadata {
+    values = { trace_id = "" }
+  }
+
+  // Poziom logu Serilog: [INF] / [ERR] / Information / Error ...
+  stage.regex {
+    expression = "(?i)\\[(?P<level>VRB|DBG|INF|WRN|ERR|FTL|Verbose|Debug|Information|Warning|Error|Fatal)\\]"
+  }
+  stage.labels {
+    values = { level = "" }
+  }
+
+  forward_to = [loki.write.local.receiver]
+}
+// @@END SERVICELOGS
+
+// @@BEGIN CENTRAL_SELF
+// ---------------------------------------------------------------------
+// Self-monitoring stosu
+// ---------------------------------------------------------------------
+prometheus.scrape "stack" {
+  targets = [
+    {"__address__" = "127.0.0.1:9090",  "job" = "observability/prometheus"},
+    {"__address__" = "127.0.0.1:3100",  "job" = "observability/loki"},
+    {"__address__" = "127.0.0.1:3200",  "job" = "observability/tempo"},
+    {"__address__" = "127.0.0.1:12345", "job" = "observability/alloy"},
+    {"__address__" = "127.0.0.1:3000",  "job" = "observability/grafana"},
+  ]
+  forward_to      = [prometheus.remote_write.default.receiver]
+  scrape_interval = "30s"
+}
+// @@END CENTRAL_SELF

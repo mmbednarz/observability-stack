@@ -1,0 +1,93 @@
+# Metryki z bazy treści WEBCON (zaległości i kolejki) - query_config drugiej instancji prometheus.exporter.mssql
+# ("webcon_data", job integrations/mssql-webcon). Plik generowany przez Install-ObservabilityStack.ps1 /
+# Install-ObservabilityAgent.ps1 z config-templates/alloy/webcon-db-queries.yaml.
+# Baza: {{WEBCON_CONTENT_DB}} (trzyczęściowe nazwy obiektów - połączenie exportera jest do master).
+# Uprawnienia: użytkownik loginu exportera w bazie treści + SELECT tylko na kolumnach z zapytań
+# (sql/grant-webcon-db-metrics.sql). Liczenie przez COUNT(<kolumna>) - COUNT(*) wymagałby SELECT na całej tabeli.
+# Projekt: docs/projekt/projekt-dostepnosc-i-metryki-bazy.md
+collector_name: webcon_db
+
+metrics:
+  # Liczba wierszy tabel kolejek, logów i WFElements - z metadanych (bez skanu tabel i bez uprawnień do danych)
+  - metric_name: webcon_db_table_rows
+    type: gauge
+    help: 'Liczba wierszy tabel kolejek (%QUEUE%), logów (%LOGS%) i WFElements w bazie treści WEBCON (sys.partitions; bez tabel dodatkowych ZWEBCON_*).'
+    key_labels:
+      - database
+      - table
+      - kind
+    values: [row_count]
+    query: |
+      SELECT N'{{WEBCON_CONTENT_DB}}' AS [database],
+             t.name AS [table],
+             CASE WHEN t.name LIKE N'%QUEUE%' THEN N'queue'
+                  WHEN t.name = N'WFElements' THEN N'elements'
+                  ELSE N'log' END AS kind,
+             CAST(SUM(p.rows) AS bigint) AS row_count
+      FROM [{{WEBCON_CONTENT_DB}}].sys.partitions AS p
+      JOIN [{{WEBCON_CONTENT_DB}}].sys.tables AS t ON t.object_id = p.object_id
+      WHERE p.index_id IN (0, 1)
+        AND (t.name LIKE N'%QUEUE%' OR t.name LIKE N'%LOGS%' OR t.name = N'WFElements')
+        -- tabele dodatkowe spoza schematu WEBCON (np. ZWEBCON_SupportQueue na serwerze testowym)
+        AND t.name NOT LIKE N'ZWEBCON[_]%'
+        -- słownik źródeł logów, nie tabela logów (nazwa zawiera "LogS")
+        AND t.name <> N'DicLogSources'
+        -- logi bazy konfiguracyjnej - w bazie treści puste (WEBCON zapisuje je w bazie konfiguracyjnej)
+        AND t.name NOT IN (N'AdminWFEventLogs', N'AdminServiceLogs')
+      GROUP BY t.name
+
+  # Kolejka maili wg liczby prób wysłania (0-5 zawsze obecne; wyższe wartości, jeśli wystąpią)
+  - metric_name: webcon_db_mails
+    type: gauge
+    help: 'Liczba maili w kolejce WFMails wg liczby prób wysłania (MAIL_AttemptsNumber).'
+    key_labels:
+      - database
+      - attempts
+    values: [mails]
+    query: |
+      WITH n AS (SELECT v FROM (VALUES (0), (1), (2), (3), (4), (5)) AS x(v)),
+           m AS (SELECT MAIL_AttemptsNumber AS a, COUNT(MAIL_AttemptsNumber) AS c
+                 FROM [{{WEBCON_CONTENT_DB}}].dbo.WFMails
+                 GROUP BY MAIL_AttemptsNumber)
+      SELECT N'{{WEBCON_CONTENT_DB}}' AS [database],
+             CAST(COALESCE(m.a, n.v) AS nvarchar(10)) AS attempts,
+             ISNULL(m.c, 0) AS mails
+      FROM n FULL OUTER JOIN m ON m.a = n.v
+
+  # Akcje cykliczne, których ostatnie wykonanie zakończyło się błędem (warunek jak w kolektorze RECURRENTACTIONS)
+  - metric_name: webcon_db_recurrent_actions_overdue
+    type: gauge
+    help: 'Aktywne akcje cykliczne z ostatnim wykonaniem zakończonym błędem, nieprzypisane do Serwisu (WFRecurrentActionsStats).'
+    key_labels:
+      - database
+    values: [actions]
+    query: |
+      SELECT N'{{WEBCON_CONTENT_DB}}' AS [database], COUNT(RAS_NextLaunch) AS actions
+      FROM [{{WEBCON_CONTENT_DB}}].dbo.WFRecurrentActionsStats
+      WHERE (RAS_TimeLastFailure > RAS_TimeLastSuccess OR (RAS_TimeLastFailure IS NOT NULL AND RAS_TimeLastSuccess IS NULL))
+        AND RAS_ServiceName IS NULL
+        AND RAS_Status = 0
+        AND RAS_NextLaunch IS NOT NULL
+
+  # Przeterminowane timeouty, których Serwis nie podjął (warunek jak w kolektorze TIMEOUTACTIONS)
+  - metric_name: webcon_db_timeouts_overdue
+    type: gauge
+    help: 'Przeterminowane timeouty elementów oczekujące na wykonanie, nieprzypisane do Serwisu (WFElementTimeouts).'
+    key_labels:
+      - database
+    values: [timeouts]
+    query: |
+      SELECT N'{{WEBCON_CONTENT_DB}}' AS [database], COUNT(e.ETM_TIMID) AS timeouts
+      FROM [{{WEBCON_CONTENT_DB}}].dbo.WFElementTimeouts AS e
+      JOIN [{{WEBCON_CONTENT_DB}}].dbo.WFTimeouts AS t ON t.TIM_ID = e.ETM_TIMID
+      JOIN [{{WEBCON_CONTENT_DB}}].dbo.WFSteps AS s ON s.STP_ID = t.TIM_STPID
+      JOIN [{{WEBCON_CONTENT_DB}}].dbo.WorkFlows AS w ON w.WF_ID = s.STP_WFID
+      JOIN [{{WEBCON_CONTENT_DB}}].dbo.WFDefinitions AS d ON d.DEF_ID = w.WF_WFDEFID AND d.DEF_EnableTimeouts = 1
+      WHERE e.ETM_ServiceName IS NULL
+        AND e.ETM_Status = 0
+        AND t.TIM_IsNightOnly = 0
+        AND e.ETM_ExpireTime < GETDATE()
+        AND e.ETM_OccurrenceErrorsCount < 10
+        AND (t.TIM_RepeatCount = 0 OR t.TIM_RepeatCount > e.ETM_OccurrenceCount)
+        AND (e.ETM_LastAttemptTime IS NULL
+             OR (e.ETM_AttemptsNumber <= 0 AND GETDATE() > DATEADD(second, 3600, e.ETM_LastAttemptTime)))

@@ -1,0 +1,652 @@
+# Reguły alertów WEBCON, SQL Server i hostów (projekt: docs/projekt/projekt-alerty.md).
+# Plik generowany przez Install-ObservabilityStack.ps1. Reguły provisionowane są tylko do odczytu w UI Grafany.
+#
+# Konwencja: zapytanie A (instant) zwraca wartość mierzoną, warunki wolumenu są w PromQL (and on() ...),
+# B = reduce (last) - tylko wyrażenia są dostępne w $values szablonów, próg ocenia wyrażenie C (threshold). Brak danych = OK (maszyna bez WEBCON / SQL nie alarmuje).
+apiVersion: 1
+groups:
+  # -------------------------------------------------------------------
+  - orgId: 1
+    name: WEBCON
+    folder: WEBCON – alerty
+    interval: 1m
+    rules:
+      - uid: webcon-w1-transitions-p95
+        title: W1 Wolne przejścia ścieżek (p95)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |-
+                histogram_quantile(0.95, sum by (le) (rate(webcon_elements_management_path_transitions_times_milliseconds_bucket[10m])))
+                and on() sum(increase(webcon_elements_management_path_transitions_times_milliseconds_count[10m])) >= 10
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [5000] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 przejść ścieżek {{ humanize $values.B.Value }} ms (próg 5000 ms)"
+          description: Przejścia ścieżek (Portal i Serwis) wolniejsze niż 5 s w p95 przez 10 min, przy co najmniej 10 przejściach. Ranking ścieżek i reguł - dashboard WEBCON – Wydajność, rząd „Formularze i przejścia” / „Gdzie ucieka czas”.
+          __dashboardUid__: webcon-performance
+          __panelId__: "26"
+
+      - uid: webcon-w2-portal-p95
+        title: W2 Wolny Portal (p95)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |-
+                histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job="Portal",http_route!~"/?health.*"}[10m])))
+                and on() sum(increase(http_server_request_duration_seconds_count{job="Portal",http_route!~"/?health.*"}[10m])) >= 50
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [3] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "p95 żądań Portalu {{ humanize $values.B.Value }} s (próg 3 s)"
+          description: Żądania Portalu (bez health check) wolniejsze niż 3 s w p95 przez 10 min, przy co najmniej 50 żądaniach. Najwolniejsze trasy - dashboard WEBCON – Wydajność, rząd „Portal”.
+          __dashboardUid__: webcon-performance
+          __panelId__: "16"
+
+      - uid: webcon-w3-portal-5xx
+        title: W3 Błędy 5xx Portalu
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |-
+                100 * sum(increase(http_server_request_duration_seconds_count{job="Portal",http_route!~"/?health.*",http_response_status_code=~"5.."}[10m]))
+                  / sum(increase(http_server_request_duration_seconds_count{job="Portal",http_route!~"/?health.*"}[10m]))
+                and on() sum(increase(http_server_request_duration_seconds_count{job="Portal",http_route!~"/?health.*",http_response_status_code=~"5.."}[10m])) >= 10
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [5] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ humanize $values.B.Value }}% żądań Portalu kończy się błędem 5xx (próg 5%)"
+          description: Co najmniej 10 błędów 5xx w 10 min i ponad 5% żądań. Trasy i kody - dashboard WEBCON – Wydajność, rząd „Portal”; szczegóły w logach Portalu (Loki).
+          __dashboardUid__: webcon-performance
+          __panelId__: "18"
+
+      - uid: webcon-w4-service-heartbeat
+        title: W4 Brak heartbeat Serwisu
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # 1 = Serwis wysyłał heartbeat w ciągu 24 h, ale nie w ostatnich 10 min
+              expr: |-
+                (vector(1) and on() sum(increase(traces_spanmetrics_calls_total{service="WebCon.WorkFlow",span_name="webcon.service.heartbeat"}[24h])) > 0)
+                unless on() sum(increase(traces_spanmetrics_calls_total{service="WebCon.WorkFlow",span_name="webcon.service.heartbeat"}[10m])) > 0
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: critical }
+        annotations:
+          summary: Serwis WEBCON nie wysyła heartbeat od ponad 10 min
+          description: Brak spanów webcon.service.heartbeat (były w ciągu ostatnich 24 h). Sprawdź usługę „WebCon WorkFlow Service” i Dziennik zdarzeń; jeśli brak też innej telemetrii - alert O3.
+          __dashboardUid__: webcon-performance
+          __panelId__: "56"
+
+      - uid: webcon-w5-heartbeat-errors
+        title: W5 Błędy heartbeat / health check
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: |-
+                sum by (span_name) (increase(traces_spanmetrics_calls_total{status_code="STATUS_CODE_ERROR",span_name=~"webcon\\.(service|portal)\\.heartbeat|webcon\\.service\\.health\\.check"}[10m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.span_name }}: {{ humanize $values.B.Value }} błędów w 10 min"
+          description: Spany heartbeat / health check zakończone błędem. Ślady - Explore (Tempo) { status = error && name = "{{ $labels.span_name }}" }.
+          __dashboardUid__: webcon-performance
+          __panelId__: "56"
+
+      - uid: webcon-w6-queue-errors
+        title: W6 Błędy kolejki Serwisu
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # role Serwisu: 25 UserSynchronization, 40-42 kolejki Solr
+              expr: |-
+                sum by (rola) (
+                  label_replace(label_replace(label_replace(label_replace(label_replace(
+                    increase(webcon_service_queue_item_error_total[15m]),
+                    "rola", "rola $1", "webcon_service_role_id", "(.*)"),
+                    "rola", "UserSynchronization", "webcon_service_role_id", "25"),
+                    "rola", "SolrActivityQueue", "webcon_service_role_id", "40"),
+                    "rola", "SolrElementQueue", "webcon_service_role_id", "41"),
+                    "rola", "SolrFileQueue", "webcon_service_role_id", "42"))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "Kolejka Serwisu ({{ $labels.rola }}): {{ humanize $values.B.Value }} błędów w 15 min"
+          description: Elementy kolejki Serwisu zakończone błędem. Szczegóły w logach Serwisu (service_name="WebCon.WorkFlow", poziom error).
+          __dashboardUid__: webcon-performance
+          __panelId__: "49"
+
+      - uid: webcon-w7-solr-backlog
+        title: W7 Rosnące zaległości indeksowania Solr
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # dodane - przetworzone w 30 min (elementy, załączniki, aktywności, narzędzia)
+              # każda metryka osobno: increase({__name__=~...}) zdejmuje nazwę metryki i serie o tych samych
+              # etykietach kolidują (błąd "vector cannot contain metrics with the same labelset")
+              expr: |-
+                ((sum(increase(webcon_solr_queue_elements_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_attachments_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_activities_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_utilities_total[30m])) or vector(0)))
+                - ((sum(increase(webcon_solr_queue_elements_processed_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_attachments_processed_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_activities_processed_total[30m])) or vector(0))
+                  + (sum(increase(webcon_solr_queue_utilities_processed_total[30m])) or vector(0)))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [1000] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 30m
+        labels: { severity: warning }
+        annotations:
+          summary: "Kolejka Solr rośnie: +{{ humanize $values.B.Value }} w 30 min"
+          description: Do kolejek indeksowania Solr trafia więcej elementów, niż Serwis przetwarza (ponad 1000 w 30 min, utrzymuje się 30 min). Sprawdź Solr i role Serwisu 40-42.
+          __dashboardUid__: webcon-performance
+          __panelId__: "52"
+
+      - uid: webcon-w8-datasource-errors
+        title: W8 Błędy źródeł danych
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              # Portal loguje 2 rekordy na błąd - pomijamy rekord RequestLoggingMiddleware
+              expr: |-
+                sum by (zrodlo, zrodlo_id) (count_over_time({service_name=~"Portal|WebCon.WorkFlow"} | exception_message=~"(?s)Error getting data for DataSource.*" | scope_name!="Serilog.AspNetCore.RequestLoggingMiddleware" | line_format "{{.exception_message}}" | regexp "DataSource name: (?P<zrodlo>.*?) ID: (?P<zrodlo_id>[0-9]+)" [15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [4] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "Źródło danych {{ $labels.zrodlo }} (ID {{ $labels.zrodlo_id }}): {{ humanize $values.B.Value }} błędów w 15 min"
+          description: Co najmniej 5 błędów pobierania danych ze źródła w 15 min. Szczegóły - dashboard WEBCON – Utrzymanie, panel błędów źródeł danych.
+          __dashboardUid__: webcon-operations
+          __panelId__: "31"
+
+      - uid: webcon-w9-http-client-errors
+        title: W9 Błędy wywołań zewnętrznych API
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # bez wywołań wewnętrznych WEBCON (localhost, własny host: Solr, moduły Serwisu, Portal -> Serwis) i OTLP
+              expr: |-
+                sum by (server_address, server_port) (increase(http_client_request_duration_seconds_count{job=~"Portal|WebCon.WorkFlow",error_type!="",server_port!~"4317|4318",server_address!~"(?i)(localhost|127[.]0[.]0[.]1|{{WEBCON_SELF_HOSTS}})([.].*)?"}[15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [9] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.server_address }}:{{ $labels.server_port }}: {{ humanize $values.B.Value }} błędów w 15 min"
+          description: Wywołania HTTP z WEBCON (akcje i źródła REST) kończą się błędem (timeout, odmowa połączenia, 4xx/5xx). Szczegóły - dashboard WEBCON – Utrzymanie, rząd zewnętrznych API.
+          __dashboardUid__: webcon-operations
+          __panelId__: "28"
+
+      - uid: webcon-w10-log-errors
+        title: W10 Skok błędów w logach
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: loki
+            model:
+              refId: A
+              queryType: instant
+              expr: |-
+                sum by (service_name) (count_over_time({service_name=~"Portal|WebCon.WorkFlow"} | detected_level=~"(?i)error|fatal|critical" [10m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [49] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.service_name }}: {{ humanize $values.B.Value }} błędów w logach w 10 min"
+          description: Co najmniej 50 rekordów error/fatal w 10 min. Logi - dashboard WEBCON – Wydajność, rząd „Logi”, lub Explore (Loki).
+          __dashboardUid__: webcon-performance
+          __panelId__: "65"
+
+      # Dostępność i zaległości w bazie (docs/projekt/projekt-dostepnosc-i-metryki-bazy.md)
+      - uid: webcon-b1-probe-down
+        title: B1 Portal niedostępny
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (instance, probe) (probe_success{job="integrations/blackbox"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [1] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 3m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.instance }} niedostępny ({{ $labels.probe }})"
+          description: Sonda HTTP nie dostaje odpowiedzi 200 (Portal - także stanu Healthy z /health) przez 3 min. Kod HTTP, czas odpowiedzi i certyfikat - dashboard WEBCON – Dostępność i zaległości. Kod 401 dla Portalu = WEBCON przestał odpowiadać na /health dla nagłówka Host localhost (docs/instalacja/07-rozwiazywanie-problemow.md).
+          __dashboardUid__: webcon-availability
+          __panelId__: "2"
+
+      - uid: webcon-b2-cert-expiry
+        title: B2 Certyfikat wkrótce wygaśnie
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (instance) ((probe_ssl_earliest_cert_expiry{job="integrations/blackbox"} - time()) / 86400)
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [14] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 1h
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.instance }}: certyfikat wygasa za {{ humanize $values.B.Value }} dni (próg 14)"
+          description: Najwcześniej wygasający certyfikat w łańcuchu TLS adresu wygasa za mniej niż 14 dni - odnów certyfikat powiązania IIS.
+          __dashboardUid__: webcon-availability
+          __panelId__: "3"
+
+      - uid: webcon-d1-timeouts-overdue
+        title: D1 Zaległe timeouty
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (database) (min_over_time(webcon_db_timeouts_overdue[30m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.database }}: co najmniej {{ humanize $values.B.Value }} przeterminowanych timeoutów przez 30 min"
+          description: Przeterminowane timeouty elementów nie schodzą do zera przez 30 min - Serwis ich nie podejmuje (zatrzymany, „żywy, ale martwy” po skoku zegara, przeciążony). Sprawdź alert W4 i rząd „Serwis” dashboardu WEBCON – Wydajność.
+          __dashboardUid__: webcon-availability
+          __panelId__: "11"
+
+      - uid: webcon-d2-mails-failing
+        title: D2 Przybywa nieudanych maili
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              # przyrost, nie stan: maile po wyczerpaniu prób zostają w WFMails (serwer testowy: 3782 po 5 próbach)
+              expr: |-
+                sum by (database) (webcon_db_mails{attempts!~"0|1|2"})
+                - sum by (database) (webcon_db_mails{attempts!~"0|1|2"} offset 30m)
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.database }}: +{{ humanize $values.B.Value }} maili po co najmniej 3 nieudanych próbach w 30 min"
+          description: W ostatnich 30 min przybyło maili z co najmniej 3 nieudanymi próbami wysłania (WFMails) - sprawdź konfigurację SMTP i logi Serwisu. Maile po wyczerpaniu prób zostają w kolejce, dlatego alert dotyczy przyrostu, nie stanu.
+          __dashboardUid__: webcon-availability
+          __panelId__: "13"
+
+      - uid: webcon-d3-recurrent-actions
+        title: D3 Akcje cykliczne z błędem
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 1800, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (database) (min_over_time(webcon_db_recurrent_actions_overdue[30m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.database }}: {{ humanize $values.B.Value }} akcji cyklicznych z błędem ostatniego wykonania"
+          description: Aktywne akcje cykliczne, których ostatnie wykonanie zakończyło się błędem, przez 30 min. Szczegóły - Designer Studio (akcje cykliczne) i logi Serwisu.
+          __dashboardUid__: webcon-availability
+          __panelId__: "12"
+
+  # -------------------------------------------------------------------
+  - orgId: 1
+    name: SQL Server i hosty
+    folder: WEBCON – alerty
+    interval: 1m
+    rules:
+      - uid: webcon-s1-deadlocks
+        title: S1 Zakleszczenia SQL
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: sum by (instance) (increase(mssql_deadlocks_total{job="integrations/mssql"}[15m]))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 0s
+        labels: { severity: warning }
+        annotations:
+          summary: "SQL {{ $labels.instance }}: {{ humanize $values.B.Value }} zakleszczeń w 15 min"
+          description: Zakleszczenia w SQL Server. Graf zakleszczeń - system_health (Extended Events) na serwerze SQL.
+          __dashboardUid__: sqlserver-webcon
+          __panelId__: "19"
+
+      - uid: webcon-s2-blocked-sessions
+        title: S2 Długie blokady SQL
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: max by (instance) (mssql_blocked_sessions{job="integrations/mssql"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [0] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 10m
+        labels: { severity: warning }
+        annotations:
+          summary: "SQL {{ $labels.instance }}: {{ humanize $values.B.Value }} zablokowanych sesji od 10 min"
+          description: Sesje czekające na blokady nieprzerwanie przez 10 min. Dashboard SQL Server, rząd blokad; na serwerze sys.dm_exec_requests (blocking_session_id).
+          __dashboardUid__: sqlserver-webcon
+          __panelId__: "17"
+
+      - uid: webcon-s3-page-life
+        title: S3 Presja pamięci SQL (Page Life Expectancy)
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (instance) (mssql_page_life_expectancy_seconds{job="integrations/mssql"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [300] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "SQL {{ $labels.instance }}: Page Life Expectancy {{ humanize $values.B.Value }} s (próg 300 s)"
+          description: Strony wypadają z bufora w mniej niż 5 min przez 15 min - za mało pamięci dla SQL Server lub ciężkie skany.
+          __dashboardUid__: sqlserver-webcon
+          __panelId__: "26"
+
+      - uid: webcon-h1-cpu
+        title: H1 Wysokie obciążenie CPU hosta
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: 100 * (1 - avg by (instance) (rate(windows_cpu_time_total{mode="idle"}[10m])))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [90] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.instance }}: CPU {{ humanize $values.B.Value }}% (próg 90%)"
+          description: Obciążenie CPU powyżej 90% przez 15 min. Procesy - dashboard Windows – obciążenie hosta, rząd „Procesy”.
+          __dashboardUid__: windows-host
+          __panelId__: "9"
+
+      - uid: webcon-h2-memory
+        title: H2 Mało wolnej pamięci hosta
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: max by (instance) (100 * (1 - windows_memory_available_bytes / windows_memory_physical_total_bytes))
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: gt, params: [90] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.instance }}: zajęta pamięć {{ humanize $values.B.Value }}% (próg 90%)"
+          description: Zajęta pamięć fizyczna powyżej 90% przez 15 min. Procesy - dashboard Windows – obciążenie hosta.
+          __dashboardUid__: windows-host
+          __panelId__: "15"
+
+      - uid: webcon-h3-disk-warning
+        title: H3 Mało miejsca na dysku
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (instance, volume) (100 * windows_logical_disk_free_bytes{volume!~"HarddiskVolume.*"} / windows_logical_disk_size_bytes{volume!~"HarddiskVolume.*"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [10] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: warning }
+        annotations:
+          summary: "{{ $labels.instance }} {{ $labels.volume }}: wolne {{ humanize $values.B.Value }}% (próg 10%)"
+          description: Mniej niż 10% wolnego miejsca na woluminie.
+          __dashboardUid__: windows-host
+          __panelId__: "21"
+
+      - uid: webcon-h4-disk-critical
+        title: H4 Krytycznie mało miejsca na dysku
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange: { from: 600, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: A
+              instant: true
+              expr: min by (instance, volume) (100 * windows_logical_disk_free_bytes{volume!~"HarddiskVolume.*"} / windows_logical_disk_size_bytes{volume!~"HarddiskVolume.*"})
+          - refId: B
+            datasourceUid: __expr__
+            model: { refId: B, type: reduce, expression: A, reducer: last }
+          - refId: C
+            datasourceUid: __expr__
+            model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [5] } } ] }
+        noDataState: OK
+        execErrState: Error
+        for: 15m
+        labels: { severity: critical }
+        annotations:
+          summary: "{{ $labels.instance }} {{ $labels.volume }}: wolne {{ humanize $values.B.Value }}% (próg 5%)"
+          description: Mniej niż 5% wolnego miejsca na woluminie - ryzyko zatrzymania SQL Server / WEBCON / stosu.
+          __dashboardUid__: windows-host
+          __panelId__: "21"
