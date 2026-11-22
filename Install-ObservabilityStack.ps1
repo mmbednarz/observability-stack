@@ -1,91 +1,98 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Instaluje self-hosted stos obserwowalności dla WEBCON na Windows Server:
-    Grafana Alloy (collector) + Prometheus (metryki) + Tempo (ślady OTLP) + Loki (logi) + Grafana.
+    Installs a self-hosted observability stack for WEBCON on Windows Server:
+    Grafana Alloy (collector) + Prometheus (metrics) + Tempo (OTLP traces) + Loki (logs) + Grafana.
 
 .DESCRIPTION
-    Wszystkie komponenty działają jako usługi Windows (WinSW), nasłuchują na localhost
-    (poza Grafaną przy -GrafanaListenAll). Skrypt jest idempotentny - ponowne uruchomienie
-    aktualizuje wersje (versions.psd1) i konfiguracje (config-templates).
+    All components run as Windows services (WinSW) and listen on localhost
+    (except Grafana with -GrafanaListenAll). The script is idempotent - running it again
+    updates versions (versions.psd1) and configurations (config-templates).
 
 .PARAMETER Root
-    Katalog instalacji (bin, config, data, logs, services, secrets).
+    Installation directory (bin, config, data, logs, services, secrets).
 
 .PARAMETER SqlServer
-    Instancja SQL Server do monitorowania (np. "SQLDEV01", "SQLDEV01\BPS", "SQLDEV01,1433").
-    Pominięcie = pytanie interaktywne; puste = bez metryk SQL Server.
+    SQL Server instance to monitor (e.g. "SQLDEV01", "SQLDEV01\BPS", "SQLDEV01,1433").
+    Omitted = interactive prompt; empty = no SQL Server metrics.
 
 .PARAMETER SqlLogin
-    Dedykowany login SQL dla exportera. Hasło jest pobierane interaktywnie (lub -SqlPassword).
-    Uprawnienia są weryfikowane przed instalacją (VIEW SERVER STATE, VIEW ANY DEFINITION).
+    Dedicated SQL login for the exporter. The password is prompted for interactively (or -SqlPassword).
+    Permissions are verified before installation (VIEW SERVER STATE, VIEW ANY DEFINITION).
 
 .PARAMETER WebconSqlReaderLogin
-    Login SQL tylko do odczytu dla źródła danych Grafany "WEBCON SQL" (dashboard WEBCON – Utrzymanie),
-    z uprawnieniami z sql\grant-webcon-reader-permissions.sql. Hasło: -WebconSqlReaderPassword, istniejący
-    sekret grafana-sql-reader.txt albo pytanie interaktywne. Pominięcie = zachowanie poprzedniej konfiguracji;
-    puste = bez źródła danych SQL.
+    Read-only SQL login for the "WEBCON SQL" Grafana data source (WEBCON – Operations dashboard),
+    with permissions from sql\grant-webcon-reader-permissions.sql. Password: -WebconSqlReaderPassword, the existing
+    grafana-sql-reader.txt secret or an interactive prompt. Omitted = keep the previous configuration;
+    empty = no SQL data source.
 
 .PARAMETER WebconSqlServer
-    Instancja SQL Server z bazą treści WEBCON. Domyślnie -SqlServer.
+    SQL Server instance hosting the WEBCON content database. Defaults to -SqlServer.
 
 .PARAMETER WebconContentDatabase
-    Baza treści WEBCON (domyślnie WEBCON_Content).
+    WEBCON content database (default: WEBCON_Content).
 
 .PARAMETER SqlSpanThresholdSeconds
-    Spany SQL krótsze niż próg są odrzucane w Alloy. 0 = zachowuj wszystkie.
+    SQL spans shorter than the threshold are dropped in Alloy. 0 = keep all.
 
 .PARAMETER ServiceLogPath
-    Glob plików logów Serilog WEBCON Serwisu (np. 'D:\WEBCON\Service\Logs\*.log').
-    Puste = bez zbierania logów Serwisu z plików.
+    Glob for the Serilog log files of the WEBCON WorkFlow Service (e.g. 'D:\WEBCON\Service\Logs\*.log').
+    Empty = Service logs are not collected from files.
 
 .PARAMETER WebconPortalServiceName
-    Awaryjne mapowanie nazw usług: nazwa usługi (ServiceName z appsettings WEBCON), pod którą Portal wysyła telemetrię
-    BEZ znacznika webcon.component (Set-WebconTelemetry.ps1 ustawia znacznik - wtedy parametr niepotrzebny).
-    Alloy zamienia ją na "Portal". Pominięcie = poprzednia wartość; puste = bez mapowania.
+    Fallback service name mapping: the service name (ServiceName from WEBCON appsettings) under which the Portal sends telemetry
+    WITHOUT the webcon.component marker (Set-WebconTelemetry.ps1 sets the marker - the parameter is then unnecessary).
+    Alloy replaces it with "Portal". Omitted = previous value; empty = no mapping.
 
 .PARAMETER WebconServiceServiceName
-    Jak -WebconPortalServiceName, dla Serwisu WEBCON (zamiana na "WebCon.WorkFlow").
+    Like -WebconPortalServiceName, for the WEBCON WorkFlow Service (replaced with "WebCon.WorkFlow").
 
 .PARAMETER PortalProbe
-    Sonda dostępności Portalu WEBCON (/health) - adresy z powiązań IIS witryny Portalu (domyślnie $true).
-    W trybie zdalnym sondę uruchamia agent na hoście WEBCON. Pominięcie = poprzednia wartość.
+    WEBCON Portal availability probe (/health) at the -PortalUrl address (default: $true).
+    In remote mode the probe is run by the agent on the WEBCON host. Omitted = previous value.
+
+.PARAMETER PortalUrl
+    Main WEBCON Portal address, the one users open, e.g. https://bps.example.com. The probe connects locally
+    on the WEBCON host and verifies the certificate for the host name from this address. Without the parameter
+    the installer asks (suggestion from IIS bindings with a host name); -NonInteractive - address from an IIS
+    binding with a host name; with bindings without a name (*) the probe is skipped. Omitted = previous value;
+    '' = detection from IIS.
 
 .PARAMETER ProbeUrl
-    Dodatkowe adresy HTTP(S) do sprawdzania dostępności (kod 2xx), np. Portal produkcyjny lub load balancer.
-    Pominięcie = poprzednia lista; '' = bez dodatkowych adresów.
+    Additional HTTP(S) addresses to check for availability (2xx code), e.g. the production Portal or a load balancer.
+    Omitted = previous list; '' = no additional addresses.
 
 .PARAMETER WebconDbMetrics
-    Metryki z bazy treści WEBCON (zaległe timeouty, akcje cykliczne, kolejka maili, rozmiary tabel kolejek i logów).
-    Wymaga metryk SQL i uprawnień kolumnowych loginu exportera (sql\grant-webcon-db-metrics.sql); brak uprawnień
-    = ostrzeżenie, instalacja trwa dalej. Pominięcie = poprzednia wartość.
+    Metrics from the WEBCON content database (overdue timeouts, cyclical actions, email queue, queue and log table sizes).
+    Requires SQL metrics and column-level permissions for the exporter login (sql\grant-webcon-db-metrics.sql); missing permissions
+    = warning, the installation continues. Omitted = previous value.
 
 .PARAMETER AllowDowngrade
-    Zezwala na instalację wersji starszej niż zainstalowana (konfiguracja i reguły alertów nowszej wersji mogą nie pasować
-    do starszej). Bez przełącznika obniżenie wersji przerywa instalację.
+    Allows installing a version older than the installed one (configuration and alert rules of the newer version may not match
+    the older one). Without this switch, a downgrade stops the installation.
 
 .PARAMETER ConfigureWebcon
-    Po instalacji uruchamia scripts\Set-WebconTelemetry.ps1 (konfiguracja OpenTelemetry w appsettings WEBCON).
+    After installation, runs scripts\Set-WebconTelemetry.ps1 (OpenTelemetry configuration in WEBCON appsettings).
 
 .PARAMETER WebconHost
-    Tryb zdalny: host z WEBCON (Portal + Serwis). Instalator generuje paczkę agenta (C:\Observability\agent-bundle + .zip)
-    ze skryptami do uruchomienia na hostach docelowych. Pominięcie = zachowanie poprzedniej konfiguracji; puste = bez hosta.
+    Remote mode: the WEBCON host (Portal + Service). The installer generates an agent bundle (C:\Observability\agent-bundle + .zip)
+    with scripts to run on the target hosts. Omitted = keep the previous configuration; empty = no host.
 
 .PARAMETER SqlHost
-    Tryb zdalny: host SQL Server z bazami WEBCON. Metryki SQL zbiera agent na tym hoście (nie podawaj -SqlServer).
-    Loginy exportera i czytelnika Grafany tworzy skrypt hosta SQL z hasłami wygenerowanymi tutaj.
+    Remote mode: the SQL Server host with the WEBCON databases. SQL metrics are collected by the agent on that host (do not specify -SqlServer).
+    The exporter and Grafana reader logins are created by the SQL host script with passwords generated here.
 
 .PARAMETER SqlInstanceName
-    Tryb zdalny: nazwa instancji na -SqlHost (MSSQLSERVER = domyślna, np. SQLEXPRESS).
+    Remote mode: instance name on -SqlHost (MSSQLSERVER = default instance, e.g. SQLEXPRESS).
 
 .PARAMETER SqlPort
-    Tryb zdalny: port TCP instancji (źródło 'WEBCON SQL' w Grafanie; -EnableSqlTcp na hoście SQL ustawia go jako statyczny).
+    Remote mode: TCP port of the instance ('WEBCON SQL' data source in Grafana; -EnableSqlTcp on the SQL host sets it as static).
 
 .PARAMETER CentralAddress
-    Adres tej VM widziany z hostów agentów. Domyślnie FQDN.
+    Address of this VM as seen from the agent hosts. Defaults to the FQDN.
 
 .PARAMETER AgentAddress
-    Adresy IP hostów agentów dopuszczone w firewallu (OTLP 4317/4318, remote write 9999). Domyślnie z DNS -WebconHost / -SqlHost.
+    IP addresses of the agent hosts allowed in the firewall (OTLP 4317/4318, remote write 9999). Defaults to DNS of -WebconHost / -SqlHost.
 
 .EXAMPLE
     .\Install-ObservabilityStack.ps1 -SqlServer 'SQLDEV01' -SqlLogin 'svc_obs_mssql_exporter' -ServiceLogPath 'C:\Program Files\WEBCON\WEBCON BPS WorkFlow Service\Logs\*.log'
@@ -98,7 +105,7 @@ param(
     [string]$EnvironmentName = $env:COMPUTERNAME,
 
     [ValidateRange(1, 3650)][int]$RetentionMetricsDays = 15,
-    # 8 dni: dashboard WEBCON – Utrzymanie ma zakres 7 dni, przy 7 dniach najstarszy dzień byłby częściowo usunięty
+    # 8 days: the WEBCON – Operations dashboard has a 7-day range; with 7 days the oldest day would be partially deleted
     [ValidateRange(1, 3650)][int]$RetentionTracesDays = 8,
     [ValidateRange(1, 3650)][int]$RetentionLogsDays = 7,
 
@@ -122,6 +129,7 @@ param(
     [string]$WebconServiceServiceName,
 
     [bool]$PortalProbe = $true,
+    [string]$PortalUrl,
     [string[]]$ProbeUrl,
     [bool]$WebconDbMetrics = $false,
 
@@ -171,43 +179,43 @@ $ReceivePort = 9999
 $ProcessInclude = '(?i)^(w3wp|sqlservr|dotnet|webcon.*|alloy.*|prometheus|loki.*|tempo|grafana)$'
 
 Write-Host ''
-Write-Host "Observability Stack (WEBCON) $($Release.Version) - instalacja" -ForegroundColor White
-Write-Host "Katalog: $($Layout.Root)   Pliki instalacyjne: $RepoRoot" -ForegroundColor White
+Write-Host "Observability Stack (WEBCON) $($Release.Version) - installation" -ForegroundColor White
+Write-Host "Directory: $($Layout.Root)   Installation files: $RepoRoot" -ForegroundColor White
 Write-StackDisclaimer
 Write-Host ''
 
 $previous = Get-InstallSettings -Root $Layout.Root
 
 # ---------------------------------------------------------------------
-# Wersja i położenie plików instalacyjnych (docs/projekt/projekt-dystrybucja-i-wersje.md)
-Write-Step 'Wersja'
+# Version and location of the installation files (docs/projekt/projekt-dystrybucja-i-wersje.md)
+Write-Step 'Version'
 Assert-InstallLocation -SourceRoot $RepoRoot -Layout $Layout
 $PreviousVersion = ''
 if ($previous -and $previous.StackVersion) { $PreviousVersion = [string]$previous.StackVersion }
 if (-not $previous) {
-    Write-Ok "Instalacja $($Release.Version)"
+    Write-Ok "Installing $($Release.Version)"
 } elseif (-not $PreviousVersion) {
-    Write-Ok "Aktualizacja instalacji sprzed wydań -> $($Release.Version)"
+    Write-Ok "Upgrading a pre-release installation -> $($Release.Version)"
 } else {
     $cmp = (ConvertTo-StackVersion $Release.Version).CompareTo((ConvertTo-StackVersion $PreviousVersion))
     if ($cmp -lt 0) {
         if (-not $AllowDowngrade) {
-            throw ("Zainstalowana jest nowsza wersja ($PreviousVersion) niż instalowana ($($Release.Version)). Konfiguracja i reguły " +
-                   "alertów nowszej wersji mogą nie pasować do starszej - użyj nowszej paczki albo -AllowDowngrade.")
+            throw ("The installed version ($PreviousVersion) is newer than the one being installed ($($Release.Version)). Configuration and alert " +
+                   "rules of the newer version may not match the older one - use a newer package or -AllowDowngrade.")
         }
-        Write-Warn "Obniżenie wersji $PreviousVersion -> $($Release.Version) (-AllowDowngrade)"
+        Write-Warn "Downgrading $PreviousVersion -> $($Release.Version) (-AllowDowngrade)"
     } elseif ($PreviousVersion -eq $Release.Version) {
-        Write-Ok "Ponowna instalacja $($Release.Version)"
+        Write-Ok "Reinstalling $($Release.Version)"
     } else {
-        Write-Ok "Aktualizacja $PreviousVersion -> $($Release.Version)"
+        Write-Ok "Upgrading $PreviousVersion -> $($Release.Version)"
     }
 }
-if ($Release.Dev) { Write-Info 'Wersja deweloperska (klon repozytorium) - linki do dokumentacji wskazują gałąź main.' }
-# Pliki z ZIP-a pobranego z internetu (Zone.Identifier) - kopia w app\ ma być odblokowana
+if ($Release.Dev) { Write-Info 'Development version (repository clone) - documentation links point to the main branch.' }
+# Files from a ZIP downloaded from the internet (Zone.Identifier) - the copy in app\ must be unblocked
 foreach ($f in $PackageFiles) { Unblock-File -LiteralPath (Join-Path $RepoRoot $f) -ErrorAction SilentlyContinue }
 
 # ---------------------------------------------------------------------
-# Tryb zdalny (agenci na hostach WEBCON / SQL). Aktualizacja bez -WebconHost/-SqlHost zachowuje poprzednie hosty.
+# Remote mode (agents on the WEBCON / SQL hosts). An upgrade without -WebconHost/-SqlHost keeps the previous hosts.
 $RemoteMode = $false
 if (-not $PSBoundParameters.ContainsKey('WebconHost') -and -not $PSBoundParameters.ContainsKey('SqlHost') -and
     $previous -and ($previous.WebconHost -or $previous.SqlHost)) {
@@ -219,11 +227,11 @@ if (-not $PSBoundParameters.ContainsKey('WebconHost') -and -not $PSBoundParamete
 }
 if ($WebconHost -or $SqlHost) {
     $RemoteMode = $true
-    Write-Step 'Tryb zdalny (agenci)'
+    Write-Step 'Remote mode (agents)'
     if ($PSBoundParameters.ContainsKey('SqlServer') -and $SqlServer) {
-        throw 'W trybie zdalnym metryki SQL zbiera agent na hoście SQL (-SqlHost) - nie podawaj -SqlServer.'
+        throw 'In remote mode SQL metrics are collected by the agent on the SQL host (-SqlHost) - do not specify -SqlServer.'
     }
-    # Exporter mssql nie działa na VM stosu - pomijamy sekcję loginu exportera (jak przy -SqlServer '')
+    # The mssql exporter does not run on the stack VM - skip the exporter login section (as with -SqlServer '')
     $SqlServer = ''
     $PSBoundParameters['SqlServer'] = ''
     if (-not $CentralAddress) { $CentralAddress = [Net.Dns]::GetHostEntry('').HostName }
@@ -233,30 +241,30 @@ if ($WebconHost -or $SqlHost) {
             try {
                 $AgentAddress += @([Net.Dns]::GetHostAddresses($h) | Where-Object { $_.AddressFamily -eq 'InterNetwork' } | ForEach-Object { $_.ToString() })
             } catch {
-                throw "Nie można ustalić adresu IP hosta $h (DNS) - podaj -AgentAddress."
+                throw "Cannot resolve the IP address of host $h (DNS) - specify -AgentAddress."
             }
         }
         $AgentAddress = @($AgentAddress | Select-Object -Unique)
     }
     $CentralIPv4 = @(Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -ne '127.0.0.1' -and $_.PrefixOrigin -ne 'WellKnown' } |
         Select-Object -ExpandProperty IPAddress)
-    if ($WebconHost) { Write-Ok "Host WEBCON: $WebconHost" }
-    if ($SqlHost)    { Write-Ok "Host SQL:    $SqlHost (instancja $SqlInstanceName, port $SqlPort)" }
-    Write-Ok "Adres stosu dla agentów: $CentralAddress; firewall dopuszcza: $($AgentAddress -join ', ')"
-    $Ports.Add($ReceivePort, 'Alloy remote write (agenci)')
+    if ($WebconHost) { Write-Ok "WEBCON host: $WebconHost" }
+    if ($SqlHost)    { Write-Ok "SQL host:    $SqlHost (instance $SqlInstanceName, port $SqlPort)" }
+    Write-Ok "Stack address for agents: $CentralAddress; firewall allows: $($AgentAddress -join ', ')"
+    $Ports.Add($ReceivePort, 'Alloy remote write (agents)')
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Katalogi'
+Write-Step 'Directories'
 foreach ($k in 'Root', 'Bin', 'Config', 'Data', 'Logs', 'Services', 'Downloads') { New-Directory $Layout[$k] }
 Protect-SecretsDirectory -Path $Layout.Secrets
-Write-Ok 'Struktura katalogów gotowa (secrets: ACL SYSTEM + Administrators).'
+Write-Ok 'Directory structure ready (secrets: ACL SYSTEM + Administrators).'
 
 # ---------------------------------------------------------------------
-Write-Step 'Zatrzymanie istniejących usług stosu (aktualizacja)'
-# Odwrotna kolejność (Grafana pierwsza): Grafana działająca po zatrzymaniu Prometheusa / Loki ocenia reguły alertów
-# z błędem "connection refused", zapisuje ten stan i odtwarza go po starcie ("Warming state cache") - fałszywe
-# błędy ewaluacji w smoke teście do kolejnej ewaluacji (1 min).
+Write-Step 'Stopping existing stack services (upgrade)'
+# Reverse order (Grafana first): if Grafana is still running after Prometheus / Loki stop, it evaluates alert rules
+# with a "connection refused" error, saves that state and restores it after start ("Warming state cache") - false
+# evaluation errors in the smoke test until the next evaluation (1 min).
 $stopOrder = @($ServiceIds.Values)
 [array]::Reverse($stopOrder)
 foreach ($id in $stopOrder) {
@@ -264,45 +272,45 @@ foreach ($id in $stopOrder) {
     if ($svc -and $svc.Status -ne 'Stopped') {
         Stop-Service -Name $id -Force
         $null = $svc.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(60))
-        Write-Ok "Zatrzymano $id"
+        Write-Ok "Stopped $id"
     }
 }
 
-Write-Step 'Weryfikacja wolnych portów'
+Write-Step 'Checking free ports'
 $busy = @()
 foreach ($p in $Ports.Keys) {
-    if (Test-TcpPortInUse -Port $p) { $busy += "$p ($($Ports[$p])) zajęty przez $(Get-PortOwner -Port $p)" }
+    if (Test-TcpPortInUse -Port $p) { $busy += "$p ($($Ports[$p])) in use by $(Get-PortOwner -Port $p)" }
 }
-if ($busy) { throw ("Zajęte porty:`n  " + ($busy -join "`n  ") + "`nZwolnij porty (np. lokalny Jaeger/Seq) i uruchom ponownie.") }
-Write-Ok 'Wszystkie porty wolne.'
+if ($busy) { throw ("Ports in use:`n  " + ($busy -join "`n  ") + "`nFree the ports (e.g. a local Jaeger/Seq) and run again.") }
+Write-Ok 'All ports are free.'
 
 # ---------------------------------------------------------------------
-Write-Step 'SQL Server - login exportera'
+Write-Step 'SQL Server - exporter login'
 $EnableMssql = $false
 $ReuseMssql = $false
 $MssqlConnString = $null
-# Aktualizacja: bez -SqlServer zachowujemy login z poprzedniej instalacji (sekret mssql.conn); -SqlServer '' wyłącza SQL
+# Upgrade: without -SqlServer keep the login from the previous installation (mssql.conn secret); -SqlServer '' disables SQL
 if (-not $PSBoundParameters.ContainsKey('SqlServer') -and $previous -and $previous.SqlServer -and
     (Test-Path -LiteralPath (Join-Path $Layout.Secrets 'mssql.conn'))) {
     $SqlServer = $previous.SqlServer
     $SqlLogin = $previous.SqlLogin
     $ReuseMssql = $true
     $EnableMssql = $true
-    Write-Ok "Zachowano login exportera z poprzedniej instalacji ($SqlLogin @ $SqlServer). Zmiana: -SqlServer/-SqlLogin, wyłączenie: -SqlServer ''."
+    Write-Ok "Kept the exporter login from the previous installation ($SqlLogin @ $SqlServer). To change: -SqlServer/-SqlLogin, to disable: -SqlServer ''."
 }
 if (-not $ReuseMssql -and -not $PSBoundParameters.ContainsKey('SqlServer') -and -not $NonInteractive) {
-    $SqlServer = Read-Host 'Instancja SQL Server do monitorowania (Enter = pomiń metryki SQL)'
+    $SqlServer = Read-Host 'SQL Server instance to monitor (Enter = skip SQL metrics)'
 }
 if ($ReuseMssql) {
-    # bez zmian - sekret mssql.conn pozostaje
+    # no changes - the mssql.conn secret stays
 } elseif ($SqlServer) {
     if (-not $SqlLogin) {
-        if ($NonInteractive) { throw 'Podaj -SqlLogin.' }
-        $SqlLogin = Read-Host "Login SQL exportera dla $SqlServer"
+        if ($NonInteractive) { throw 'Specify -SqlLogin.' }
+        $SqlLogin = Read-Host "Exporter SQL login for $SqlServer"
     }
     if (-not $SqlPassword) {
-        if ($NonInteractive) { throw 'Podaj -SqlPassword.' }
-        $SqlPassword = Read-Host "Hasło dla $SqlLogin" -AsSecureString
+        if ($NonInteractive) { throw 'Specify -SqlPassword.' }
+        $SqlPassword = Read-Host "Password for $SqlLogin" -AsSecureString
     }
     $result = Test-SqlExporterPermissions -Server $SqlServer -Login $SqlLogin -Password $SqlPassword -Encrypt $SqlEncrypt -TrustServerCertificate $SqlTrustServerCertificate
     foreach ($c in $result.Checks) {
@@ -313,31 +321,31 @@ if ($ReuseMssql) {
     if (-not $result.Success) {
         if ($result.Remediation) {
             Write-Host ''
-            Write-Host 'Brakujące uprawnienia - do wykonania przez DBA:' -ForegroundColor Yellow
+            Write-Host 'Missing permissions - to be run by a DBA:' -ForegroundColor Yellow
             Write-Host $result.Remediation
             Write-Host ''
         }
-        throw 'Weryfikacja loginu SQL nie powiodła się. Popraw uprawnienia i uruchom instalację ponownie (albo pomiń metryki SQL pustym -SqlServer).'
+        throw 'SQL login verification failed. Fix the permissions and run the installation again (or skip SQL metrics with an empty -SqlServer).'
     }
     $MssqlConnString = New-MssqlExporterConnectionString -Server $SqlServer -Login $SqlLogin -Password (ConvertFrom-SecureStringPlain $SqlPassword) -Encrypt $SqlEncrypt -TrustServerCertificate $SqlTrustServerCertificate
     $EnableMssql = $true
 } elseif ($RemoteMode -and $SqlHost) {
-    Write-Ok "Metryki SQL Server zbiera agent na hoście $SqlHost."
+    Write-Ok "SQL Server metrics are collected by the agent on host $SqlHost."
 } else {
-    Write-Warn 'Metryki SQL Server pominięte.'
+    Write-Warn 'SQL Server metrics skipped.'
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'SQL Server - źródło danych Grafany (baza treści WEBCON)'
+Write-Step 'SQL Server - Grafana data source (WEBCON content database)'
 $EnableWebconSql = $false
 $WebconSqlReaderPlain = $null
-$saveReaderPwd = $false   # hasło z parametru lub z Read-Host (nie z istniejącego sekretu) - do zapisania
+$saveReaderPwd = $false   # password from a parameter or Read-Host (not from an existing secret) - to be saved
 $readerPwdFile = Join-Path $Layout.Secrets 'grafana-sql-reader.txt'
 if ($RemoteMode) {
-    # Login tworzy skrypt hosta SQL z paczki agenta (hasło generowane tutaj) - weryfikacja: Test-ObservabilityStack.ps1 po instalacji agenta
+    # The login is created by the SQL host script from the agent bundle (password generated here) - verification: Test-ObservabilityStack.ps1 after the agent is installed
     if (-not $PSBoundParameters.ContainsKey('WebconSqlReaderLogin')) {
         $WebconSqlReaderLogin = 'svc_obs_grafana_reader'
-        # poprzedni wybór tylko z instalacji w trybie zdalnym ('' = świadomie wyłączone); w trybie lokalnym pusty login = brak źródła
+        # previous choice only from a remote-mode installation ('' = deliberately disabled); in local mode an empty login = no data source
         if ($previous -and ($previous.WebconHost -or $previous.SqlHost) -and $null -ne $previous.WebconSqlReaderLogin) {
             $WebconSqlReaderLogin = $previous.WebconSqlReaderLogin
         }
@@ -354,12 +362,12 @@ if ($RemoteMode) {
             $saveReaderPwd = $true
         }
         $EnableWebconSql = $true
-        Write-Ok "Źródło danych 'WEBCON SQL': $WebconSqlReaderLogin @ $WebconSqlServer / $WebconContentDatabase (login utworzy skrypt hosta SQL)"
+        Write-Ok "Data source 'WEBCON SQL': $WebconSqlReaderLogin @ $WebconSqlServer / $WebconContentDatabase (the login will be created by the SQL host script)"
     } else {
-        Write-Warn "Źródło danych 'WEBCON SQL' pominięte (dashboard WEBCON – Utrzymanie bez paneli z bazy)."
+        Write-Warn "Data source 'WEBCON SQL' skipped (the WEBCON – Operations dashboard has no database panels)."
     }
 } else {
-    # Aktualizacja: bez -WebconSqlReaderLogin zachowujemy poprzednią konfigurację; -WebconSqlReaderLogin '' wyłącza źródło
+    # Upgrade: without -WebconSqlReaderLogin keep the previous configuration; -WebconSqlReaderLogin '' disables the data source
     $reuseReader = $false
     if (-not $PSBoundParameters.ContainsKey('WebconSqlReaderLogin') -and $previous -and $previous.WebconSqlReaderLogin) {
         $WebconSqlReaderLogin = $previous.WebconSqlReaderLogin
@@ -369,19 +377,19 @@ if ($RemoteMode) {
     }
     if (-not $WebconSqlServer) { $WebconSqlServer = $SqlServer }
     if ($WebconSqlReaderLogin) {
-        if (-not $WebconSqlServer) { throw 'Podaj -WebconSqlServer (instancja z bazą treści WEBCON) albo -SqlServer.' }
+        if (-not $WebconSqlServer) { throw 'Specify -WebconSqlServer (instance hosting the WEBCON content database) or -SqlServer.' }
         if ($WebconSqlReaderPassword) {
             $WebconSqlReaderPlain = ConvertFrom-SecureStringPlain $WebconSqlReaderPassword
             $saveReaderPwd = $true
         } elseif ((Test-Path -LiteralPath $readerPwdFile) -and
                   ($reuseReader -or ($previous -and $previous.WebconSqlReaderLogin -eq $WebconSqlReaderLogin))) {
-            # sekret należy do tego samego loginu (nowy login bez -WebconSqlReaderPassword = pytanie o hasło)
+            # the secret belongs to the same login (a new login without -WebconSqlReaderPassword = password prompt)
             $WebconSqlReaderPlain = [IO.File]::ReadAllText($readerPwdFile, [Text.Encoding]::UTF8)
-            Write-Ok 'Hasło loginu z istniejącego sekretu grafana-sql-reader.txt.'
+            Write-Ok 'Login password taken from the existing grafana-sql-reader.txt secret.'
         } elseif ($NonInteractive) {
-            throw "Podaj -WebconSqlReaderPassword (login $WebconSqlReaderLogin; istniejący sekret grafana-sql-reader.txt dotyczy innego loginu lub go brak)."
+            throw "Specify -WebconSqlReaderPassword (login $WebconSqlReaderLogin; the grafana-sql-reader.txt secret belongs to a different login or does not exist)."
         } else {
-            $WebconSqlReaderPlain = ConvertFrom-SecureStringPlain (Read-Host "Hasło dla $WebconSqlReaderLogin" -AsSecureString)
+            $WebconSqlReaderPlain = ConvertFrom-SecureStringPlain (Read-Host "Password for $WebconSqlReaderLogin" -AsSecureString)
             $saveReaderPwd = $true
         }
         $result = Test-WebconSqlReaderPermissions -Server $WebconSqlServer -Database $WebconContentDatabase -Login $WebconSqlReaderLogin `
@@ -393,55 +401,71 @@ if ($RemoteMode) {
         }
         if ($result.Success) {
             $EnableWebconSql = $true
-            Write-Ok "Źródło danych 'WEBCON SQL': $WebconSqlReaderLogin @ $WebconSqlServer / $WebconContentDatabase"
+            Write-Ok "Data source 'WEBCON SQL': $WebconSqlReaderLogin @ $WebconSqlServer / $WebconContentDatabase"
         } elseif ($reuseReader) {
-            # Np. aktualizacja WEBCON odtworzyła tabele i usunęła uprawnienia - nie blokujemy aktualizacji stosu
-            Write-Warn "Źródło danych 'WEBCON SQL' pominięte - uruchom ponownie sql\grant-webcon-reader-permissions.sql i instalator."
+            # E.g. a WEBCON upgrade recreated the tables and removed the permissions - do not block the stack upgrade
+            Write-Warn "Data source 'WEBCON SQL' skipped - run sql\grant-webcon-reader-permissions.sql and the installer again."
         } else {
-            throw "Weryfikacja loginu $WebconSqlReaderLogin nie powiodła się. Uruchom sql\grant-webcon-reader-permissions.sql (DBA) albo pomiń źródło pustym -WebconSqlReaderLogin."
+            throw "Verification of login $WebconSqlReaderLogin failed. Run sql\grant-webcon-reader-permissions.sql (DBA) or skip the data source with an empty -WebconSqlReaderLogin."
         }
     } else {
-        Write-Warn "Źródło danych 'WEBCON SQL' pominięte (dashboard WEBCON – Utrzymanie bez paneli z bazy)."
+        Write-Warn "Data source 'WEBCON SQL' skipped (the WEBCON – Operations dashboard has no database panels)."
     }
 }
 
 # ---------------------------------------------------------------------
-# Dostępność i metryki z bazy WEBCON (docs/projekt/projekt-dostepnosc-i-metryki-bazy.md)
-Write-Step 'Dostępność Portalu (sondy HTTP)'
+# Availability and WEBCON database metrics (docs/projekt/projekt-dostepnosc-i-metryki-bazy.md)
+Write-Step 'Portal availability (HTTP probes)'
 if (-not $PSBoundParameters.ContainsKey('PortalProbe') -and $previous -and $null -ne $previous.PortalProbe) { $PortalProbe = [bool]$previous.PortalProbe }
 if (-not $PSBoundParameters.ContainsKey('ProbeUrl') -and $previous -and $previous.ProbeUrl) { $ProbeUrl = @($previous.ProbeUrl) }
 $ProbeUrl = @($ProbeUrl | Where-Object { $_ })
 foreach ($u in $ProbeUrl) {
-    if ($u -notmatch '^https?://[^\s"`\\]+$') { throw "-ProbeUrl: niepoprawny adres '$u' (oczekiwany http:// lub https://)." }
+    if ($u -notmatch '^https?://[^\s"`\\]+$') { throw "-ProbeUrl: invalid address '$u' (expected http:// or https://)." }
 }
-$PortalTargets = @()
+# Portal address (docs/projekt/projekt-sonda-portalu-adres.md): parameter > previous value > prompt (suggestion from IIS)
+$portalUrlKnown = $PSBoundParameters.ContainsKey('PortalUrl')
+if (-not $portalUrlKnown -and $previous -and $null -ne $previous.PortalUrl) { $PortalUrl = [string]$previous.PortalUrl; $portalUrlKnown = $true }
+if ($PortalUrl) { $PortalUrl = ConvertTo-PortalUrl $PortalUrl } else { $PortalUrl = '' }
+$PortalBindings = @()
+if ($PortalProbe -and -not $RemoteMode) { $PortalBindings = Get-WebconPortalBinding }   # returns an array (return ,) - no @()
+if ($PortalProbe -and -not $portalUrlKnown -and -not $NonInteractive) {
+    $suggestion = Get-PortalUrlSuggestion -Binding $PortalBindings
+    $prompt = 'Main Portal address to monitor, e.g. https://bps.example.com'
+    if ($suggestion) { $prompt = "$prompt (Enter = $suggestion)" }
+    elseif ($RemoteMode) { $prompt = "$prompt (Enter = detection from IIS bindings by the agent)" }
+    else { $prompt = "$prompt (Enter = no Portal probe)" }
+    $answer = (Read-Host $prompt).Trim()
+    if (-not $answer) { $answer = $suggestion }
+    if ($answer) { $PortalUrl = ConvertTo-PortalUrl $answer }
+}
+$PortalTarget = $null
 if (-not $PortalProbe) {
-    Write-Info 'Sonda Portalu wyłączona (-PortalProbe $false).'
+    Write-Info 'Portal probe disabled (-PortalProbe $false).'
 } elseif ($RemoteMode) {
-    Write-Info 'Sonda Portalu: agent na hoście WEBCON (powiązania IIS są na tamtym hoście).'
+    if ($PortalUrl) { Write-Ok "Portal: $PortalUrl - probe in the agent on the WEBCON host." }
+    else { Write-Info 'Portal probe: agent on the WEBCON host - address from IIS bindings with a host name (-PortalUrl sets the address).' }
 } else {
-    $PortalTargets = @(Get-WebconPortalProbeTarget)
-    if ($PortalTargets.Count) {
-        foreach ($t in $PortalTargets) { Write-Ok "Portal: $($t.Url) (witryna IIS '$($t.Site)')" }
-    } else {
-        Write-Info 'Nie wykryto Portalu WEBCON w IIS (witryna z WebCon.WorkFlow.Bootstrapper) - bez sondy Portalu.'
+    $resolved = Resolve-PortalProbeTarget -PortalUrl $PortalUrl -Binding $PortalBindings
+    foreach ($m in $resolved.Messages) {
+        switch ($m.Level) { 'ok' { Write-Ok $m.Text } 'warn' { Write-Warn $m.Text } default { Write-Info $m.Text } }
     }
+    $PortalTarget = $resolved.Target
 }
-foreach ($u in $ProbeUrl) { Write-Ok "Dodatkowy adres: $u" }
-$Blackbox = New-BlackboxConfig -PortalTarget $PortalTargets -ProbeUrl $ProbeUrl
+foreach ($u in $ProbeUrl) { Write-Ok "Additional address: $u" }
+$Blackbox = New-BlackboxConfig -PortalTarget $PortalTarget -ProbeUrl $ProbeUrl
 
-Write-Step 'Metryki z bazy treści WEBCON'
+Write-Step 'WEBCON content database metrics'
 if (-not $PSBoundParameters.ContainsKey('WebconDbMetrics') -and $previous -and $null -ne $previous.WebconDbMetrics) { $WebconDbMetrics = [bool]$previous.WebconDbMetrics }
 if (-not $PSBoundParameters.ContainsKey('WebconContentDatabase') -and $previous -and $previous.WebconContentDatabase) { $WebconContentDatabase = $previous.WebconContentDatabase }
-if ($WebconContentDatabase -notmatch '^[^\[\]''";]+$') { throw "-WebconContentDatabase: niedozwolone znaki w nazwie bazy '$WebconContentDatabase'." }
+if ($WebconContentDatabase -notmatch '^[^\[\]''";]+$') { throw "-WebconContentDatabase: invalid characters in database name '$WebconContentDatabase'." }
 $EnableWebconDb = $false
 if (-not $WebconDbMetrics) {
-    Write-Info 'Wyłączone (-WebconDbMetrics $true włącza).'
+    Write-Info 'Disabled (-WebconDbMetrics $true enables them).'
 } elseif ($RemoteMode) {
-    if ($SqlHost) { Write-Ok "Zbiera agent na hoście $SqlHost (baza $WebconContentDatabase; uprawnienia nadaje skrypt hosta SQL)." }
-    else { Write-Warn 'Pominięte - tryb zdalny bez -SqlHost.' }
+    if ($SqlHost) { Write-Ok "Collected by the agent on host $SqlHost (database $WebconContentDatabase; permissions are granted by the SQL host script)." }
+    else { Write-Warn 'Skipped - remote mode without -SqlHost.' }
 } elseif (-not $EnableMssql) {
-    Write-Warn 'Pominięte - wymagają metryk SQL Server (-SqlServer / -SqlLogin).'
+    Write-Warn 'Skipped - they require SQL Server metrics (-SqlServer / -SqlLogin).'
 } else {
     if ($ReuseMssql) {
         $c = ConvertFrom-MssqlConnectionUrl ([IO.File]::ReadAllText((Join-Path $Layout.Secrets 'mssql.conn'), [Text.Encoding]::UTF8))
@@ -456,44 +480,44 @@ if (-not $WebconDbMetrics) {
         if ($c.Detail) { $line = "$line - $($c.Detail)" }
         if ($c.Ok) { Write-Ok $line } else { Write-Warn $line }
     }
-    # Brak uprawnień nie blokuje instalacji (D5) - błąd widać tylko w jobie integrations/mssql-webcon
+    # Missing permissions do not block the installation (D5) - the error is visible only in the integrations/mssql-webcon job
     $EnableWebconDb = $true
     if ($result.Success) {
-        Write-Ok "Metryki z bazy: $dbLogin @ $dbServer / $WebconContentDatabase"
+        Write-Ok "Database metrics: $dbLogin @ $dbServer / $WebconContentDatabase"
     } else {
-        Write-Warn "Brak uprawnień - DBA: sql\grant-webcon-db-metrics.sql (@login = N'$dbLogin', @databases = N'$WebconContentDatabase'). Metryki pojawią się bez ponownej instalacji."
+        Write-Warn "Missing permissions - DBA: sql\grant-webcon-db-metrics.sql (@login = N'$dbLogin', @databases = N'$WebconContentDatabase'). Metrics will appear without reinstalling."
     }
     $dbPassword = $null
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Pobieranie i instalacja binarek'
+Write-Step 'Downloading and installing binaries'
 $Exe = @{}
 foreach ($name in 'WinSW', 'Prometheus', 'Loki', 'Tempo', 'Alloy', 'Grafana') {
     $Exe[$name] = Install-StackComponent -Name $name -Definition $Versions[$name] -Layout $Layout -Force:$ForceDownload
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Sekrety'
+Write-Step 'Secrets'
 $grafanaPwdFile = Join-Path $Layout.Secrets 'grafana-admin.txt'
 $newGrafanaPassword = $null
 if (-not (Test-Path -LiteralPath $grafanaPwdFile)) {
     $newGrafanaPassword = New-RandomPassword
     Set-SecretFile -Path $grafanaPwdFile -Content $newGrafanaPassword
-    Write-Ok 'Wygenerowano hasło admina Grafany.'
+    Write-Ok 'Generated the Grafana admin password.'
 } else {
-    Write-Ok 'Hasło admina Grafany już istnieje (bez zmian).'
+    Write-Ok 'Grafana admin password already exists (unchanged).'
 }
 $mssqlConnFile = Join-Path $Layout.Secrets 'mssql.conn'
 if ($EnableMssql -and -not $ReuseMssql) {
     Set-SecretFile -Path $mssqlConnFile -Content $MssqlConnString
-    Write-Ok 'Zapisano connection string exportera SQL.'
+    Write-Ok 'Saved the SQL exporter connection string.'
 }
 if ($EnableWebconSql -and $saveReaderPwd) {
     Set-SecretFile -Path $readerPwdFile -Content $WebconSqlReaderPlain
-    Write-Ok 'Zapisano hasło loginu źródła danych WEBCON SQL.'
+    Write-Ok 'Saved the password of the WEBCON SQL data source login.'
 }
-# Tryb zdalny: hasło loginu exportera mssql (agent na hoście SQL) - przechowywane tu, by ponowna instalacja dała tę samą paczkę
+# Remote mode: password of the mssql exporter login (agent on the SQL host) - stored here so that a reinstallation produces the same bundle
 $AgentExporterLogin = 'svc_obs_mssql_exporter'
 if ($SqlLogin) { $AgentExporterLogin = $SqlLogin }
 $AgentExporterPlain = $null
@@ -504,15 +528,15 @@ if ($RemoteMode -and $SqlHost) {
     } else {
         $AgentExporterPlain = New-RandomPassword
         Set-SecretFile -Path $exporterPwdFile -Content $AgentExporterPlain
-        Write-Ok 'Wygenerowano hasło loginu exportera SQL (agent na hoście SQL).'
+        Write-Ok 'Generated the SQL exporter login password (agent on the SQL host).'
     }
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Generowanie konfiguracji'
+Write-Step 'Generating configuration'
 $thresholdNs = [int64]([math]::Round($SqlSpanThresholdSeconds * 1e9))
 $thresholdText = "$SqlSpanThresholdSeconds s"
-if ($thresholdNs -eq 0) { $thresholdText = 'wyłączony - zachowywane wszystkie spany SQL' }
+if ($thresholdNs -eq 0) { $thresholdText = 'disabled - all SQL spans are kept' }
 
 $otlpBind = '127.0.0.1'
 if ($OtlpListenAll -or $RemoteMode) { $otlpBind = '0.0.0.0' }
@@ -540,7 +564,7 @@ $vars = @{
     REMOTE_WRITE_URL   = 'http://127.0.0.1:9090/api/v1/write'
     RECEIVE_PORT       = $ReceivePort
     CENTRAL_OTLP       = ''
-    # alerty Grafany (provisioning\alerting): host stosu, wolumin danych, hosty WEBCON wykluczane z alertu W9
+    # Grafana alerts (provisioning\alerting): stack host, data volume, WEBCON hosts excluded from alert W9
     STACK_HOST         = $env:COMPUTERNAME
     DATA_VOLUME        = (Split-Path -Qualifier $Layout.Data)
     DATA_DIR           = $Layout.Data
@@ -552,7 +576,7 @@ $removeBlocks = @('AGENT')
 if (-not $RemoteMode) { $removeBlocks += 'RECEIVE' }
 if (-not $EnableMssql) { $removeBlocks += 'MSSQL' }
 if ($EnableWebconSql) {
-    # Grafana (go-mssqldb): host:port lub host\instancja
+    # Grafana (go-mssqldb): host:port or host\instance
     $s = ConvertFrom-SqlServerName -Server $WebconSqlServer
     $url = $s.Host
     if ($s.Port) { $url = "$($s.Host):$($s.Port)" } elseif ($s.Instance) { $url = "$($s.Host)\$($s.Instance)" }
@@ -568,20 +592,20 @@ if ($EnableWebconSql) {
 }
 if ($ServiceLogPath) { $vars.SERVICE_LOG_GLOB = ConvertTo-AlloyPath $ServiceLogPath } else { $removeBlocks += 'SERVICELOGS' }
 
-# Awaryjne mapowanie nazw usług WEBCON bez znacznika webcon.component (docs/projekt/projekt-nazwy-uslug-webcon.md)
+# Fallback mapping of WEBCON service names without the webcon.component marker (docs/projekt/projekt-nazwy-uslug-webcon.md)
 foreach ($k in 'WebconPortalServiceName', 'WebconServiceServiceName') {
     if (-not $PSBoundParameters.ContainsKey($k) -and $previous -and $previous.$k) { Set-Variable -Name $k -Value $previous.$k }
     $v = Get-Variable -Name $k -ValueOnly
-    if ($v -and $v -notmatch '^[A-Za-z0-9_.:\-]+$') { throw "-$k ma niedozwolone znaki: '$v' (dozwolone: litery, cyfry, _ . : -)." }
+    if ($v -and $v -notmatch '^[A-Za-z0-9_.:\-]+$') { throw "-$k contains invalid characters: '$v' (allowed: letters, digits, _ . : -)." }
 }
 if ($WebconPortalServiceName -and $WebconPortalServiceName -eq $WebconServiceServiceName) {
-    throw "-WebconPortalServiceName i -WebconServiceServiceName mają tę samą wartość ('$WebconPortalServiceName') - Portalu i Serwisu nie da się rozróżnić po nazwie. Uruchom scripts\Set-WebconTelemetry.ps1 (znacznik webcon.component)."
+    throw "-WebconPortalServiceName and -WebconServiceServiceName have the same value ('$WebconPortalServiceName') - the Portal and the Service cannot be told apart by name. Run scripts\Set-WebconTelemetry.ps1 (webcon.component marker)."
 }
 $vars.WEBCON_PORTAL_SERVICE_NAME = [string]$WebconPortalServiceName
 $vars.WEBCON_SERVICE_SERVICE_NAME = [string]$WebconServiceServiceName
 if (-not $WebconPortalServiceName -and -not $WebconServiceServiceName) { $removeBlocks += 'SERVICENAME_FALLBACK' }
 
-# Sondy dostępności i metryki z bazy WEBCON
+# Availability probes and WEBCON database metrics
 $vars.BLACKBOX_MODULES = $Blackbox.Modules
 $vars.BLACKBOX_TARGETS = $Blackbox.Targets
 if (-not $Blackbox.Count) { $removeBlocks += 'BLACKBOX' }
@@ -609,26 +633,26 @@ foreach ($r in $rendered) {
 foreach ($d in 'prometheus', 'loki', 'tempo', 'alloy', 'grafana') { New-Directory (Join-Path $Layout.Data $d) }
 
 # ---------------------------------------------------------------------
-Write-Step 'Walidacja konfiguracji'
+Write-Step 'Validating configuration'
 $promtool = Join-Path (Split-Path -Parent $Exe.Prometheus) 'promtool.exe'
 if (Test-Path -LiteralPath $promtool) {
     $r = Invoke-NativeTool -FilePath $promtool -Arguments @('check', 'config', (Join-Path $Layout.Config 'prometheus\prometheus.yml'))
-    if ($r.ExitCode -ne 0) { throw "promtool: niepoprawny prometheus.yml`n$($r.Output)" }
+    if ($r.ExitCode -ne 0) { throw "promtool: invalid prometheus.yml`n$($r.Output)" }
     Write-Ok 'prometheus.yml'
 }
 $r = Invoke-NativeTool -FilePath $Exe.Loki -Arguments @("-config.file=$(Join-Path $Layout.Config 'loki\loki.yaml')", '-verify-config')
-if ($r.ExitCode -ne 0) { throw "Loki: niepoprawny loki.yaml`n$($r.Output)" }
+if ($r.ExitCode -ne 0) { throw "Loki: invalid loki.yaml`n$($r.Output)" }
 Write-Ok 'loki.yaml'
 $r = Invoke-NativeTool -FilePath $Exe.Alloy -Arguments @('fmt', (Join-Path $Layout.Config 'alloy\config.alloy'))
-if ($r.ExitCode -ne 0) { throw "Alloy: błąd składni config.alloy (alloy fmt)`n$($r.Output)" }
-Write-Ok 'config.alloy (składnia)'
+if ($r.ExitCode -ne 0) { throw "Alloy: config.alloy syntax error (alloy fmt)`n$($r.Output)" }
+Write-Ok 'config.alloy (syntax)'
 
 # ---------------------------------------------------------------------
-Write-Step 'Dashboardy Grafany'
+Write-Step 'Grafana dashboards'
 $dashRoot = Join-Path $Layout.Config 'grafana\dashboards'
 New-Directory $dashRoot
-# Katalog jest w całości zarządzany przez instalator: usuń dashboardy, których nie ma już w repozytorium
-# ani w CommunityDashboards (np. host\windows-exporter.json = 19957, webcon\webcon-overview.json)
+# The directory is fully managed by the installer: remove dashboards that are no longer in the repository
+# or in CommunityDashboards (e.g. host\windows-exporter.json = 19957, webcon\webcon-overview.json)
 $repoDashRoot = Join-Path $RepoRoot 'dashboards'
 $keepDash = @{}
 foreach ($f in Get-ChildItem -LiteralPath $repoDashRoot -Recurse -File -Filter '*.json') {
@@ -639,10 +663,10 @@ foreach ($f in Get-ChildItem -LiteralPath $dashRoot -Recurse -File -Filter '*.js
     $rel = $f.FullName.Substring($dashRoot.Length).TrimStart('\')
     if (-not $keepDash.ContainsKey($rel.ToLowerInvariant())) {
         Remove-Item -LiteralPath $f.FullName -Force
-        Write-Warn "Usunięto nieaktualny dashboard: $rel"
+        Write-Warn "Removed obsolete dashboard: $rel"
     }
 }
-# {{DOCS_URL}} w linkach "Dokumentacja" = dokumentacja zainstalowanej wersji w publicznym repozytorium
+# {{DOCS_URL}} in the documentation links = documentation of the installed version in the public repository
 $docsUrl = Get-StackDocsUrl -Release $Release
 foreach ($f in Get-ChildItem -LiteralPath $repoDashRoot -Recurse -File -Filter '*.json') {
     $rel = $f.FullName.Substring($repoDashRoot.Length).TrimStart('\')
@@ -650,7 +674,7 @@ foreach ($f in Get-ChildItem -LiteralPath $repoDashRoot -Recurse -File -Filter '
     New-Directory (Split-Path -Parent $dst)
     Write-Utf8NoBom -Path $dst -Content ([IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8).Replace('{{DOCS_URL}}', $docsUrl))
 }
-Write-Ok "Dashboardy z paczki skopiowane (dokumentacja: $docsUrl)."
+Write-Ok "Package dashboards copied (documentation: $docsUrl)."
 if (-not $SkipCommunityDashboards) {
     foreach ($d in $Versions.CommunityDashboards) {
         $folder = Join-Path $dashRoot $d.Folder
@@ -663,19 +687,19 @@ if (-not $SkipCommunityDashboards) {
             Write-Utf8NoBom -Path $out -Content $json
             Write-Ok "grafana.com #$($d.Id) -> $($d.Folder)\$($d.File)"
         } catch {
-            Write-Warn "Nie pobrano dashboardu #$($d.Id): $($_.Exception.Message)"
+            Write-Warn "Failed to download dashboard #$($d.Id): $($_.Exception.Message)"
             Remove-Item -LiteralPath $out -Force -ErrorAction SilentlyContinue
         }
     }
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Rejestracja usług Windows (WinSW)'
+Write-Step 'Registering Windows services (WinSW)'
 $cfg = $Layout.Config
 $dat = $Layout.Data
 
 Install-WinSWService -Id $ServiceIds.Prometheus -DisplayName 'Observability - Prometheus' `
-    -Description 'Prometheus - metryki (stos obserwowalności WEBCON)' `
+    -Description 'Prometheus - metrics (WEBCON observability stack)' `
     -Executable $Exe.Prometheus `
     -Arguments ("--config.file=`"$cfg\prometheus\prometheus.yml`" --storage.tsdb.path=`"$dat\prometheus`" " +
                 "--storage.tsdb.retention.time=$($RetentionMetricsDays)d --web.listen-address=127.0.0.1:9090 " +
@@ -684,19 +708,19 @@ Install-WinSWService -Id $ServiceIds.Prometheus -DisplayName 'Observability - Pr
     -WinSWExe $Exe.WinSW -ServicesRoot $Layout.Services
 
 Install-WinSWService -Id $ServiceIds.Loki -DisplayName 'Observability - Loki' `
-    -Description 'Grafana Loki - logi (stos obserwowalności WEBCON)' `
+    -Description 'Grafana Loki - logs (WEBCON observability stack)' `
     -Executable $Exe.Loki -Arguments "-config.file=`"$cfg\loki\loki.yaml`"" `
     -WorkingDirectory "$dat\loki" -LogDirectory "$($Layout.Logs)\loki" `
     -WinSWExe $Exe.WinSW -ServicesRoot $Layout.Services
 
 Install-WinSWService -Id $ServiceIds.Tempo -DisplayName 'Observability - Tempo' `
-    -Description 'Grafana Tempo - ślady OTLP (stos obserwowalności WEBCON)' `
+    -Description 'Grafana Tempo - OTLP traces (WEBCON observability stack)' `
     -Executable $Exe.Tempo -Arguments "-config.file=`"$cfg\tempo\tempo.yaml`"" `
     -WorkingDirectory "$dat\tempo" -LogDirectory "$($Layout.Logs)\tempo" `
     -WinSWExe $Exe.WinSW -ServicesRoot $Layout.Services
 
 Install-WinSWService -Id $ServiceIds.Alloy -DisplayName 'Observability - Alloy' `
-    -Description 'Grafana Alloy - collector OTLP/metryk/logów (stos obserwowalności WEBCON)' `
+    -Description 'Grafana Alloy - OTLP/metrics/logs collector (WEBCON observability stack)' `
     -Executable $Exe.Alloy `
     -Arguments ("run `"$cfg\alloy\config.alloy`" --storage.path=`"$dat\alloy`" " +
                 "--server.http.listen-addr=127.0.0.1:12345 --disable-reporting") `
@@ -706,14 +730,14 @@ Install-WinSWService -Id $ServiceIds.Alloy -DisplayName 'Observability - Alloy' 
 
 $grafanaHome = Split-Path -Parent (Split-Path -Parent $Exe.Grafana)
 Install-WinSWService -Id $ServiceIds.Grafana -DisplayName 'Observability - Grafana' `
-    -Description 'Grafana - wizualizacja (stos obserwowalności WEBCON)' `
+    -Description 'Grafana - visualization (WEBCON observability stack)' `
     -Executable $Exe.Grafana `
     -Arguments "server --homepath `"$grafanaHome`" --config `"$cfg\grafana\grafana.ini`"" `
     -WorkingDirectory $grafanaHome -LogDirectory "$($Layout.Logs)\grafana" `
     -WinSWExe $Exe.WinSW -ServicesRoot $Layout.Services
 
 # ---------------------------------------------------------------------
-Write-Step 'Start usług'
+Write-Step 'Starting services'
 $ready = [ordered]@{
     Prometheus = 'http://127.0.0.1:9090/-/ready'
     Loki       = 'http://127.0.0.1:3100/ready'
@@ -724,13 +748,18 @@ $ready = [ordered]@{
 $failed = @()
 foreach ($name in $ready.Keys) {
     Start-Service -Name $ServiceIds[$name]
-    # Loki/Tempo zgłaszają gotowość po ~15-30 s (ring)
+    # Loki/Tempo report readiness after ~15-30 s (ring)
     if (Wait-HttpReady -Url $ready[$name] -TimeoutSec 120) {
-        Write-Ok "$name gotowy ($($ready[$name]))"
+        Write-Ok "$name ready ($($ready[$name]))"
     } else {
-        Write-Warn "$name nie zgłosił gotowości - sprawdź $($Layout.Logs)\$($name.ToLower())"
+        Write-Warn "$name did not report readiness - check $($Layout.Logs)\$($name.ToLower())"
         $failed += $name
     }
+}
+
+if ($failed -notcontains 'Grafana') {
+    # alert folders renamed to English (0.9.x) - remove the old, empty Polish folders
+    Remove-GrafanaEmptyFolder -PasswordFile $grafanaPwdFile -Title @(('Stos obserwowalno' + [char]0x015B + 'ci ' + [char]0x2013 + ' alerty'), ('WEBCON ' + [char]0x2013 + ' alerty'))
 }
 
 # ---------------------------------------------------------------------
@@ -738,7 +767,7 @@ Write-Step 'Firewall'
 $rules = @()
 if ($GrafanaListenAll) { $rules += @{ Name = 'Observability - Grafana'; Port = 3000 } }
 if ($OtlpListenAll)    { $rules += @{ Name = 'Observability - OTLP'; Port = '4317,4318' } }
-# Agenci: bez TLS i uwierzytelnienia - jedyną ochroną jest ograniczenie do adresów hostów agentów
+# Agents: no TLS or authentication - the only protection is restricting access to the agent host addresses
 if ($RemoteMode) { $rules += @{ Name = 'Observability - Agenci'; Port = "4317,4318,$ReceivePort"; RemoteAddress = $AgentAddress } }
 Get-NetFirewallRule -DisplayName 'Observability - Agenci' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
 foreach ($rule in $rules) {
@@ -747,20 +776,20 @@ foreach ($rule in $rules) {
     $fw = @{ DisplayName = $rule.Name; Direction = 'Inbound'; Protocol = 'TCP'; LocalPort = $ports; Action = 'Allow'; Profile = @('Domain', 'Private') }
     $from = ''
     if ($rule.ContainsKey('RemoteAddress')) {
-        # adresy jawne - profil nie ogranicza (VM w sieci rozpoznanej jako Public)
+        # explicit addresses - no profile restriction (VM on a network identified as Public)
         $fw.RemoteAddress = $rule.RemoteAddress
         $fw.Profile = 'Any'
-        $from = ", z: $($rule.RemoteAddress -join ', ')"
+        $from = ", from: $($rule.RemoteAddress -join ', ')"
     }
     New-NetFirewallRule @fw | Out-Null
-    Write-Ok "Reguła '$($rule.Name)' (TCP $($rule.Port)$from)"
+    Write-Ok "Rule '$($rule.Name)' (TCP $($rule.Port)$from)"
 }
-if (-not $rules) { Write-Ok 'Brak zmian - wszystkie usługi tylko na localhost.' }
+if (-not $rules) { Write-Ok 'No changes - all services listen on localhost only.' }
 
 # ---------------------------------------------------------------------
 $BundleDir = $null
 if ($RemoteMode) {
-    Write-Step 'Paczka agenta (hosty WEBCON / SQL)'
+    Write-Step 'Agent bundle (WEBCON / SQL hosts)'
     $BundleDir = New-AgentBundle -Layout $Layout -RepoRoot $RepoRoot -Versions $Versions -WebconHost $WebconHost -SqlHost $SqlHost -Settings ([ordered]@{
         GeneratedAt          = (Get-Date).ToString('s')
         EnvironmentName      = $EnvironmentName
@@ -778,6 +807,7 @@ if ($RemoteMode) {
         WebconContentDatabase = $WebconContentDatabase
         WebconDbMetrics      = [bool]$WebconDbMetrics
         PortalProbe          = [bool]$PortalProbe
+        PortalUrl            = [string]$PortalUrl
         ExporterLogin        = $AgentExporterLogin
         ReaderLogin          = $(if ($EnableWebconSql) { $WebconSqlReaderLogin } else { '' })
         SqlSpanThresholdNs   = $thresholdNs
@@ -810,6 +840,7 @@ Save-InstallSettings -Layout $Layout -Settings @{
     WebconPortalServiceName  = [string]$WebconPortalServiceName
     WebconServiceServiceName = [string]$WebconServiceServiceName
     PortalProbe             = [bool]$PortalProbe
+    PortalUrl               = [string]$PortalUrl
     ProbeUrl                = @($ProbeUrl)
     WebconDbMetrics         = [bool]$WebconDbMetrics
     ServiceIds              = $ServiceIds
@@ -821,11 +852,11 @@ Save-InstallSettings -Layout $Layout -Settings @{
     AgentAddress            = @($AgentAddress | Where-Object { $_ })
 }
 
-Write-Step 'Kopia plików instalacyjnych'
+Write-Step 'Copying installation files'
 $AppDir = Copy-StackApp -SourceRoot $RepoRoot -Layout $Layout -Release $Release -Files $PackageFiles
 
 if ($ConfigureWebcon) {
-    Write-Step 'Konfiguracja OpenTelemetry w WEBCON'
+    Write-Step 'Configuring OpenTelemetry in WEBCON'
     $sqlMode = 'Threshold'
     if ($thresholdNs -eq 0) { $sqlMode = 'All' }
     & (Join-Path $RepoRoot 'scripts\Set-WebconTelemetry.ps1') -SqlTracing $sqlMode
@@ -833,35 +864,35 @@ if ($ConfigureWebcon) {
 
 # ---------------------------------------------------------------------
 Write-Host ''
-Write-Host 'Podsumowanie' -ForegroundColor White
-Write-Info "Grafana     http://localhost:3000  (admin / hasło: $grafanaPwdFile)"
-if ($newGrafanaPassword) { Write-Info "            Nowe hasło admina: $newGrafanaPassword" }
+Write-Host 'Summary' -ForegroundColor White
+Write-Info "Grafana     http://localhost:3000  (admin / password: $grafanaPwdFile)"
+if ($newGrafanaPassword) { Write-Info "            New admin password: $newGrafanaPassword" }
 Write-Info 'OTLP        http://localhost:4318 (HTTP), localhost:4317 (gRPC)'
 Write-Info 'Alloy UI    http://localhost:12345'
 Write-Info 'Prometheus  http://localhost:9090'
-Write-Info "Próg SQL    $thresholdText"
-Write-Info "Logi usług  $($Layout.Logs)"
-Write-Info "Wersja      $($Release.Version); skrypty (smoke test, odinstalowanie, zmiana parametrów): $AppDir"
-if (-not (Test-PathInside -Path $RepoRoot -Parent $AppDir)) { Write-Info "            Pliki instalacyjne ($RepoRoot) można usunąć." }
+Write-Info "SQL filter  $thresholdText"
+Write-Info "Logs        $($Layout.Logs)"
+Write-Info "Version     $($Release.Version); scripts (smoke test, uninstall, parameter changes): $AppDir"
+if (-not (Test-PathInside -Path $RepoRoot -Parent $AppDir)) { Write-Info "            The installation files ($RepoRoot) can be deleted." }
 if ($RemoteMode) {
     Write-Host ''
-    Write-Host 'Następne kroki (agenci)' -ForegroundColor White
-    Write-Info "1. Skopiuj $BundleDir.zip na hosty docelowe i rozpakuj (np. C:\Install\agent-bundle)."
-    Write-Info '   Paczka zawiera hasła loginów SQL - usuń ją z hostów po instalacji.'
+    Write-Host 'Next steps (agents)' -ForegroundColor White
+    Write-Info "1. Copy $BundleDir.zip to the target hosts and extract it (e.g. C:\Install\agent-bundle)."
+    Write-Info '   The bundle contains SQL login passwords - delete it from the hosts after installation.'
     $n = 2
     foreach ($w in (Get-ChildItem -LiteralPath $BundleDir -Filter '0*.ps1' | Sort-Object Name)) {
-        Write-Info "$n. $($w.Name)  (PowerShell jako administrator, na hoście z nazwy pliku)"
+        Write-Info "$n. $($w.Name)  (PowerShell as administrator, on the host named in the file name)"
         $n++
     }
-    Write-Info "$n. Tutaj: $AppDir\Test-ObservabilityStack.ps1"
-    Write-Info "Szczegóły: $BundleDir\README.txt"
+    Write-Info "$n. Here: $AppDir\Test-ObservabilityStack.ps1"
+    Write-Info "Details: $BundleDir\README.txt"
 } else {
     if (-not $ConfigureWebcon) {
-        Write-Info "WEBCON      uruchom $AppDir\scripts\Set-WebconTelemetry.ps1, aby skierować telemetrię do Alloy."
+        Write-Info "WEBCON      run $AppDir\scripts\Set-WebconTelemetry.ps1 to send telemetry to Alloy."
     }
     Write-Info "Test        $AppDir\Test-ObservabilityStack.ps1"
 }
 if ($failed) {
-    Write-Warn "Nie wystartowały poprawnie: $($failed -join ', ')"
+    Write-Warn "Failed to start correctly: $($failed -join ', ')"
     exit 1
 }

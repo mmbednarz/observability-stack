@@ -1,14 +1,14 @@
 ﻿#Requires -Version 5.1
 <#
-    Wspólne funkcje stosu obserwowalności WEBCON.
-    Kompatybilność: Windows PowerShell 5.1 i PowerShell 7+ (bez ternary, ??, -Parallel).
-    Pliki .ps1/.psm1 muszą być zapisane jako UTF-8 z BOM (polskie znaki w PS 5.1).
+    Shared functions of the WEBCON observability stack.
+    Compatibility: Windows PowerShell 5.1 and PowerShell 7+ (no ternary, ??, -Parallel).
+    .ps1/.psm1 files must be saved as UTF-8 with BOM (non-ASCII characters in PS 5.1).
 #>
 
 Set-StrictMode -Version Latest
 
 # ---------------------------------------------------------------------
-# Logowanie
+# Logging
 # ---------------------------------------------------------------------
 function Write-Step { param([string]$Message) Write-Host "==> $Message" -ForegroundColor Cyan }
 function Write-Ok   { param([string]$Message) Write-Host "    [OK]   $Message" -ForegroundColor Green }
@@ -19,12 +19,12 @@ function Assert-Administrator {
     $id = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($id)
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        throw 'Skrypt wymaga uruchomienia jako Administrator.'
+        throw 'Run the script as administrator.'
     }
 }
 
 # ---------------------------------------------------------------------
-# Układ katalogów
+# Directory layout
 # ---------------------------------------------------------------------
 function Get-StackLayout {
     param([Parameter(Mandatory)][string]$Root)
@@ -44,7 +44,7 @@ function Get-StackLayout {
 
 function ConvertTo-ForwardSlash { param([string]$Path) return ($Path -replace '\\', '/') }
 
-# Ścieżka Windows jako literał w stringu Alloy ("C:\\dir\\file")
+# Windows path as a literal in an Alloy string ("C:\\dir\\file")
 function ConvertTo-AlloyPath { param([string]$Path) return ($Path -replace '\\', '\\') }
 
 function New-Directory {
@@ -53,7 +53,7 @@ function New-Directory {
 }
 
 # ---------------------------------------------------------------------
-# Sieć / porty
+# Network / ports
 # ---------------------------------------------------------------------
 function Test-TcpPortInUse {
     param([Parameter(Mandatory)][int]$Port)
@@ -68,11 +68,11 @@ function Get-PortOwner {
         $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
         if ($proc) { return "$($proc.ProcessName) (PID $($proc.Id))" }
         return "PID $($conn.OwningProcess)"
-    } catch { return 'nieznany proces' }
+    } catch { return 'unknown process' }
 }
 
 function Test-TcpEndpoint {
-    <# Szybki test połączenia TCP (Test-NetConnection w PS 5.1 czeka ~20 s przy blokadzie) #>
+    <# Fast TCP connection test (Test-NetConnection in PS 5.1 waits ~20 s when blocked) #>
     param([Parameter(Mandatory)][string]$HostName, [Parameter(Mandatory)][int]$Port, [int]$TimeoutMs = 3000)
     $client = New-Object Net.Sockets.TcpClient
     try {
@@ -101,7 +101,7 @@ function Wait-HttpReady {
 }
 
 # ---------------------------------------------------------------------
-# Pobieranie i rozpakowywanie
+# Download and extraction
 # ---------------------------------------------------------------------
 function Initialize-WebClient {
     [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -115,14 +115,14 @@ function Invoke-Download {
     )
     Initialize-WebClient
     $old = $ProgressPreference
-    $ProgressPreference = 'SilentlyContinue'   # w PS 5.1 pasek postępu spowalnia IWR wielokrotnie
+    $ProgressPreference = 'SilentlyContinue'   # in PS 5.1 the progress bar slows IWR down many times over
     try {
         for ($i = 1; $i -le $Retries; $i++) {
             try {
                 Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing -ErrorAction Stop
                 return
             } catch {
-                if ($i -eq $Retries) { throw "Nie udało się pobrać $Url : $($_.Exception.Message)" }
+                if ($i -eq $Retries) { throw "Failed to download $Url : $($_.Exception.Message)" }
                 Start-Sleep -Seconds (3 * $i)
             }
         }
@@ -140,7 +140,7 @@ function Get-ExpectedSha256 {
     try {
         Invoke-Download -Url $ChecksumUrl -Destination $sumFile -Retries 2
     } catch {
-        Write-Warn "Brak pliku sum kontrolnych ($ChecksumUrl) - pomijam weryfikację."
+        Write-Warn "Checksum file not available ($ChecksumUrl) - skipping verification."
         return $null
     }
     $lines = Get-Content -LiteralPath $sumFile
@@ -155,21 +155,21 @@ function Get-ExpectedSha256 {
             if ($name -eq $FileName) { return $parts[0].ToLowerInvariant() }
         }
     }
-    Write-Warn "Plik sum kontrolnych nie zawiera wpisu dla $FileName - pomijam weryfikację."
+    Write-Warn "Checksum file has no entry for $FileName - skipping verification."
     return $null
 }
 
 function Install-StackComponent {
     <#
-        Pobiera artefakt, weryfikuje SHA256, rozpakowuje i umieszcza w bin\<Name>.
-        Zwraca pełną ścieżkę do pliku wykonywalnego.
+        Downloads the artifact, verifies SHA256, extracts it and places it in bin\<Name>.
+        Returns the full path to the executable.
     #>
     param(
         [Parameter(Mandatory)][string]$Name,
         [Parameter(Mandatory)][hashtable]$Definition,
         [Parameter(Mandatory)]$Layout,
         [switch]$Force,
-        # Agent: artefakt z paczki (bez pobierania), suma SHA256 policzona przez instalator stosu
+        # Agent: artifact from the bundle (no download), SHA256 computed by the stack installer
         [string]$ArchivePath,
         [string]$Sha256
     )
@@ -184,7 +184,7 @@ function Install-StackComponent {
         if ($installed -eq $version) {
             $exe = Get-ChildItem -LiteralPath $target -Recurse -Filter $Definition.Exe -File | Select-Object -First 1
             if ($exe) {
-                Write-Ok "$Name $version już zainstalowany."
+                Write-Ok "$Name $version already installed."
                 return $exe.FullName
             }
         }
@@ -197,7 +197,7 @@ function Install-StackComponent {
     } else {
         $archive = Join-Path $Layout.Downloads $fileName
         if (-not (Test-Path -LiteralPath $archive) -or $Force) {
-            Write-Info "Pobieranie $url"
+            Write-Info "Downloading $url"
             Invoke-Download -Url $url -Destination $archive
         }
         $checksumUrl = $null
@@ -208,9 +208,9 @@ function Install-StackComponent {
         $actual = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
         if ($actual -ne $expected) {
             if (-not $ArchivePath) { Remove-Item -LiteralPath $archive -Force }
-            throw "Niezgodna suma SHA256 dla $fileName (oczekiwana $expected, otrzymana $actual)."
+            throw "SHA256 mismatch for $fileName (expected $expected, got $actual)."
         }
-        Write-Ok "SHA256 $fileName zgodna."
+        Write-Ok "SHA256 of $fileName verified."
     }
 
     $staging = Join-Path $Layout.Downloads ("extract-$Name-" + [Guid]::NewGuid().ToString('N'))
@@ -220,17 +220,17 @@ function Install-StackComponent {
             Expand-Archive -LiteralPath $archive -DestinationPath $staging -Force
         } elseif ($fileName -like '*.tar.gz' -or $fileName -like '*.tgz') {
             $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
-            if (-not (Test-Path -LiteralPath $tar)) { throw 'Brak tar.exe (wymagany Windows Server 2019+ / Windows 10 1803+).' }
+            if (-not (Test-Path -LiteralPath $tar)) { throw 'tar.exe not found (requires Windows Server 2019+ / Windows 10 1803+).' }
             & $tar -xzf $archive -C $staging
-            if ($LASTEXITCODE -ne 0) { throw "tar.exe zakończył się kodem $LASTEXITCODE" }
+            if ($LASTEXITCODE -ne 0) { throw "tar.exe exited with code $LASTEXITCODE" }
         } else {
             Copy-Item -LiteralPath $archive -Destination (Join-Path $staging $fileName) -Force
         }
 
         $exe = Get-ChildItem -LiteralPath $staging -Recurse -Filter $Definition.Exe -File | Select-Object -First 1
-        if (-not $exe) { throw "Nie znaleziono $($Definition.Exe) w $fileName." }
+        if (-not $exe) { throw "$($Definition.Exe) not found in $fileName." }
 
-        # Katalog główny dystrybucji: dla Grafany to katalog nadrzędny "bin", dla pozostałych katalog z exe
+        # Distribution root: for Grafana the parent of "bin", for the others the directory containing the exe
         $sourceRoot = $exe.Directory.FullName
         if ($Name -eq 'Grafana' -and $exe.Directory.Name -eq 'bin') { $sourceRoot = $exe.Directory.Parent.FullName }
 
@@ -243,15 +243,15 @@ function Install-StackComponent {
     }
 
     $installedExe = Get-ChildItem -LiteralPath $target -Recurse -Filter $Definition.Exe -File | Select-Object -First 1
-    Write-Ok "$Name $version zainstalowany w $target"
+    Write-Ok "$Name $version installed in $target"
     return $installedExe.FullName
 }
 
 function Invoke-NativeTool {
     <#
-        Uruchamia narzędzie natywne i zwraca @{ ExitCode; Output }.
-        PS 5.1 przy ErrorActionPreference=Stop zamienia każdą linię stderr (np. logi Loki/Alloy) na wyjątek -
-        dlatego lokalnie Continue, a o wyniku decyduje kod wyjścia.
+        Runs a native tool and returns @{ ExitCode; Output }.
+        With ErrorActionPreference=Stop, PS 5.1 turns every stderr line (e.g. Loki/Alloy logs) into an exception -
+        hence Continue locally; the exit code decides the result.
     #>
     param([Parameter(Mandatory)][string]$FilePath, [string[]]$Arguments)
     $ErrorActionPreference = 'Continue'
@@ -260,7 +260,7 @@ function Invoke-NativeTool {
 }
 
 # ---------------------------------------------------------------------
-# Szablony i pliki
+# Templates and files
 # ---------------------------------------------------------------------
 function Write-Utf8NoBom {
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][AllowEmptyString()][string]$Content)
@@ -271,8 +271,8 @@ function Write-Utf8NoBom {
 
 function Expand-StackTemplate {
     <#
-        Podstawia {{KLUCZ}} wartościami z $Variables.
-        Bloki "// @@BEGIN NAZWA" ... "// @@END NAZWA" (lub "# @@BEGIN ...") są usuwane, gdy NAZWA jest w $RemoveBlocks.
+        Replaces {{KEY}} with values from $Variables.
+        Blocks "// @@BEGIN NAME" ... "// @@END NAME" (or "# @@BEGIN ...") are removed when NAME is in $RemoveBlocks.
     #>
     param(
         [Parameter(Mandatory)][string]$TemplatePath,
@@ -284,36 +284,36 @@ function Expand-StackTemplate {
         $pattern = '(?ms)^[ \t]*(//|#)[ \t]*@@BEGIN ' + [regex]::Escape($block) + '\b.*?^[ \t]*(//|#)[ \t]*@@END ' + [regex]::Escape($block) + '\b[^\r\n]*\r?\n?'
         $text = [regex]::Replace($text, $pattern, '')
     }
-    # Usuń pozostałe znaczniki bloków (bloki aktywne)
+    # Remove the remaining block markers (active blocks)
     $text = [regex]::Replace($text, '(?m)^[ \t]*(//|#)[ \t]*@@(BEGIN|END) [A-Z_]+[^\r\n]*\r?\n', '')
     foreach ($key in $Variables.Keys) {
         $text = $text.Replace('{{' + $key + '}}', [string]$Variables[$key])
     }
     $left = [regex]::Matches($text, '\{\{[A-Z0-9_]+\}\}') | ForEach-Object { $_.Value } | Select-Object -Unique
-    if ($left) { throw "Niepodstawione zmienne w ${TemplatePath}: $($left -join ', ')" }
+    if ($left) { throw "Unsubstituted variables in ${TemplatePath}: $($left -join ', ')" }
     return $text
 }
 
 function Set-SecretFile {
-    <# Zapisuje sekret do pliku i zawęża ACL do SYSTEM + Administrators. #>
+    <# Writes a secret to a file and restricts the ACL to SYSTEM + Administrators. #>
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Content)
     Write-Utf8NoBom -Path $Path -Content $Content
     $null = & icacls.exe $Path /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F'
-    if ($LASTEXITCODE -ne 0) { throw "icacls nie ustawił ACL dla $Path" }
+    if ($LASTEXITCODE -ne 0) { throw "icacls failed to set the ACL for $Path" }
 }
 
 function Protect-SecretsDirectory {
     param([Parameter(Mandatory)][string]$Path)
     New-Directory $Path
     $null = & icacls.exe $Path /inheritance:r /grant:r '*S-1-5-18:(OI)(CI)F' '*S-1-5-32-544:(OI)(CI)F'
-    if ($LASTEXITCODE -ne 0) { throw "icacls nie ustawił ACL dla $Path" }
+    if ($LASTEXITCODE -ne 0) { throw "icacls failed to set the ACL for $Path" }
 }
 
 function New-RandomPassword {
     param([int]$Length = 24)
     $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
     $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
-    # Wielkie + małe litery + cyfra: wymóg złożoności SQL Server (CHECK_POLICY = ON)
+    # Upper + lower case letters + a digit: SQL Server complexity requirement (CHECK_POLICY = ON)
     do {
         $bytes = New-Object byte[] $Length
         $rng.GetBytes($bytes)
@@ -332,7 +332,7 @@ function ConvertFrom-SecureStringPlain {
 }
 
 # ---------------------------------------------------------------------
-# Usługi Windows (WinSW 2.x)
+# Windows services (WinSW 2.x)
 # ---------------------------------------------------------------------
 function Install-WinSWService {
     param(
@@ -362,7 +362,7 @@ function Install-WinSWService {
 
     Copy-Item -LiteralPath $WinSWExe -Destination $wrapper -Force
 
-    # XML budowany przez XmlDocument - poprawne escapowanie argumentów
+    # XML built with XmlDocument - correct escaping of arguments
     $xml = New-Object System.Xml.XmlDocument
     $root = $xml.CreateElement('service'); [void]$xml.AppendChild($root)
     function Add-Node([System.Xml.XmlElement]$Parent, [string]$Name, [string]$Text) {
@@ -403,17 +403,17 @@ function Install-WinSWService {
 
     if (-not $existing) {
         & $wrapper install | Out-Null
-        if ($LASTEXITCODE -ne 0) { throw "WinSW install dla $Id zakończył się kodem $LASTEXITCODE" }
-        Write-Ok "Usługa $Id zarejestrowana."
+        if ($LASTEXITCODE -ne 0) { throw "WinSW install for $Id exited with code $LASTEXITCODE" }
+        Write-Ok "Service $Id registered."
     } else {
-        Write-Ok "Usługa $Id zaktualizowana (konfiguracja WinSW)."
+        Write-Ok "Service $Id updated (WinSW configuration)."
     }
 }
 
 function Uninstall-WinSWService {
     param([Parameter(Mandatory)][string]$Id, [Parameter(Mandatory)][string]$ServicesRoot)
     $svc = Get-Service -Name $Id -ErrorAction SilentlyContinue
-    if (-not $svc) { Write-Info "Usługa $Id nie istnieje."; return }
+    if (-not $svc) { Write-Info "Service $Id does not exist."; return }
     if ($svc.Status -ne 'Stopped') {
         Stop-Service -Name $Id -Force -ErrorAction SilentlyContinue
         $null = $svc.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(60))
@@ -424,14 +424,14 @@ function Uninstall-WinSWService {
     } else {
         & sc.exe delete $Id | Out-Null
     }
-    Write-Ok "Usługa $Id usunięta."
+    Write-Ok "Service $Id removed."
 }
 
 # ---------------------------------------------------------------------
 # SQL Server
 # ---------------------------------------------------------------------
 function ConvertFrom-SqlServerName {
-    <# "host", "host\INST", "host,1433", "host\INST,1433" -> obiekt #>
+    <# "host", "host\INST", "host,1433", "host\INST,1433" -> object #>
     param([Parameter(Mandatory)][string]$Server)
     $hostPart = $Server; $port = $null; $instance = $null
     if ($hostPart -match '^(.*),(\d+)$') { $hostPart = $Matches[1]; $port = [int]$Matches[2] }
@@ -441,7 +441,7 @@ function ConvertFrom-SqlServerName {
 }
 
 function New-MssqlExporterConnectionString {
-    <# Connection string w formacie go-mssqldb (URL) dla prometheus.exporter.mssql #>
+    <# Connection string in go-mssqldb (URL) format for prometheus.exporter.mssql #>
     param(
         [Parameter(Mandatory)][string]$Server,
         [Parameter(Mandatory)][string]$Login,
@@ -473,8 +473,8 @@ function Invoke-SqlScalarQuery {
 
 function Test-SqlExporterPermissions {
     <#
-        Łączy się loginem SQL i sprawdza uprawnienia wymagane przez prometheus.exporter.mssql.
-        Zwraca obiekt z polami: Success, Checks (lista), Remediation (T-SQL).
+        Connects with the SQL login and checks the permissions required by prometheus.exporter.mssql.
+        Returns an object with the fields: Success, Checks (list), Remediation (T-SQL).
     #>
     param(
         [Parameter(Mandatory)][string]$Server,
@@ -503,27 +503,27 @@ function Test-SqlExporterPermissions {
     try {
         try {
             $conn.Open()
-            Add-Check 'Połączenie (SQL login, baza master)' $true "Wersja: $($conn.ServerVersion)"
+            Add-Check 'Connection (SQL login, master database)' $true "Version: $($conn.ServerVersion)"
         } catch {
-            Add-Check 'Połączenie (SQL login, baza master)' $false $_.Exception.Message
+            Add-Check 'Connection (SQL login, master database)' $false $_.Exception.Message
             return [pscustomobject]@{ Success = $false; Checks = $checks; Remediation = $null }
         }
 
         $edition = [string](Invoke-SqlScalarQuery $conn "SELECT CAST(SERVERPROPERTY('Edition') AS nvarchar(128))")
         if ($edition -like '*Azure*' -or $edition -eq 'SQL Azure') {
-            Add-Check 'Typ serwera' $false "Edycja '$edition' - exporter jest przewidziany dla SQL Server (on-prem / VM)."
+            Add-Check 'Server type' $false "Edition '$edition' - the exporter is intended for SQL Server (on-premises / VM)."
         }
 
         $isSysadmin = [int](Invoke-SqlScalarQuery $conn "SELECT IS_SRVROLEMEMBER('sysadmin')")
         if ($isSysadmin -eq 1) {
-            Add-Check 'Brak roli sysadmin (least privilege)' $false 'Login jest sysadmin - działa, ale ma nadmiarowe uprawnienia. Zalecany dedykowany login z GRANT jak w sql/grant-sql-exporter-permissions.sql.'
+            Add-Check 'No sysadmin role (least privilege)' $false 'The login is sysadmin - it works, but has excessive permissions. Use a dedicated login with GRANT as in sql/grant-sql-exporter-permissions.sql.'
         } else {
-            Add-Check 'Brak roli sysadmin (least privilege)' $true ''
+            Add-Check 'No sysadmin role (least privilege)' $true ''
         }
 
         foreach ($perm in @('VIEW SERVER STATE', 'VIEW ANY DEFINITION')) {
             $has = [int](Invoke-SqlScalarQuery $conn "SELECT HAS_PERMS_BY_NAME(NULL, NULL, '$perm')")
-            Add-Check "Uprawnienie $perm" ($has -eq 1) ''
+            Add-Check "Permission $perm" ($has -eq 1) ''
             if ($has -ne 1) { $missing.Add($perm) }
         }
 
@@ -539,10 +539,10 @@ function Test-SqlExporterPermissions {
                 $v = Invoke-SqlScalarQuery $conn $probes[$k]
                 $ok = $true
                 $detail = ''
-                if ($k -eq 'sys.master_files' -and [int]$v -eq 0) { $ok = $false; $detail = 'Brak widocznych plików baz (wymaga VIEW ANY DEFINITION).' }
-                Add-Check "Odczyt $k" $ok $detail
+                if ($k -eq 'sys.master_files' -and [int]$v -eq 0) { $ok = $false; $detail = 'No database files visible (requires VIEW ANY DEFINITION).' }
+                Add-Check "Read $k" $ok $detail
             } catch {
-                Add-Check "Odczyt $k" $false $_.Exception.Message
+                Add-Check "Read $k" $false $_.Exception.Message
             }
         }
     } finally {
@@ -556,14 +556,14 @@ function Test-SqlExporterPermissions {
         foreach ($p in $missing) { $lines += "GRANT $p TO $q;" }
         $remediation = $lines -join [Environment]::NewLine
     }
-    $success = -not ($checks | Where-Object { -not $_.Ok -and $_.Check -ne 'Brak roli sysadmin (least privilege)' })
+    $success = -not ($checks | Where-Object { -not $_.Ok -and $_.Check -ne 'No sysadmin role (least privilege)' })
     return [pscustomobject]@{ Success = [bool]$success; Checks = $checks; Remediation = $remediation }
 }
 
 function Test-WebconSqlReaderPermissions {
     <#
-        Łączy się loginem źródła danych Grafany "WEBCON SQL" z bazą treści i sprawdza SELECT na tabelach
-        z sql\grant-webcon-reader-permissions.sql. Zwraca obiekt z polami: Success, Checks (lista).
+        Connects to the content database with the login of the "WEBCON SQL" Grafana data source and checks SELECT on the tables
+        from sql\grant-webcon-reader-permissions.sql. Returns an object with the fields: Success, Checks (list).
     #>
     param(
         [Parameter(Mandatory)][string]$Server,
@@ -592,9 +592,9 @@ function Test-WebconSqlReaderPermissions {
     try {
         try {
             $conn.Open()
-            Add-Check "Połączenie (SQL login, baza $Database)" $true ''
+            Add-Check "Connection (SQL login, database $Database)" $true ''
         } catch {
-            Add-Check "Połączenie (SQL login, baza $Database)" $false $_.Exception.Message
+            Add-Check "Connection (SQL login, database $Database)" $false $_.Exception.Message
             return [pscustomobject]@{ Success = $false; Checks = $checks }
         }
         foreach ($t in 'ActiveTasks', 'WFAvaiblePaths', 'WFSteps', 'WorkFlows', 'WFDefinitions') {
@@ -605,22 +605,22 @@ function Test-WebconSqlReaderPermissions {
                 Add-Check "SELECT dbo.$t" $false $_.Exception.Message
             }
         }
-        # Nadmiarowe uprawnienia - zapytania w Grafanie może pisać każdy edytor dashboardów
+        # Excessive permissions - any dashboard editor can write queries in Grafana
         $wide = [int](Invoke-SqlScalarQuery $conn "SELECT IS_SRVROLEMEMBER('sysadmin') + ISNULL(IS_ROLEMEMBER('db_owner'), 0) + ISNULL(IS_ROLEMEMBER('db_datareader'), 0)")
         if ($wide -gt 0) {
-            Add-Check 'Tylko odczyt wybranych tabel (least privilege)' $false 'Login ma sysadmin / db_owner / db_datareader - edytorzy Grafany zobaczą dane formularzy. Zalecany login z sql\grant-webcon-reader-permissions.sql.'
+            Add-Check 'Read-only access to selected tables (least privilege)' $false 'The login has sysadmin / db_owner / db_datareader - Grafana editors will see form data. Use a login from sql\grant-webcon-reader-permissions.sql.'
         } else {
-            Add-Check 'Tylko odczyt wybranych tabel (least privilege)' $true ''
+            Add-Check 'Read-only access to selected tables (least privilege)' $true ''
         }
     } finally {
         $conn.Dispose()
     }
-    $success = -not ($checks | Where-Object { -not $_.Ok -and $_.Check -ne 'Tylko odczyt wybranych tabel (least privilege)' })
+    $success = -not ($checks | Where-Object { -not $_.Ok -and $_.Check -ne 'Read-only access to selected tables (least privilege)' })
     return [pscustomobject]@{ Success = [bool]$success; Checks = $checks }
 }
 
 function ConvertFrom-MssqlConnectionUrl {
-    <# Odwrotność New-MssqlExporterConnectionString: sqlserver://login:hasło@host[:port][/instancja]?... -> Server, Login, Password #>
+    <# Inverse of New-MssqlExporterConnectionString: sqlserver://login:password@host[:port][/instance]?... -> Server, Login, Password #>
     param([Parameter(Mandatory)][string]$ConnectionString)
     $u = [Uri]$ConnectionString.Trim()
     $parts = $u.UserInfo.Split(':', 2)
@@ -634,7 +634,7 @@ function ConvertFrom-MssqlConnectionUrl {
     }
 }
 
-# Kolumny używane w config-templates/alloy/webcon-db-queries.yaml (= GRANT w sql/grant-webcon-db-metrics.sql)
+# Columns used in config-templates/alloy/webcon-db-queries.yaml (= GRANT in sql/grant-webcon-db-metrics.sql)
 $script:WebconDbMetricsColumns = [ordered]@{
     'WFMails'                 = @('MAIL_AttemptsNumber')
     'WFRecurrentActionsStats' = @('RAS_TimeLastFailure', 'RAS_TimeLastSuccess', 'RAS_ServiceName', 'RAS_Status', 'RAS_NextLaunch')
@@ -647,8 +647,8 @@ $script:WebconDbMetricsColumns = [ordered]@{
 
 function Test-WebconDbMetricsPermissions {
     <#
-        Sprawdza (jako login exportera) dostęp do bazy treści i SELECT na kolumnach z webcon-db-queries.yaml.
-        Zwraca obiekt z polami: Success, Checks (lista).
+        Checks (as the exporter login) access to the content database and SELECT on the columns from webcon-db-queries.yaml.
+        Returns an object with the fields: Success, Checks (list).
     #>
     param(
         [Parameter(Mandatory)][string]$Server,
@@ -675,9 +675,9 @@ function Test-WebconDbMetricsPermissions {
     try {
         try {
             $conn.Open()
-            Add-Check "Dostęp do bazy $Database" $true ''
+            Add-Check "Access to database $Database" $true ''
         } catch {
-            Add-Check "Dostęp do bazy $Database" $false $_.Exception.Message
+            Add-Check "Access to database $Database" $false $_.Exception.Message
             return [pscustomobject]@{ Success = $false; Checks = $checks }
         }
         foreach ($t in $script:WebconDbMetricsColumns.Keys) {
@@ -686,7 +686,7 @@ function Test-WebconDbMetricsPermissions {
                 $has = Invoke-SqlScalarQuery $conn "SELECT HAS_PERMS_BY_NAME(N'dbo.$t', N'OBJECT', N'SELECT', N'$c', N'COLUMN')"
                 if ([string]$has -ne '1') { $missing += $c }
             }
-            if ($missing) { Add-Check "SELECT dbo.$t" $false "brak: $($missing -join ', ')" } else { Add-Check "SELECT dbo.$t (kolumny)" $true '' }
+            if ($missing) { Add-Check "SELECT dbo.$t" $false "missing: $($missing -join ', ')" } else { Add-Check "SELECT dbo.$t (columns)" $true '' }
         }
     } finally {
         $conn.Dispose()
@@ -695,12 +695,12 @@ function Test-WebconDbMetricsPermissions {
     return [pscustomobject]@{ Success = [bool]$success; Checks = $checks }
 }
 
-function Get-WebconPortalProbeTarget {
+function Get-WebconPortalBinding {
     <#
-        Adresy /health Portalu WEBCON z powiązań IIS: witryna, której aplikacja "/" wskazuje katalog z web.config
-        uruchamiającym WebCon.WorkFlow.Bootstrapper (ASP.NET Core Module). Powiązania http/https z nazwą hosta
-        -> <schemat>://<host>[:port]/health; powiązanie bez nazwy -> FQDN serwera, tylko gdy witryna nie ma powiązań
-        z nazwą. Pomija zatrzymane witryny. Zwraca listę obiektów: Url, Host, Site.
+        http/https bindings of the WEBCON Portal IIS site: the site whose "/" application points to a directory with
+        a web.config that starts WebCon.WorkFlow.Bootstrapper (ASP.NET Core Module). Skips stopped sites.
+        Returns a list of objects: Protocol, Port, Host ('' = binding without a host name), Site.
+        Design: docs/projekt/projekt-sonda-portalu-adres.md
     #>
     $appcmd = Join-Path $env:windir 'system32\inetsrv\appcmd.exe'
     if (-not (Test-Path -LiteralPath $appcmd)) { return ,@() }
@@ -715,49 +715,119 @@ function Get-WebconPortalProbeTarget {
         $webConfig = Join-Path ([Environment]::ExpandEnvironmentVariables($vdir.physicalPath)) 'web.config'
         if (-not (Test-Path -LiteralPath $webConfig)) { continue }
         if (-not (Select-String -LiteralPath $webConfig -Pattern 'WebCon.WorkFlow.Bootstrapper' -SimpleMatch -Quiet)) { continue }
-        $named = @(); $unnamed = @()
         foreach ($b in @($site.site.bindings.binding)) {
             if ($b.protocol -ne 'http' -and $b.protocol -ne 'https') { continue }
-            $p = $b.bindingInformation.Split(':')   # adres:port:host
-            $port = [int]$p[1]
-            $h = ''
-            if ($p.Count -ge 3) { $h = $p[2] }
-            $item = [pscustomobject]@{ Protocol = $b.protocol; Port = $port; Host = $h }
-            if ($h -and $h -ne '*') { $named += $item } else { $unnamed += $item }
-        }
-        $use = $named
-        if (-not $use) {
-            $fqdn = [Net.Dns]::GetHostEntry($env:COMPUTERNAME).HostName
-            $use = @($unnamed | ForEach-Object { [pscustomobject]@{ Protocol = $_.Protocol; Port = $_.Port; Host = $fqdn } })
-        }
-        foreach ($u in $use) {
-            $portPart = ''
-            if (-not (($u.Protocol -eq 'https' -and $u.Port -eq 443) -or ($u.Protocol -eq 'http' -and $u.Port -eq 80))) { $portPart = ":$($u.Port)" }
-            $url = "$($u.Protocol)://$($u.Host)$portPart/health"
-            if (-not ($result | Where-Object { $_.Url -eq $url })) {
-                $result.Add([pscustomobject]@{ Url = $url; Host = $u.Host; Site = $site.'SITE.NAME' })
-            }
+            # address:port:host; an IPv6 address in brackets contains colons
+            if ($b.bindingInformation -notmatch '^(.*):(\d+):([^:]*)$') { continue }
+            $h = $Matches[3]
+            if ($h -eq '*') { $h = '' }
+            $result.Add([pscustomobject]@{ Protocol = [string]$b.protocol; Port = [int]$Matches[2]; Host = $h; Site = $site.'SITE.NAME' })
         }
     }
-    # ToArray(): ",@(List)" rzuca w pwsh 7 "Argument types do not match"
+    # ToArray(): ",@(List)" throws "Argument types do not match" in pwsh 7
     return ,($result.ToArray())
+}
+
+function ConvertTo-PortalUrl {
+    <#
+        Normalizes the Portal address (-PortalUrl) to <scheme>://<host>[:port] (the path is dropped).
+        Throws on an invalid address (the host is inserted into YAML / config.alloy - DNS name characters only).
+    #>
+    param([Parameter(Mandatory)][string]$Url)
+    if ($Url -notmatch '^(?i)(https?)://([A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?)(:(\d{1,5}))?(/.*)?$') {
+        throw "-PortalUrl: invalid address '$Url' (expected http(s)://host.name[:port], e.g. https://bps.example.com)."
+    }
+    $scheme = $Matches[1].ToLowerInvariant()
+    $hostName = $Matches[2]
+    $portPart = ''
+    if ($Matches[5]) {
+        $port = [int]$Matches[5]
+        if ($port -lt 1 -or $port -gt 65535) { throw "-PortalUrl: invalid port in '$Url'." }
+        if (-not (($scheme -eq 'https' -and $port -eq 443) -or ($scheme -eq 'http' -and $port -eq 80))) { $portPart = ":$port" }
+    }
+    return "$scheme`://$hostName$portPart"
+}
+
+function Get-PortalUrlSuggestion {
+    <# Portal address from IIS bindings with a host name (https first, then http); '' when there is none. #>
+    param([object[]]$Binding = @())
+    $named = @($Binding | Where-Object { $_ -and $_.Host })
+    $b = @(@($named | Where-Object { $_.Protocol -eq 'https' }) + @($named | Where-Object { $_.Protocol -eq 'http' })) | Select-Object -First 1
+    if (-not $b) { return '' }
+    return ConvertTo-PortalUrl "$($b.Protocol)://$($b.Host):$($b.Port)"
+}
+
+function Resolve-PortalProbeTarget {
+    <#
+        Portal /health probe target: local connection (127.0.0.1) to the port from the Portal address, Host: localhost
+        header, SNI and certificate verification for the host name from the Portal address, instance = Portal address.
+        Empty -PortalUrl = address from IIS bindings with a host name (Get-PortalUrlSuggestion); only bindings without
+        a host name = no target. When the site has no <scheme>:<port> binding from the address (e.g. TLS terminated on
+        a load balancer) - the first http binding of the site, without certificate verification.
+        Returns: Target (Url, Address, ServerName, Site; $null = no probe), Messages (Level ok/info/warn, Text).
+        Design: docs/projekt/projekt-sonda-portalu-adres.md
+    #>
+    param([string]$PortalUrl, [object[]]$Binding = @())
+    $msgs = New-Object System.Collections.Generic.List[object]
+    $Binding = @($Binding | Where-Object { $_ })
+    $source = '-PortalUrl'
+    if ($PortalUrl) {
+        $url = ConvertTo-PortalUrl $PortalUrl
+    } else {
+        if (-not $Binding.Count) {
+            $msgs.Add([pscustomobject]@{ Level = 'info'; Text = 'WEBCON Portal not detected in IIS (site with WebCon.WorkFlow.Bootstrapper) - no Portal probe.' })
+            return [pscustomobject]@{ Target = $null; Messages = $msgs.ToArray() }
+        }
+        $url = Get-PortalUrlSuggestion -Binding $Binding
+        if (-not $url) {
+            $msgs.Add([pscustomobject]@{ Level = 'warn'; Text = 'The IIS bindings of the Portal site have no host name - Portal address unknown. No Portal probe; specify -PortalUrl (e.g. https://bps.example.com).' })
+            return [pscustomobject]@{ Target = $null; Messages = $msgs.ToArray() }
+        }
+        $source = 'IIS binding'
+    }
+    $uri = [Uri]$url
+    $scheme = $uri.Scheme
+    $port = $uri.Port
+    $site = ''
+    $match = @($Binding | Where-Object { $_.Protocol -eq $scheme -and $_.Port -eq $port }) | Select-Object -First 1
+    if ($match) {
+        $site = $match.Site
+    } elseif ($Binding.Count) {
+        $http = @($Binding | Where-Object { $_.Protocol -eq 'http' }) | Select-Object -First 1
+        if ($http) {
+            $msgs.Add([pscustomobject]@{ Level = 'warn'; Text = "The Portal site has no $scheme binding on port $port - local probe over http on port $($http.Port), without certificate verification." })
+            $scheme = 'http'; $port = $http.Port; $site = $http.Site
+        } else {
+            $msgs.Add([pscustomobject]@{ Level = 'warn'; Text = "The Portal site has no $scheme binding on port $port - the probe may get no response." })
+        }
+    } else {
+        $msgs.Add([pscustomobject]@{ Level = 'warn'; Text = "WEBCON Portal not detected in IIS - probe on $scheme`://127.0.0.1:$port." })
+    }
+    $serverName = ''
+    if ($scheme -eq 'https') { $serverName = $uri.Host }
+    $target = [pscustomobject]@{ Url = $url; Address = "$scheme`://127.0.0.1:$port/health"; ServerName = $serverName; Site = $site }
+    $siteText = ''
+    if ($site) { $siteText = ", IIS site '$site'" }
+    $msgs.Add([pscustomobject]@{ Level = 'ok'; Text = "Portal: $url ($source; probe $($target.Address)$siteText)" })
+    return [pscustomobject]@{ Target = $target; Messages = $msgs.ToArray() }
 }
 
 function New-BlackboxConfig {
     <#
-        Fragmenty bloku BLACKBOX config.alloy: moduły (YAML, wcięcie pod "modules:") i bloki target.
-        Portal: moduł na nazwę hosta (nagłówek Host: localhost + tls_config.server_name = host); -ProbeUrl: moduł http_2xx.
+        Fragments of the BLACKBOX block in config.alloy: modules (YAML, indented under "modules:") and target blocks.
+        Portal (Resolve-PortalProbeTarget): local address, Host: localhost header, tls_config.server_name = host name
+        from the Portal address, portal_url label -> instance (discovery.relabel); -ProbeUrl: http_2xx module.
     #>
-    param([object[]]$PortalTarget = @(), [string[]]$ProbeUrl = @())
+    param([object]$PortalTarget, [string[]]$ProbeUrl = @())
     $modules = New-Object System.Collections.Generic.List[string]
     $targets = New-Object System.Collections.Generic.List[string]
-    $i = 0
-    foreach ($t in @($PortalTarget)) {
-        if (-not $t) { continue }
-        $i++
-        $m = "webcon_health_$i"
+    if ($PortalTarget) {
+        $tls = ''
+        if ($PortalTarget.ServerName) {
+            $tls = "`n      tls_config:`n        server_name: '$($PortalTarget.ServerName)'"
+        }
         $modules.Add(@"
-  ${m}:
+  webcon_health:
     prober: http
     timeout: 10s
     http:
@@ -765,18 +835,16 @@ function New-BlackboxConfig {
       valid_status_codes: [200]
       no_follow_redirects: true
       headers:
-        Host: localhost
-      tls_config:
-        server_name: '$($t.Host)'
+        Host: localhost$tls
       fail_if_body_not_matches_regexp:
         - '"status":"Healthy"'
 "@)
         $targets.Add(@"
   target {
-    name    = "portal_$i"
-    address = "$($t.Url)"
-    module  = "$m"
-    labels  = { "probe" = "portal" }
+    name    = "portal"
+    address = "$($PortalTarget.Address)"
+    module  = "webcon_health"
+    labels  = { "probe" = "portal", "portal_url" = "$($PortalTarget.Url)" }
   }
 "@)
     }
@@ -800,7 +868,7 @@ function New-BlackboxConfig {
     }
 }
 
-# Kolektory windows_exporter w formacie listy Alloy; "iis" tylko przy zainstalowanym IIS (inaczej success=0 przy każdym scrape)
+# windows_exporter collectors as an Alloy list; "iis" only when IIS is installed (otherwise success=0 on every scrape)
 function Get-WindowsCollectorList {
     $c = @('cpu', 'logical_disk', 'memory', 'net', 'os', 'system', 'process', 'tcp')
     if (Get-Service -Name 'W3SVC' -ErrorAction SilentlyContinue) { $c += 'iis' }
@@ -808,30 +876,30 @@ function Get-WindowsCollectorList {
 }
 
 # ---------------------------------------------------------------------
-# SQL Server - lokalna instancja (agent na hoście SQL)
+# SQL Server - local instance (agent on the SQL host)
 # ---------------------------------------------------------------------
 function Get-SqlInstanceInfo {
     <#
-        Instancja SQL Server na tym hoście: usługa, ustawienia TCP z rejestru, porty, na których faktycznie nasłuchuje,
-        i Data Source do połączenia lokalnego (shared memory - działa także przy wyłączonym TCP).
+        SQL Server instance on this host: service, TCP settings from the registry, ports it actually listens on,
+        and the Data Source for a local connection (shared memory - works also with TCP disabled).
     #>
     param([Parameter(Mandatory)][string]$InstanceName)
     $svcName = 'MSSQLSERVER'
     $dataSource = '.'
     if ($InstanceName -ne 'MSSQLSERVER') { $svcName = 'MSSQL$' + $InstanceName; $dataSource = ".\$InstanceName" }
     $svc = Get-CimInstance Win32_Service -Filter "Name='$($svcName.Replace("'", "''"))'"
-    if (-not $svc) { throw "Brak usługi SQL Server $svcName (instancja $InstanceName) na tym hoście." }
+    if (-not $svc) { throw "SQL Server service $svcName (instance $InstanceName) not found on this host." }
 
     $names = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\Instance Names\SQL' -ErrorAction Stop
     $id = $names.$InstanceName
-    if (-not $id) { throw "Brak instancji $InstanceName w rejestrze SQL Server." }
+    if (-not $id) { throw "Instance $InstanceName not found in the SQL Server registry." }
     $tcpKey = "HKLM:\SOFTWARE\Microsoft\Microsoft SQL Server\$id\MSSQLServer\SuperSocketNetLib\Tcp"
     $tcp = Get-ItemProperty -Path $tcpKey
     $ipAll = Get-ItemProperty -Path "$tcpKey\IPAll"
 
     $ports = @()
     if ($svc.ProcessId) {
-        # bez adresów pętli zwrotnej: tam nasłuchuje DAC
+        # without loopback addresses: DAC listens there
         $ports = @(Get-NetTCPConnection -State Listen -OwningProcess $svc.ProcessId -ErrorAction SilentlyContinue |
             Where-Object { $_.LocalAddress -ne '127.0.0.1' -and $_.LocalAddress -ne '::1' } |
             Select-Object -ExpandProperty LocalPort -Unique)
@@ -850,7 +918,7 @@ function Get-SqlInstanceInfo {
 }
 
 function Set-SqlTcpStaticPort {
-    <# Włącza TCP i ustawia statyczny port (IPAll) instancji, restartuje instancję i uruchamia ponownie zależne usługi (np. Agent). #>
+    <# Enables TCP and sets a static port (IPAll) for the instance, restarts the instance and starts dependent services again (e.g. Agent). #>
     param([Parameter(Mandatory)]$Info, [Parameter(Mandatory)][int]$Port)
     Set-ItemProperty -Path $Info.TcpKey -Name Enabled -Value 1
     Set-ItemProperty -Path "$($Info.TcpKey)\IPAll" -Name TcpPort -Value ([string]$Port)
@@ -861,7 +929,7 @@ function Set-SqlTcpStaticPort {
 }
 
 function Invoke-SqlBatches {
-    <# Wykonuje skrypt T-SQL z separatorami GO; komunikaty (PRINT / RAISERROR < 11) wypisuje jako informacje. #>
+    <# Runs a T-SQL script with GO separators; messages (PRINT / RAISERROR < 11) are written as information. #>
     param([Parameter(Mandatory)][string]$ConnectionString, [Parameter(Mandatory)][string]$Sql)
     $conn = New-Object System.Data.SqlClient.SqlConnection($ConnectionString)
     $conn.add_InfoMessage({ param($s, $e) Write-Info "  SQL: $($e.Message)" })
@@ -878,7 +946,7 @@ function Invoke-SqlBatches {
 }
 
 function Set-SqlLogin {
-    <# Tworzy login SQL albo ustawia mu hasło (hasło z paczki agenta = jedno źródło prawdy dla stosu i hosta SQL). #>
+    <# Creates a SQL login or sets its password (password from the agent bundle = single source of truth for the stack and the SQL host). #>
     param([Parameter(Mandatory)][string]$ConnectionString, [Parameter(Mandatory)][string]$Login, [Parameter(Mandatory)][string]$Password)
     $l = $Login.Replace("'", "''")
     $q = '[' + $Login.Replace(']', ']]') + ']'
@@ -886,15 +954,15 @@ function Set-SqlLogin {
     $sql = "IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = N'$l') " +
            "CREATE LOGIN $q WITH PASSWORD = N'$p', CHECK_POLICY = ON, CHECK_EXPIRATION = OFF, DEFAULT_DATABASE = [master]; " +
            "ELSE IF NOT EXISTS (SELECT 1 FROM sys.sql_logins WHERE name = N'$l' AND PWDCOMPARE(N'$p', password_hash) = 1) " +
-           "ALTER LOGIN $q WITH PASSWORD = N'$p';"   # ponowne uruchomienie: bez zmiany hasła (historia haseł przy CHECK_POLICY)
+           "ALTER LOGIN $q WITH PASSWORD = N'$p';"   # re-run: no password change (password history with CHECK_POLICY)
     Invoke-SqlBatches -ConnectionString $ConnectionString -Sql $sql
 }
 
 # ---------------------------------------------------------------------
-# Paczka agenta (tryb zdalny)
+# Agent bundle (remote mode)
 # ---------------------------------------------------------------------
 function Write-Utf8Bom {
-    <# Skrypty .ps1 z polskimi znakami: UTF-8 z BOM (PS 5.1) #>
+    <# .ps1 scripts with non-ASCII characters: UTF-8 with BOM (PS 5.1) #>
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Content)
     New-Directory (Split-Path -Parent $Path)
     [IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($true)))
@@ -902,9 +970,9 @@ function Write-Utf8Bom {
 
 function New-AgentBundle {
     <#
-        Tworzy <Root>\agent-bundle (+ .zip): instalator agenta, moduł, szablony Alloy, skrypty SQL, binarki Alloy/WinSW
-        z katalogu downloads, ustawienia (agent-settings.json), hasła loginów SQL i skrypty 01-/02- dla hostów.
-        Zwraca ścieżkę katalogu paczki.
+        Creates <Root>\agent-bundle (+ .zip): agent installer, module, Alloy templates, SQL scripts, Alloy/WinSW binaries
+        from the downloads directory, settings (agent-settings.json), SQL login passwords and 01-/02- scripts for the hosts.
+        Returns the bundle directory path.
     #>
     param(
         [Parameter(Mandatory)]$Layout,
@@ -918,7 +986,7 @@ function New-AgentBundle {
     )
     $bundle = Join-Path $Layout.Root 'agent-bundle'
     if (Test-Path -LiteralPath $bundle) { Remove-Item -LiteralPath $bundle -Recurse -Force }
-    # Paczka zawiera hasła SQL - ACL jak katalog secrets
+    # The bundle contains SQL passwords - same ACL as the secrets directory
     Protect-SecretsDirectory -Path $bundle
 
     $files = @(
@@ -934,7 +1002,7 @@ function New-AgentBundle {
         Copy-Item -LiteralPath (Join-Path $RepoRoot $f) -Destination $dst -Force
     }
 
-    # Binarki z downloads stosu (pobrane i zweryfikowane przez Install-StackComponent)
+    # Binaries from the stack downloads (downloaded and verified by Install-StackComponent)
     $packages = [ordered]@{}
     $pkgDir = Join-Path $bundle 'packages'
     New-Directory $pkgDir
@@ -957,7 +1025,7 @@ function New-AgentBundle {
         Version = $Release.Version; Commit = $Release.Commit; BuiltAt = $Release.BuiltAt } | ConvertTo-Json)
     Set-SecretFile -Path (Join-Path $bundle 'secrets\sql-logins.json') -Content ($Secrets | ConvertTo-Json)
 
-    # Skrypty dla hostów: SQL przed WEBCON (ewentualny restart SQL i restart WEBCON w jednym oknie)
+    # Host scripts: SQL before WEBCON (a possible SQL restart and the WEBCON restart in one window)
     $hosts = @()
     $sameHost = ($WebconHost -and $SqlHost -and $WebconHost -eq $SqlHost)
     if ($sameHost) {
@@ -968,37 +1036,37 @@ function New-AgentBundle {
     }
     $i = 1
     $readme = New-Object System.Collections.Generic.List[string]
-    $readme.Add('Paczka agenta - stos obserwowalności WEBCON')
-    $readme.Add("Wygenerowana: $($Settings.GeneratedAt) na $env:COMPUTERNAME; stos: $($Settings.CentralAddress); wersja $($Release.Version)")
+    $readme.Add('Agent bundle - WEBCON observability stack')
+    $readme.Add("Generated: $($Settings.GeneratedAt) on $env:COMPUTERNAME; stack: $($Settings.CentralAddress); version $($Release.Version)")
     $readme.Add($script:Disclaimer)
     $readme.Add('')
-    $readme.Add('ZAWIERA HASŁA LOGINÓW SQL (secrets\sql-logins.json) - usuń paczkę z hostów po instalacji.')
+    $readme.Add('CONTAINS SQL LOGIN PASSWORDS (secrets\sql-logins.json) - delete the bundle from the hosts after installation.')
     $readme.Add('')
-    $readme.Add('Kolejność (PowerShell jako administrator, katalog rozpakowanej paczki):')
+    $readme.Add('Order (PowerShell as administrator, in the extracted bundle directory):')
     foreach ($h in $hosts) {
         $script = ('{0:00}-{1}.ps1' -f $i, $h.Name)
         $roleText = $h.Role
         $content = @(
             '#Requires -Version 5.1'
-            "# Wygenerowane przez Install-ObservabilityStack.ps1 ($($Settings.GeneratedAt)) - host: $($h.Host), role: $roleText"
-            '# Dodatkowe parametry są przekazywane do Install-ObservabilityAgent.ps1, np. -EnableSqlTcp, -Force, -SkipWebconConfig'
+            "# Generated by Install-ObservabilityStack.ps1 ($($Settings.GeneratedAt)) - host: $($h.Host), role: $roleText"
+            '# Additional parameters are passed to Install-ObservabilityAgent.ps1, e.g. -EnableSqlTcp, -Force, -SkipWebconConfig'
             "& (Join-Path `$PSScriptRoot 'Install-ObservabilityAgent.ps1') -Role $roleText @args"
         ) -join "`r`n"
         Write-Utf8Bom -Path (Join-Path $bundle $script) -Content ($content + "`r`n")
         $line = "  $i. host $($h.Host): .\$script"
-        if ($h.Role -like '*Sql*') { $line += '   (TCP instancji wyłączone: dodaj -EnableSqlTcp = restart instancji SQL)' }
+        if ($h.Role -like '*Sql*') { $line += '   (instance TCP disabled: add -EnableSqlTcp = SQL instance restart)' }
         $readme.Add($line)
         $i++
     }
-    $readme.Add("  $i. VM stosu ($env:COMPUTERNAME): .\Test-ObservabilityStack.ps1")
+    $readme.Add("  $i. stack VM ($env:COMPUTERNAME): .\Test-ObservabilityStack.ps1")
     $readme.Add('')
-    $readme.Add("Wymagana łączność: host -> $($Settings.CentralAddress) TCP $($Settings.OtlpPort), $($Settings.ReceivePort)")
-    $readme.Add("  (firewall stosu dopuszcza: $($Settings.AgentAddress -join ', '))")
+    $readme.Add("Required connectivity: host -> $($Settings.CentralAddress) TCP $($Settings.OtlpPort), $($Settings.ReceivePort)")
+    $readme.Add("  (stack firewall allows: $($Settings.AgentAddress -join ', '))")
     if ($SqlHost -and $Settings.ReaderLogin) {
-        $readme.Add("Grafana -> $SqlHost TCP $($Settings.SqlPort) (źródło 'WEBCON SQL'; skrypt hosta SQL dodaje regułę firewall dla $($Settings.CentralIPv4 -join ', '))")
+        $readme.Add("Grafana -> $SqlHost TCP $($Settings.SqlPort) ('WEBCON SQL' data source; the SQL host script adds a firewall rule for $($Settings.CentralIPv4 -join ', '))")
     }
     $readme.Add('')
-    $readme.Add('Po instalacji paczkę można usunąć - odinstalowanie agenta: C:\Observability\app\Uninstall-ObservabilityAgent.ps1 [-RemoveFiles]')
+    $readme.Add('After installation the bundle can be deleted - to uninstall the agent: C:\Observability\app\Uninstall-ObservabilityAgent.ps1 [-RemoveFiles]')
     Write-Utf8NoBom -Path (Join-Path $bundle 'README.txt') -Content (($readme -join "`r`n") + "`r`n")
 
     $zip = "$bundle.zip"
@@ -1008,40 +1076,40 @@ function New-AgentBundle {
     try { Compress-Archive -Path (Join-Path $bundle '*') -DestinationPath $zip -CompressionLevel Fastest }
     finally { $ProgressPreference = $old }
     $null = & icacls.exe $zip /inheritance:r /grant:r '*S-1-5-18:F' '*S-1-5-32-544:F'
-    Write-Ok "Paczka: $bundle ($zip, $([math]::Round((Get-Item -LiteralPath $zip).Length / 1MB)) MB)"
+    Write-Ok "Bundle: $bundle ($zip, $([math]::Round((Get-Item -LiteralPath $zip).Length / 1MB)) MB)"
     foreach ($h in $hosts) { Write-Ok "Host $($h.Host): role $($h.Role)" }
     return $bundle
 }
 
 # ---------------------------------------------------------------------
-# Wydania, wersja, kopia app\ (docs/projekt/projekt-dystrybucja-i-wersje.md)
+# Releases, version, app\ copy (docs/projekt/projekt-dystrybucja-i-wersje.md)
 # ---------------------------------------------------------------------
 $script:PublicRepoUrl = 'https://github.com/mmbednarz/observability-stack'
-$script:Disclaimer = 'Projekt nieoficjalny, bez wsparcia i gwarancji (licencja MIT) - nie jest produktem WEBCON. Szczegóły: README.md.'
+$script:Disclaimer = 'Unofficial project, without support or warranty (MIT license) - not a WEBCON product. Details: README.md.'
 
-# Zawartość paczki wydania i kopii C:\Observability\app. Katalog = wpis zakończony "\" (rekurencyjnie).
-# Nowy plik w repozytorium poza tymi wpisami nie trafi do paczki - build\New-ReleasePackage.ps1 to sprawdza.
+# Contents of the release package and of the C:\Observability\app copy. Directory = entry ending with "\" (recursive).
+# A new repository file outside these entries will not be included in the package - build\New-ReleasePackage.ps1 checks this.
 $script:PackageEntries = @(
     'Install-ObservabilityStack.ps1', 'Install-ObservabilityAgent.ps1',
     'Uninstall-ObservabilityStack.ps1', 'Uninstall-ObservabilityAgent.ps1', 'Test-ObservabilityStack.ps1',
     'versions.psd1', 'VERSION', 'CHANGELOG.md', 'README.md', 'LICENSE', '.gitattributes',
     'config-templates\', 'dashboards\', 'scripts\', 'sql\', 'webcon\',
-    'docs\README.md', 'docs\instalacja\', 'docs\uzytkownik\', 'docs\img\'
+    'docs\README.md', 'docs\installation\', 'docs\user-guide\', 'docs\img\'
 )
-# Pliki lokalne, które nie trafiają do paczki ani do app\ (kopie, logi)
+# Local files excluded from the package and from app\ (backups, logs)
 $script:PackageExcludeRegex = '(\.bak-[^\\]*|\.log|\.tmp)$'
 
 function Write-StackDisclaimer { Write-Host $script:Disclaimer -ForegroundColor DarkGray }
 
 function Get-StackPackageFiles {
-    <# Ścieżki względne (z "\") plików paczki w katalogu źródłowym (repozytorium, paczka albo app\). #>
+    <# Relative paths (with "\") of the package files in the source directory (repository, package or app\). #>
     param([Parameter(Mandatory)][string]$SourceRoot)
     $SourceRoot = [IO.Path]::GetFullPath($SourceRoot).TrimEnd('\')
     $files = New-Object System.Collections.Generic.List[string]
     foreach ($e in $script:PackageEntries) {
         $p = Join-Path $SourceRoot $e.TrimEnd('\')
         if ($e.EndsWith('\')) {
-            if (-not (Test-Path -LiteralPath $p -PathType Container)) { throw "Brak katalogu paczki: $e (w $SourceRoot)" }
+            if (-not (Test-Path -LiteralPath $p -PathType Container)) { throw "Package directory missing: $e (in $SourceRoot)" }
             foreach ($f in Get-ChildItem -LiteralPath $p -Recurse -File -Force) {
                 $rel = $f.FullName.Substring($SourceRoot.Length + 1)
                 if ($rel -notmatch $script:PackageExcludeRegex) { $files.Add($rel) }
@@ -1049,7 +1117,7 @@ function Get-StackPackageFiles {
         } elseif (Test-Path -LiteralPath $p -PathType Leaf) {
             $files.Add($e)
         } else {
-            throw "Brak pliku paczki: $e (w $SourceRoot)"
+            throw "Package file missing: $e (in $SourceRoot)"
         }
     }
     return ,([string[]]($files.ToArray() | Sort-Object))
@@ -1057,8 +1125,8 @@ function Get-StackPackageFiles {
 
 function Get-StackRelease {
     <#
-        Wersja plików instalacyjnych: RELEASE.json (paczka wydania, app\) albo VERSION + commit z gita (klon).
-        Klon: Version = "X.Y.Z+dev.<commit>" (metadane builda - ta sama pozycja co X.Y.Z przy porównaniu wersji).
+        Version of the installation files: RELEASE.json (release package, app\) or VERSION + git commit (clone).
+        Clone: Version = "X.Y.Z+dev.<commit>" (build metadata - same position as X.Y.Z when comparing versions).
     #>
     param([Parameter(Mandatory)][string]$SourceRoot)
     $releaseFile = Join-Path $SourceRoot 'RELEASE.json'
@@ -1067,7 +1135,7 @@ function Get-StackRelease {
         return [pscustomobject]@{ Version = [string]$r.Version; Commit = [string]$r.Commit; BuiltAt = [string]$r.BuiltAt; Dev = ([string]$r.Version -like '*+dev*') }
     }
     $versionFile = Join-Path $SourceRoot 'VERSION'
-    if (-not (Test-Path -LiteralPath $versionFile)) { throw "Brak pliku VERSION ani RELEASE.json w $SourceRoot." }
+    if (-not (Test-Path -LiteralPath $versionFile)) { throw "Neither VERSION nor RELEASE.json found in $SourceRoot." }
     $base = ([IO.File]::ReadAllText($versionFile)).Trim()
     $commit = ''
     if ((Test-Path -LiteralPath (Join-Path $SourceRoot '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)) {
@@ -1080,15 +1148,15 @@ function Get-StackRelease {
 }
 
 function ConvertTo-StackVersion {
-    <# Część X.Y.Z wersji (bez metadanych "+...") jako [version]; brak = 0.0.0. #>
+    <# X.Y.Z part of the version (without "+..." metadata) as [version]; none = 0.0.0. #>
     param([string]$Version)
     if (-not $Version) { return [version]'0.0.0' }
     $core = ($Version -split '[+-]')[0]
-    try { return [version]$core } catch { throw "Niepoprawny numer wersji: '$Version'." }
+    try { return [version]$core } catch { throw "Invalid version number: '$Version'." }
 }
 
 function Test-PathInside {
-    <# Czy $Path jest katalogiem $Parent lub leży w nim (bez rozróżniania wielkości liter). #>
+    <# Whether $Path is the $Parent directory or lies inside it (case-insensitive). #>
     param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Parent)
     $p = [IO.Path]::GetFullPath($Path).TrimEnd('\') + '\'
     $q = [IO.Path]::GetFullPath($Parent).TrimEnd('\') + '\'
@@ -1096,22 +1164,22 @@ function Test-PathInside {
 }
 
 function Assert-InstallLocation {
-    <# Pliki instalacyjne nie mogą leżeć w katalogu instalacji (poza app\) ani zawierać go. #>
+    <# Installation files must not be inside the installation directory (except app\) nor contain it. #>
     param([Parameter(Mandatory)][string]$SourceRoot, [Parameter(Mandatory)]$Layout)
     $app = Join-Path $Layout.Root 'app'
     if ((Test-PathInside -Path $SourceRoot -Parent $Layout.Root) -and -not (Test-PathInside -Path $SourceRoot -Parent $app)) {
-        throw ("Pliki instalacyjne ($SourceRoot) leżą w katalogu instalacji $($Layout.Root) - usunięcie stosu z -RemoveFiles " +
-               "usunęłoby je razem z danymi. Przenieś je (np. do C:\Install) i uruchom ponownie.")
+        throw ("The installation files ($SourceRoot) are inside the installation directory $($Layout.Root) - removing the stack with -RemoveFiles " +
+               "would delete them together with the data. Move them (e.g. to C:\Install) and run again.")
     }
     if (Test-PathInside -Path $Layout.Root -Parent $SourceRoot) {
-        throw "Katalog instalacji $($Layout.Root) leży w katalogu plików instalacyjnych ($SourceRoot) - wybierz inny -Root."
+        throw "The installation directory $($Layout.Root) is inside the installation files directory ($SourceRoot) - choose a different -Root."
     }
 }
 
 function Copy-StackApp {
     <#
-        Tworzy od nowa <Root>\app z plików instalacyjnych (smoke test, odinstalowanie, zmiana parametrów bez paczki).
-        $Files = ścieżki względne; brak = pełna lista paczki. Uruchomienie z app\ = pominięcie (ta sama wersja).
+        Recreates <Root>\app from the installation files (smoke test, uninstall, parameter changes without the package).
+        $Files = relative paths; none = full package list. Running from app\ = skipped (same version).
     #>
     param(
         [Parameter(Mandatory)][string]$SourceRoot,
@@ -1121,7 +1189,7 @@ function Copy-StackApp {
     )
     $app = Join-Path $Layout.Root 'app'
     if (Test-PathInside -Path $SourceRoot -Parent $app) {
-        Write-Ok "Uruchomiono z $app - kopia bez zmian."
+        Write-Ok "Running from $app - copy left unchanged."
         return $app
     }
     if (-not $Files) { $Files = Get-StackPackageFiles -SourceRoot $SourceRoot }
@@ -1135,12 +1203,12 @@ function Copy-StackApp {
     Write-Utf8NoBom -Path (Join-Path $app 'RELEASE.json') -Content ([ordered]@{
         Version = $Release.Version; Commit = $Release.Commit; BuiltAt = $Release.BuiltAt } | ConvertTo-Json)
     Get-ChildItem -LiteralPath $app -Recurse -File | Unblock-File
-    Write-Ok "Kopia plików instalacyjnych: $app ($($Files.Count) plików, wersja $($Release.Version))"
+    Write-Ok "Installation files copy: $app ($($Files.Count) files, version $($Release.Version))"
     return $app
 }
 
 function Get-StackDocsUrl {
-    <# Adres dokumentacji dla wersji: tag wydania albo main (klon / wersja dev). #>
+    <# Documentation URL for the version: release tag or main (clone / dev version). #>
     param([Parameter(Mandatory)]$Release)
     if ($Release.Dev) { return "$script:PublicRepoUrl/blob/main" }
     return "$script:PublicRepoUrl/blob/v$($Release.Version)"
@@ -1148,8 +1216,8 @@ function Get-StackDocsUrl {
 
 function Assert-SafeRemoveRoot {
     <#
-        Przed Remove-Item katalogu instalacji: odmowa, gdy zawiera repozytorium git; potwierdzenie, gdy zawiera
-        elementy spoza układu stosu/agenta (-Force pomija pytanie).
+        Before Remove-Item of the installation directory: refuses when it contains a git repository; asks for confirmation when it contains
+        items outside the stack/agent layout (-Force skips the prompt).
     #>
     param([Parameter(Mandatory)]$Layout, [switch]$Force)
     $root = $Layout.Root
@@ -1159,24 +1227,24 @@ function Assert-SafeRemoveRoot {
         $gitDirs += @(Get-Item -Path (Join-Path $root $pattern) -Force -ErrorAction SilentlyContinue | ForEach-Object { $_.FullName })
     }
     if ($gitDirs.Count) {
-        throw ("Katalog instalacji zawiera repozytorium git - usunięcie odrzucone:`n  " + ($gitDirs -join "`n  ") +
-               "`nPrzenieś repozytorium poza $root i uruchom ponownie.")
+        throw ("The installation directory contains a git repository - removal refused:`n  " + ($gitDirs -join "`n  ") +
+               "`nMove the repository outside $root and run again.")
     }
     $known = 'bin', 'config', 'data', 'logs', 'services', 'secrets', 'downloads', 'agent-bundle', 'agent-bundle.zip', 'app'
     $unknown = @(Get-ChildItem -LiteralPath $root -Force | Where-Object { $known -notcontains $_.Name.ToLowerInvariant() } | ForEach-Object { $_.FullName })
     if ($unknown.Count) {
-        Write-Warn "Katalog instalacji zawiera elementy spoza stosu:`n      $($unknown -join "`n      ")"
+        Write-Warn "The installation directory contains items that do not belong to the stack:`n      $($unknown -join "`n      ")"
         if (-not $Force) {
             $answer = $null
-            try { $answer = Read-Host "Usunąć $root razem z nimi? (tak/nie)" }
-            catch { throw 'Brak konsoli do potwierdzenia - nic nie usunięto. Przenieś pliki spoza stosu albo uruchom z -Force.' }
-            if ($answer -ne 'tak') { throw 'Przerwano - nic nie usunięto z katalogu instalacji (pliki spoza stosu: przenieś je albo użyj -Force).' }
+            try { $answer = Read-Host "Delete $root together with them? (yes/no)" }
+            catch { throw 'No console available for confirmation - nothing was deleted. Move the files that do not belong to the stack or run with -Force.' }
+            if ($answer -ne 'yes') { throw 'Aborted - nothing was deleted from the installation directory (files that do not belong to the stack: move them or use -Force).' }
         }
     }
 }
 
 function Remove-StackRoot {
-    <# Usuwa katalog instalacji; bieżący katalog poza nim (blokada katalogu bieżącego przy uruchomieniu z app\). #>
+    <# Removes the installation directory; moves the current directory outside it first (the current directory is locked when running from app\). #>
     param([Parameter(Mandatory)]$Layout)
     if (Test-PathInside -Path (Get-Location).ProviderPath -Parent $Layout.Root) { Set-Location -LiteralPath $env:SystemRoot }
     [Environment]::CurrentDirectory = $env:SystemRoot
@@ -1184,7 +1252,51 @@ function Remove-StackRoot {
 }
 
 # ---------------------------------------------------------------------
-# Ustawienia instalacji (bez sekretów)
+# Grafana: legacy folders
+# ---------------------------------------------------------------------
+function Remove-GrafanaEmptyFolder {
+    <#
+    .SYNOPSIS
+    Removes Grafana folders with the given titles if they are empty (no dashboards, no alert rules).
+    Used after renaming provisioned alert folders: provisioning moves the rules (same uid) to the new folder,
+    but the old folder stays. Without forceDeleteRules Grafana refuses to delete a folder that still has rules.
+    Design: docs/projekt/projekt-wersja-angielska.md
+    #>
+    param(
+        [Parameter(Mandatory)][string]$PasswordFile,
+        [Parameter(Mandatory)][string[]]$Title,
+        [string]$BaseUrl = 'http://127.0.0.1:3000',
+        [int]$Attempts = 3
+    )
+    try { $adminPwd = [IO.File]::ReadAllText($PasswordFile, [Text.Encoding]::UTF8) } catch { Write-Warn "Grafana folders not checked - cannot read $PasswordFile"; return }
+    $headers = @{ Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("admin:$adminPwd")) }
+    # Invoke-RestMethod in PS 5.1 decodes the response as ISO-8859-1 (Grafana sends no charset) - non-ASCII folder
+    # titles would never match; read the raw bytes as UTF-8
+    try {
+        $resp = Invoke-WebRequest -Uri "$BaseUrl/api/folders?limit=1000" -Headers $headers -TimeoutSec 20 -UseBasicParsing
+        $folders = [Text.Encoding]::UTF8.GetString($resp.RawContentStream.ToArray()) | ConvertFrom-Json
+    }
+    catch { Write-Warn "Grafana folders not checked: $($_.Exception.Message)"; return }
+    foreach ($f in $folders) {
+        if ($Title -notcontains $f.title) { continue }
+        $dash = Invoke-RestMethod -Uri "$BaseUrl/api/search?type=dash-db&folderUIDs=$($f.uid)" -Headers $headers -TimeoutSec 20
+        if (@($dash | Where-Object { $_ }).Count -gt 0) { Write-Warn "Grafana folder '$($f.title)' kept - it contains dashboards."; continue }
+        $removed = $false
+        for ($i = 1; $i -le $Attempts -and -not $removed; $i++) {
+            try {
+                $null = Invoke-RestMethod -Method Delete -Uri "$BaseUrl/api/folders/$($f.uid)?forceDeleteRules=false" -Headers $headers -TimeoutSec 20
+                $removed = $true
+            } catch {
+                # right after start, provisioning may not have moved the alert rules yet
+                if ($i -lt $Attempts) { Start-Sleep -Seconds 10 } else { Write-Warn "Grafana folder '$($f.title)' not removed (it still contains alert rules?): $($_.Exception.Message). It will be retried on the next installer run." }
+            }
+        }
+        if ($removed) { Write-Ok "Removed the empty legacy Grafana folder '$($f.title)'" }
+    }
+}
+
+# ---------------------------------------------------------------------
+# Installation settings (without secrets)
 # ---------------------------------------------------------------------
 function Save-InstallSettings {
     param([Parameter(Mandatory)]$Layout, [Parameter(Mandatory)][hashtable]$Settings)

@@ -1,7 +1,7 @@
 {
   "uid": "windows-host",
-  "title": "Windows – obciążenie hosta",
-  "description": "Obciążenie maszyny Windows z WEBCON: CPU, pamięć, dyski, sieć, procesy, IIS (prometheus.exporter.windows w Alloy).",
+  "title": "Windows – Host load",
+  "description": "Load of the Windows machine running WEBCON: CPU, memory, disks, network, processes, IIS (prometheus.exporter.windows in Alloy).",
   "tags": [
     "windows",
     "host"
@@ -23,17 +23,17 @@
       "tooltip": "",
       "targetBlank": false,
       "asDropdown": false,
-      "title": "WEBCON – Wydajność",
+      "title": "WEBCON – Performance",
       "icon": "dashboard",
       "type": "link",
       "url": "/d/webcon-performance"
     },
     {
-      "title": "Dokumentacja",
+      "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/uzytkownik/06-host-windows.md",
-      "tooltip": "Opis paneli i jak je czytać (GitHub)",
+      "url": "{{DOCS_URL}}/docs/user-guide/06-windows-host.md",
+      "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,
       "targetBlank": true,
@@ -64,7 +64,7 @@
       },
       {
         "name": "process",
-        "label": "Procesy",
+        "label": "Processes",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -96,7 +96,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Przegląd",
+      "title": "Overview",
       "id": 1,
       "collapsed": false,
       "gridPos": {
@@ -111,7 +111,7 @@
       "type": "stat",
       "title": "CPU",
       "id": 2,
-      "description": "Średnie obciążenie wszystkich rdzeni (1 - idle).",
+      "description": "Average utilization of all cores (1 - idle).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -178,9 +178,9 @@
     },
     {
       "type": "stat",
-      "title": "Pamięć zajęta",
+      "title": "Memory used",
       "id": 3,
-      "description": "Pamięć fizyczna w użyciu (bez cache dostępnego do odzyskania).",
+      "description": "Physical memory in use (excluding reclaimable cache).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -249,7 +249,7 @@
       "type": "stat",
       "title": "Commit",
       "id": 4,
-      "description": "Pamięć zarezerwowana (RAM + plik stronicowania) względem limitu. Blisko 100% = ryzyko OutOfMemory.",
+      "description": "Committed memory (RAM + page file) relative to the limit. Close to 100% = risk of OutOfMemory.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -316,9 +316,9 @@
     },
     {
       "type": "stat",
-      "title": "Kolejka procesora",
+      "title": "Processor queue",
       "id": 5,
-      "description": "Wątki gotowe do wykonania czekające na CPU. Trwale > 2 × liczba rdzeni = niedobór CPU.",
+      "description": "Ready threads waiting for CPU. Consistently > 2 × number of cores = CPU shortage.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -385,9 +385,9 @@
     },
     {
       "type": "stat",
-      "title": "Najmniej wolnego miejsca",
+      "title": "Lowest free space",
       "id": 6,
-      "description": "Najmniejszy procent wolnego miejsca wśród woluminów.",
+      "description": "Lowest free space percentage across volumes.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -458,9 +458,9 @@
     },
     {
       "type": "stat",
-      "title": "Czas od startu",
+      "title": "Uptime",
       "id": 7,
-      "description": "Uptime systemu.",
+      "description": "System uptime.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -532,9 +532,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Obciążenie CPU wg trybu",
+      "title": "CPU utilization by mode",
       "id": 9,
-      "description": "Suma = obciążenie CPU. user = aplikacje, privileged = jądro/sterowniki, interrupt/dpc = obsługa sprzętu.",
+      "description": "Sum = CPU utilization. user = applications, privileged = kernel/drivers, interrupt/dpc = hardware handling.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -597,9 +597,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Obciążenie per rdzeń",
+      "title": "Utilization per core",
       "id": 10,
-      "description": "Nierówne obciążenie rdzeni = praca jednowątkowa lub affinity.",
+      "description": "Uneven core utilization = single-threaded work or affinity.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -617,7 +617,7 @@
             "uid": "prometheus"
           },
           "expr": "100 * (1 - avg by (core) (rate(windows_cpu_time_total{instance=~\"$instance\",mode=\"idle\"}[$__rate_interval])))",
-          "legendFormat": "rdzeń {{core}}",
+          "legendFormat": "core {{core}}",
           "refId": "A",
           "range": true
         }
@@ -658,7 +658,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Kolejka procesora",
+      "title": "Processor queue",
       "id": 11,
       "description": "Processor Queue Length.",
       "datasource": {
@@ -678,7 +678,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_system_processor_queue_length{instance=~\"$instance\"}",
-          "legendFormat": "kolejka",
+          "legendFormat": "queue",
           "refId": "A",
           "range": true
         }
@@ -717,9 +717,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Przełączenia kontekstu / s",
+      "title": "Context switches /s",
       "id": 12,
-      "description": "Gwałtowny wzrost przy stałym obciążeniu = rywalizacja o blokady / za dużo wątków.",
+      "description": "Sharp increase under steady load = lock contention / too many threads.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -776,9 +776,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Procesy i wątki",
+      "title": "Processes and threads",
       "id": 13,
-      "description": "Liczba procesów i wątków w systemie.",
+      "description": "Number of processes and threads in the system.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -796,7 +796,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_system_processes{instance=~\"$instance\"}",
-          "legendFormat": "procesy",
+          "legendFormat": "processes",
           "refId": "A",
           "range": true
         },
@@ -806,7 +806,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_system_threads{instance=~\"$instance\"}",
-          "legendFormat": "wątki",
+          "legendFormat": "threads",
           "refId": "B",
           "range": true
         }
@@ -845,7 +845,7 @@
     },
     {
       "type": "row",
-      "title": "Pamięć",
+      "title": "Memory",
       "id": 14,
       "collapsed": false,
       "gridPos": {
@@ -858,9 +858,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Pamięć fizyczna",
+      "title": "Physical memory",
       "id": 15,
-      "description": "Dostępna = wolna + standby (cache do odzyskania).",
+      "description": "Available = free + standby (reclaimable cache).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -878,7 +878,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_memory_physical_total_bytes{instance=~\"$instance\"}",
-          "legendFormat": "całkowita",
+          "legendFormat": "total",
           "refId": "A",
           "range": true
         },
@@ -888,7 +888,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_memory_physical_total_bytes{instance=~\"$instance\"} - windows_memory_available_bytes{instance=~\"$instance\"}",
-          "legendFormat": "w użyciu",
+          "legendFormat": "in use",
           "refId": "B",
           "range": true
         },
@@ -898,7 +898,7 @@
             "uid": "prometheus"
           },
           "expr": "windows_memory_available_bytes{instance=~\"$instance\"}",
-          "legendFormat": "dostępna",
+          "legendFormat": "available",
           "refId": "C",
           "range": true
         },
@@ -949,7 +949,7 @@
       "type": "timeseries",
       "title": "Commit vs limit",
       "id": 16,
-      "description": "Commit zbliżony do limitu = brak pamięci wirtualnej (rozważ RAM lub plik stronicowania).",
+      "description": "Commit close to the limit = out of virtual memory (consider more RAM or a larger page file).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1016,9 +1016,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Stronicowanie z dysku (hard faults)",
+      "title": "Paging from disk (hard faults)",
       "id": 17,
-      "description": "Trwałe odczyty stron z dysku = za mało RAM (najlepszy sygnał presji pamięci).",
+      "description": "Sustained page reads from disk = not enough RAM (the best memory pressure signal).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1036,7 +1036,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_memory_swap_page_reads_total{instance=~\"$instance\"}[$__rate_interval])",
-          "legendFormat": "odczyty stron / s",
+          "legendFormat": "page reads /s",
           "refId": "A",
           "range": true
         },
@@ -1046,7 +1046,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_memory_swap_page_writes_total{instance=~\"$instance\"}[$__rate_interval])",
-          "legendFormat": "zapisy stron / s",
+          "legendFormat": "page writes /s",
           "refId": "B",
           "range": true
         }
@@ -1087,7 +1087,7 @@
       "type": "timeseries",
       "title": "Page faults / s",
       "id": 18,
-      "description": "Wszystkie page faults (miękkie i twarde).",
+      "description": "All page faults (soft and hard).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1144,9 +1144,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Pule jądra",
+      "title": "Kernel pools",
       "id": 19,
-      "description": "Stały wzrost puli nonpaged = wyciek w sterowniku.",
+      "description": "Steady growth of the nonpaged pool = driver leak.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1213,7 +1213,7 @@
     },
     {
       "type": "row",
-      "title": "Dyski",
+      "title": "Disks",
       "id": 20,
       "collapsed": false,
       "gridPos": {
@@ -1226,9 +1226,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Zajętość dysku",
+      "title": "Disk usage",
       "id": 21,
-      "description": "Procent czasu, w którym wolumin obsługiwał żądania (100 - % Idle Time).",
+      "description": "Percentage of time the volume was servicing requests (100 - % Idle Time).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1287,9 +1287,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Opóźnienie odczytu / zapisu",
+      "title": "Read / write latency",
       "id": 22,
-      "description": "Średni czas operacji. SSD: < 5 ms dobrze, > 20 ms problem. Kluczowe dla SQL Server.",
+      "description": "Average operation time. SSD: < 5 ms good, > 20 ms problem. Critical for SQL Server.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1307,7 +1307,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_read_latency_seconds_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval]) / rate(windows_logical_disk_reads_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} odczyt",
+          "legendFormat": "{{volume}} read",
           "refId": "A",
           "range": true
         },
@@ -1317,7 +1317,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_write_latency_seconds_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval]) / rate(windows_logical_disk_writes_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} zapis",
+          "legendFormat": "{{volume}} write",
           "refId": "B",
           "range": true
         }
@@ -1356,7 +1356,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Kolejka dysku",
+      "title": "Disk queue",
       "id": 23,
       "description": "Current Disk Queue Length.",
       "datasource": {
@@ -1417,7 +1417,7 @@
       "type": "timeseries",
       "title": "IOPS",
       "id": 24,
-      "description": "Operacje na sekundę.",
+      "description": "Operations per second.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1435,7 +1435,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_reads_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} odczyt",
+          "legendFormat": "{{volume}} read",
           "refId": "A",
           "range": true
         },
@@ -1445,7 +1445,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_writes_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} zapis",
+          "legendFormat": "{{volume}} write",
           "refId": "B",
           "range": true
         }
@@ -1484,9 +1484,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Przepustowość",
+      "title": "Throughput",
       "id": 25,
-      "description": "Bajty na sekundę.",
+      "description": "Bytes per second.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1504,7 +1504,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_read_bytes_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} odczyt",
+          "legendFormat": "{{volume}} read",
           "refId": "A",
           "range": true
         },
@@ -1514,7 +1514,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_logical_disk_write_bytes_total{instance=~\"$instance\",volume!~\"HarddiskVolume.*\"}[$__rate_interval])",
-          "legendFormat": "{{volume}} zapis",
+          "legendFormat": "{{volume}} write",
           "refId": "B",
           "range": true
         }
@@ -1553,13 +1553,13 @@
     },
     {
       "type": "bargauge",
-      "title": "Wolne miejsce",
+      "title": "Free space",
       "id": 26,
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Procent wolnego miejsca na woluminach.",
+      "description": "Free space percentage on volumes.",
       "gridPos": {
         "x": 16,
         "h": 7,
@@ -1626,7 +1626,7 @@
     },
     {
       "type": "row",
-      "title": "Sieć",
+      "title": "Network",
       "id": 27,
       "collapsed": false,
       "gridPos": {
@@ -1639,9 +1639,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Ruch sieciowy",
+      "title": "Network traffic",
       "id": 28,
-      "description": "Bity na sekundę; przerywana linia (prawa oś) = wykorzystanie przepustowości karty w %.",
+      "description": "Bits per second; dashed line (right axis) = adapter bandwidth utilization in %.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1659,7 +1659,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_net_bytes_received_total{instance=~\"$instance\"}[$__rate_interval]) * 8",
-          "legendFormat": "{{nic}} odebrane",
+          "legendFormat": "{{nic}} received",
           "refId": "A",
           "range": true
         },
@@ -1669,7 +1669,7 @@
             "uid": "prometheus"
           },
           "expr": "rate(windows_net_bytes_sent_total{instance=~\"$instance\"}[$__rate_interval]) * 8",
-          "legendFormat": "{{nic}} wysłane",
+          "legendFormat": "{{nic}} sent",
           "refId": "B",
           "range": true
         },
@@ -1679,7 +1679,7 @@
             "uid": "prometheus"
           },
           "expr": "100 * rate(windows_net_bytes_total{instance=~\"$instance\"}[$__rate_interval]) / windows_net_current_bandwidth_bytes{instance=~\"$instance\"}",
-          "legendFormat": "{{nic}} wykorzystanie łącza %",
+          "legendFormat": "{{nic}} link utilization %",
           "refId": "C",
           "range": true
         }
@@ -1749,9 +1749,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Błędy i odrzucone pakiety",
+      "title": "Errors and discarded packets",
       "id": 29,
-      "description": "Powinno być 0.",
+      "description": "Should be 0.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1769,7 +1769,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (nic) (rate(windows_net_packets_received_errors_total{instance=~\"$instance\"}[$__rate_interval]) + rate(windows_net_packets_outbound_errors_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{nic}} błędy",
+          "legendFormat": "{{nic}} errors",
           "refId": "A",
           "range": true
         },
@@ -1779,7 +1779,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (nic) (rate(windows_net_packets_received_discarded_total{instance=~\"$instance\"}[$__rate_interval]) + rate(windows_net_packets_outbound_discarded_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "{{nic}} odrzucone",
+          "legendFormat": "{{nic}} discarded",
           "refId": "B",
           "range": true
         }
@@ -1820,7 +1820,7 @@
       "type": "timeseries",
       "title": "TCP",
       "id": 30,
-      "description": "Retransmisje (prawa oś, %) > 1% = problemy sieci.",
+      "description": "Retransmissions (right axis, %) > 1% = network problems.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1838,7 +1838,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(windows_tcp_connections_established{instance=~\"$instance\"})",
-          "legendFormat": "połączenia nawiązane",
+          "legendFormat": "established connections",
           "refId": "A",
           "range": true
         },
@@ -1848,7 +1848,7 @@
             "uid": "prometheus"
           },
           "expr": "100 * sum(rate(windows_tcp_segments_retransmitted_total{instance=~\"$instance\"}[$__rate_interval])) / sum(rate(windows_tcp_segments_sent_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "retransmisje %",
+          "legendFormat": "retransmissions %",
           "refId": "B",
           "range": true
         },
@@ -1858,7 +1858,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(windows_tcp_connections_reset_total{instance=~\"$instance\"}[$__rate_interval]))",
-          "legendFormat": "resety / s",
+          "legendFormat": "resets /s",
           "refId": "C",
           "range": true
         }
@@ -1918,7 +1918,7 @@
     },
     {
       "type": "row",
-      "title": "Procesy (WEBCON, IIS, SQL Server, stos)",
+      "title": "Processes (WEBCON, IIS, SQL Server, stack)",
       "id": 31,
       "collapsed": false,
       "gridPos": {
@@ -1931,9 +1931,9 @@
     },
     {
       "type": "timeseries",
-      "title": "CPU per proces",
+      "title": "CPU per process",
       "id": 32,
-      "description": "Udział procesu w całkowitej mocy CPU (100% = wszystkie rdzenie).",
+      "description": "Process share of total CPU capacity (100% = all cores).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1990,9 +1990,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Pamięć prywatna (working set)",
+      "title": "Private memory (working set)",
       "id": 33,
-      "description": "Prywatny working set – stały wzrost = wyciek pamięci.",
+      "description": "Private working set – steady growth = memory leak.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2049,9 +2049,9 @@
     },
     {
       "type": "timeseries",
-      "title": "I/O per proces",
+      "title": "I/O per process",
       "id": 34,
-      "description": "Odczyt + zapis + inne operacje I/O (dysk i sieć).",
+      "description": "Read + write + other I/O operations (disk and network).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2108,9 +2108,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Uchwyty",
+      "title": "Handles",
       "id": 35,
-      "description": "Stały wzrost = wyciek uchwytów.",
+      "description": "Steady growth = handle leak.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2167,9 +2167,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Wątki",
+      "title": "Threads",
       "id": 36,
-      "description": "Liczba wątków procesu.",
+      "description": "Number of process threads.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2239,9 +2239,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Żądania / s",
+      "title": "Requests /s",
       "id": 38,
-      "description": "Wszystkie metody HTTP.",
+      "description": "All HTTP methods.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2298,9 +2298,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Bieżące połączenia",
+      "title": "Current connections",
       "id": 39,
-      "description": "Aktywne połączenia do witryny.",
+      "description": "Active connections to the site.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2357,9 +2357,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Odrzucone żądania async I/O / s",
+      "title": "Rejected async I/O requests /s",
       "id": 40,
-      "description": "Powinno być 0.",
+      "description": "Should be 0.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"

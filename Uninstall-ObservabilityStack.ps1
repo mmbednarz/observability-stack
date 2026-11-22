@@ -1,18 +1,18 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Usuwa usługi stosu obserwowalności. Dane, konfiguracja i binarki zostają, chyba że podano -RemoveFiles.
+    Removes the observability stack services. Data, configuration and binaries are kept unless -RemoveFiles is specified.
 
 .EXAMPLE
     .\Uninstall-ObservabilityStack.ps1
 .EXAMPLE
-    .\Uninstall-ObservabilityStack.ps1 -RemoveFiles   # usuwa cały katalog instalacji (także dane i sekrety)
+    .\Uninstall-ObservabilityStack.ps1 -RemoveFiles   # removes the entire installation directory (including data and secrets)
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     [string]$Root = 'C:\Observability',
     [switch]$RemoveFiles,
-    # -RemoveFiles bez pytania o elementy spoza stosu w katalogu instalacji (repozytorium git zawsze blokuje usunięcie)
+    # -RemoveFiles without prompting about non-stack items in the installation directory (a git repository always blocks removal)
     [switch]$Force
 )
 
@@ -21,32 +21,32 @@ Import-Module (Join-Path $PSScriptRoot 'scripts\modules\ObservabilityStack.psm1'
 Assert-Administrator
 
 $Layout = Get-StackLayout -Root $Root
-# -RemoveFiles: kontrola zawartości katalogu PRZED usunięciem usług (odmowa nie zostawia stosu w połowie)
+# -RemoveFiles: check the directory contents BEFORE removing services (a refusal does not leave the stack half-removed)
 if ($RemoveFiles) { Assert-SafeRemoveRoot -Layout $Layout -Force:$Force }
 
-Write-Step 'Usuwanie usług'
+Write-Step 'Removing services'
 foreach ($id in 'obs-grafana', 'obs-alloy', 'obs-tempo', 'obs-loki', 'obs-prometheus') {
     if ($PSCmdlet.ShouldProcess($id, 'Uninstall service')) {
         Uninstall-WinSWService -Id $id -ServicesRoot $Layout.Services
     }
 }
 
-Write-Step 'Reguły firewall'
+Write-Step 'Firewall rules'
 foreach ($name in 'Observability - Grafana', 'Observability - OTLP', 'Observability - Agenci') {
     $rule = Get-NetFirewallRule -DisplayName $name -ErrorAction SilentlyContinue
     if ($rule -and $PSCmdlet.ShouldProcess($name, 'Remove firewall rule')) {
         $rule | Remove-NetFirewallRule
-        Write-Ok "Usunięto regułę $name"
+        Write-Ok "Removed rule $name"
     }
 }
 
 if ($RemoveFiles) {
-    Write-Step "Usuwanie $($Layout.Root)"
+    Write-Step "Removing $($Layout.Root)"
     if ($PSCmdlet.ShouldProcess($Layout.Root, 'Remove directory')) {
         Remove-StackRoot -Layout $Layout
-        Write-Ok 'Usunięto katalog instalacji.'
+        Write-Ok 'Installation directory removed.'
     }
 } else {
-    Write-Info "Pliki pozostawione w $($Layout.Root) (użyj -RemoveFiles, aby usunąć)."
+    Write-Info "Files left in $($Layout.Root) (use -RemoveFiles to remove them)."
 }
-Write-Info 'Konfiguracja WEBCON nie jest zmieniana - przywróć kopie *.bak-* appsettings, jeśli potrzeba.'
+Write-Info 'WEBCON configuration is not changed - restore the *.bak-* appsettings backups if needed.'

@@ -1,37 +1,37 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Konfiguruje OpenTelemetry w WEBCON 2026.2+ (Portal, Serwis) - eksport OTLP/HTTP do lokalnego Alloy.
+    Configures OpenTelemetry in WEBCON 2026.2+ (Portal, Service) - OTLP/HTTP export to the local Alloy.
 
 .DESCRIPTION
-    Modyfikuje sekcję "OpenTelemetry" w plikach appsettings(.Production).json WEBCON:
+    Modifies the "OpenTelemetry" section in the WEBCON appsettings(.Production).json files:
       - Metrics / Tracing / Logs: Enabled = true
-      - Exporters.<nazwa> -> http://localhost:4318/v1/{metrics|traces|logs}, Protocol = http
-        (nazwy jak w przykładach WEBCON 2026: Metrics/Tracing -> "Otlp", Logs -> "Loki"; zmiana: -*ExporterName)
-      - pozostałe eksportery w tych sekcjach -> Enabled = false (chyba że -KeepOtherExporters)
-      - SqlTracing zgodnie z -SqlTracing
-    Ustawia zmienne OTEL_SPAN_EVENT_COUNT_LIMIT, OTEL_METRICS_EXEMPLAR_FILTER i OTEL_RESOURCE_ATTRIBUTES
-    (znacznik komponentu webcon.component = service / portal; istniejące atrybuty są zachowywane):
-      - usługi Windows WEBCON (Serwis) - rejestr usługi; wykrywane są tylko usługi z exe w katalogu zmienianego appsettings
-      - Portal pod IIS - web.config (<aspNetCore><environmentVariables>); zapis restartuje aplikację
-    Znacznik pozwala Alloy nadać stałe nazwy usług ("Portal", "WebCon.WorkFlow") niezależnie od ServiceName
-    w appsettings - docs/projekt/projekt-nazwy-uslug-webcon.md.
-    Przed każdą zmianą tworzy kopię pliku (*.bak-<timestamp>). Upgrade WEBCON może nadpisać pliki -
-    wtedy uruchom skrypt ponownie.
+      - Exporters.<name> -> http://localhost:4318/v1/{metrics|traces|logs}, Protocol = http
+        (names as in the WEBCON 2026 examples: Metrics/Tracing -> "Otlp", Logs -> "Loki"; to change: -*ExporterName)
+      - other exporters in these sections -> Enabled = false (unless -KeepOtherExporters)
+      - SqlTracing according to -SqlTracing
+    Sets the OTEL_SPAN_EVENT_COUNT_LIMIT, OTEL_METRICS_EXEMPLAR_FILTER and OTEL_RESOURCE_ATTRIBUTES variables
+    (component marker webcon.component = service / portal; existing attributes are preserved):
+      - WEBCON Windows services (Service) - service registry key; only services whose exe is in the folder of a modified appsettings file are detected
+      - Portal under IIS - web.config (<aspNetCore><environmentVariables>); saving it restarts the application
+    The marker lets Alloy assign fixed service names ("Portal", "WebCon.WorkFlow") regardless of ServiceName
+    in appsettings - docs/projekt/projekt-nazwy-uslug-webcon.md.
+    Before each change, creates a backup copy of the file (*.bak-<timestamp>). A WEBCON upgrade may overwrite the files -
+    in that case run the script again.
 
-    Logi przez OTLP eksportuje Portal i (od 2026.2) Serwis; starsze wersje Serwisu - pliki Serilog (-ServiceLogPath instalatora).
+    Logs are exported over OTLP by the Portal and (since 2026.2) the Service; older Service versions - Serilog files (installer -ServiceLogPath).
 
 .PARAMETER AppSettingsPath
-    Pliki do zmiany. Brak = wyszukanie plików z sekcją "OpenTelemetry" w -SearchRoot.
+    Files to change. If omitted, files with an "OpenTelemetry" section are searched for in -SearchRoot.
 
 .PARAMETER SearchRoot
-    Katalogi przeszukiwane przy braku -AppSettingsPath. Domyślnie <Program Files>\WEBCON i <Program Files (x86)>\WEBCON
-    (istniejące).
+    Folders searched when -AppSettingsPath is omitted. Default: <Program Files>\WEBCON and <Program Files (x86)>\WEBCON
+    (those that exist).
 
 .PARAMETER SqlTracing
-    Threshold - SQL tracing włączony, krótkie spany odrzuca Alloy (próg z instalacji, domyślnie 1 s)
-    All       - SQL tracing włączony, bez filtrowania (próg instalatora = 0)
-    Off       - SQL tracing wyłączony w WEBCON
+    Threshold - SQL tracing enabled, Alloy drops short spans (threshold from the installation, default 1 s)
+    All       - SQL tracing enabled, no filtering (installer threshold = 0)
+    Off       - SQL tracing disabled in WEBCON
 
 .EXAMPLE
     .\scripts\Set-WebconTelemetry.ps1 -WhatIf
@@ -84,7 +84,7 @@ function Set-SignalExporter {
     if (-not $KeepOtherExporters) {
         foreach ($p in @($exporters.PSObject.Properties)) {
             if ($p.Name -ne $ExporterName -and $p.Value -is [System.Management.Automation.PSCustomObject] -and $p.Value.PSObject.Properties['Enabled']) {
-                if ($p.Value.Enabled) { Write-Info "  wyłączam eksporter $($p.Name)" }
+                if ($p.Value.Enabled) { Write-Info "  disabling exporter $($p.Name)" }
                 $p.Value.Enabled = $false
             }
         }
@@ -94,7 +94,7 @@ function Set-SignalExporter {
         Endpoint = "$OtlpEndpoint$Path"
         Protocol = 'http'
     }
-    # Bez pustego Headers: WEBCON 2026.2.5 nie startuje przy "Headers": "" (IndexOutOfRangeException przy budowaniu hosta)
+    # No empty Headers: WEBCON 2026.2.5 fails to start with "Headers": "" (IndexOutOfRangeException while building the host)
     $old = $exporters.PSObject.Properties[$ExporterName]
     if ($old -and $old.Value -is [System.Management.Automation.PSCustomObject] -and $old.Value.PSObject.Properties['Headers'] -and $old.Value.Headers) {
         $exporter.Headers = $old.Value.Headers
@@ -102,7 +102,7 @@ function Set-SignalExporter {
     Set-JsonProperty -Object $exporters -Name $ExporterName -Value ([pscustomobject]$exporter)
 }
 
-# OTEL_RESOURCE_ATTRIBUTES: lista klucz=wartość rozdzielona przecinkami - ustawia webcon.component, resztę zachowuje
+# OTEL_RESOURCE_ATTRIBUTES: comma-separated key=value list - sets webcon.component, keeps the rest
 function Merge-ResourceAttribute {
     param([string]$Current, [Parameter(Mandatory)][string]$Component)
     $pairs = [ordered]@{}
@@ -116,38 +116,38 @@ function Merge-ResourceAttribute {
 }
 
 # ---------------------------------------------------------------------
-Write-Step 'Pliki konfiguracyjne WEBCON'
+Write-Step 'WEBCON configuration files'
 if (-not $AppSettingsPath) {
     if (-not $SearchRoot) {
-        # WEBCON bywa instalowany w Program Files (x86) (zweryfikowano 2026.2.5 na Windows Server 2019)
+        # WEBCON is sometimes installed in Program Files (x86) (verified with 2026.2.5 on Windows Server 2019)
         $SearchRoot = @($env:ProgramFiles, ${env:ProgramFiles(x86)} | Where-Object { $_ } | Select-Object -Unique |
             ForEach-Object { Join-Path $_ 'WEBCON' })
     }
     $roots = @($SearchRoot | Where-Object { Test-Path -LiteralPath $_ })
-    if (-not $roots) { throw "Brak katalogu $($SearchRoot -join ', ') - podaj -AppSettingsPath lub -SearchRoot." }
-    Write-Info "Przeszukiwane: $($roots -join ', ')"
-    # Filtr nazw w Where-Object: PS 5.1 ignoruje -Include razem z -LiteralPath (czytałby wszystkie pliki, np. zablokowane indeksy Solr)
+    if (-not $roots) { throw "Folder $($SearchRoot -join ', ') not found - specify -AppSettingsPath or -SearchRoot." }
+    Write-Info "Searching: $($roots -join ', ')"
+    # Name filter in Where-Object: PS 5.1 ignores -Include together with -LiteralPath (it would read all files, e.g. locked Solr indexes)
     $candidates = Get-ChildItem -LiteralPath $roots -Recurse -File -ErrorAction SilentlyContinue |
         Where-Object { ($_.Name -eq 'appsettings.json' -or $_.Name -eq 'appsettings.Production.json') -and $_.FullName -notmatch '\\(bin|obj)\\' } |
         Where-Object { Select-String -LiteralPath $_.FullName -Pattern '"OpenTelemetry"' -SimpleMatch -Quiet -ErrorAction SilentlyContinue }
-    # Jeśli w katalogu jest appsettings.Production.json z sekcją OpenTelemetry - zmieniamy tylko jego (nadpisuje bazowy)
+    # If the folder contains appsettings.Production.json with an OpenTelemetry section - change only that file (it overrides the base one)
     $byDir = $candidates | Group-Object DirectoryName
     $AppSettingsPath = foreach ($g in $byDir) {
         $prod = $g.Group | Where-Object Name -eq 'appsettings.Production.json'
         if ($prod) { $prod.FullName } else { $g.Group[0].FullName }
     }
-    if (-not $AppSettingsPath) { throw "Nie znaleziono plików appsettings z sekcją OpenTelemetry w $($roots -join ', ')." }
-    Write-Info 'Znalezione pliki:'
+    if (-not $AppSettingsPath) { throw "No appsettings files with an OpenTelemetry section found in $($roots -join ', ')." }
+    Write-Info 'Files found:'
     $AppSettingsPath | ForEach-Object { Write-Info "  $_" }
     if (-not $Force -and -not $WhatIfPreference) {
-        $answer = Read-Host 'Zmienić powyższe pliki? (T/N)'
-        if ($answer -notmatch '^(t|y)') { Write-Warn 'Przerwano.'; return }
+        $answer = Read-Host 'Change the files listed above? (Y/N)'
+        if ($answer -notmatch '^(t|y)') { Write-Warn 'Cancelled.'; return }
     }
 }
 
 $stamp = Get-Date -Format 'yyyyMMddHHmmss'
 foreach ($file in $AppSettingsPath) {
-    if (-not (Test-Path -LiteralPath $file)) { throw "Brak pliku $file" }
+    if (-not (Test-Path -LiteralPath $file)) { throw "File $file not found" }
     Write-Step $file
     $bytes = [IO.File]::ReadAllBytes($file)
     $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
@@ -155,7 +155,7 @@ foreach ($file in $AppSettingsPath) {
     try {
         $json = $raw | ConvertFrom-Json
     } catch {
-        throw "Nie można sparsować $file (komentarze / przecinki końcowe?). Popraw plik lub uruchom w PowerShell 7. Błąd: $($_.Exception.Message)"
+        throw "Cannot parse $file (comments / trailing commas?). Fix the file or run in PowerShell 7. Error: $($_.Exception.Message)"
     }
 
     $otel = Get-OrCreateObject -Object $json -Name 'OpenTelemetry'
@@ -179,11 +179,11 @@ foreach ($file in $AppSettingsPath) {
     Set-SignalExporter -Signal $logs -Path '/v1/logs' -ExporterName $LogsExporterName
 
     $out = $json | ConvertTo-Json -Depth 64
-    if ($PSCmdlet.ShouldProcess($file, 'Zapis sekcji OpenTelemetry')) {
+    if ($PSCmdlet.ShouldProcess($file, 'Save OpenTelemetry section')) {
         Copy-Item -LiteralPath $file -Destination "$file.bak-$stamp" -Force
         $enc = New-Object System.Text.UTF8Encoding($hasBom)
         [IO.File]::WriteAllText($file, $out, $enc)
-        Write-Ok "Zapisano (kopia: $file.bak-$stamp)"
+        Write-Ok "Saved (backup: $file.bak-$stamp)"
     }
 }
 
@@ -194,7 +194,7 @@ $envVars = [ordered]@{
 }
 $configDirs = @($AppSettingsPath | ForEach-Object { (Split-Path -Parent (Resolve-Path -LiteralPath $_).Path).TrimEnd('\') })
 
-# Usługi WEBCON, których exe leży w katalogu zmienianego appsettings (np. Serwis; bez Search Service itp.)
+# WEBCON services whose exe is in the folder of a modified appsettings file (e.g. the Service; excludes Search Service etc.)
 $serviceDirs = @()
 if (-not $WebconServiceName) {
     $WebconServiceName = @(Get-CimInstance Win32_Service | Where-Object {
@@ -207,8 +207,8 @@ foreach ($svc in $WebconServiceName) {
     if ($img -match '^"?([^"]+\.exe)') { $serviceDirs += (Split-Path -Parent $Matches[1]).TrimEnd('\') }
 }
 
-# Aplikacje pod IIS (ASP.NET Core Module): katalogi bez usługi Windows z web.config zawierającym <aspNetCore>.
-# Zmienne OTEL_* trafiają do <environmentVariables>; zapis web.config restartuje aplikację (bez iisreset).
+# Applications under IIS (ASP.NET Core Module): folders without a Windows service, with a web.config containing <aspNetCore>.
+# OTEL_* variables go to <environmentVariables>; saving web.config restarts the application (no iisreset).
 if (-not $SkipServiceEnvironment) {
     foreach ($dir in ($configDirs | Where-Object { $serviceDirs -notcontains $_ })) {
         $webConfig = Join-Path $dir 'web.config'
@@ -218,7 +218,7 @@ if (-not $SkipServiceEnvironment) {
         $xml.Load($webConfig)
         $anc = $xml.SelectSingleNode('/configuration/system.webServer/aspNetCore')
         if (-not $anc -or $anc.GetAttribute('processPath') -like '%LAUNCHER_PATH%') { continue }
-        Write-Step "Zmienne środowiskowe IIS: $webConfig"
+        Write-Step "IIS environment variables: $webConfig"
         $envNode = $anc.SelectSingleNode('environmentVariables')
         if (-not $envNode) { $envNode = $anc.AppendChild($xml.CreateElement('environmentVariables')) }
         foreach ($k in $envVars.Keys) {
@@ -229,26 +229,26 @@ if (-not $SkipServiceEnvironment) {
             }
             $var.SetAttribute('value', $envVars[$k])
         }
-        # Aplikacja IIS = Portal (Serwis to usługa Windows)
+        # IIS application = Portal (the Service is a Windows service)
         $ra = $envNode.SelectSingleNode("environmentVariable[@name='OTEL_RESOURCE_ATTRIBUTES']")
         if (-not $ra) {
             $ra = $envNode.AppendChild($xml.CreateElement('environmentVariable'))
             $ra.SetAttribute('name', 'OTEL_RESOURCE_ATTRIBUTES')
         }
         $ra.SetAttribute('value', (Merge-ResourceAttribute -Current $ra.GetAttribute('value') -Component 'portal'))
-        if ($PSCmdlet.ShouldProcess($webConfig, 'Ustawienie zmiennych OTEL_* (restart aplikacji IIS)')) {
+        if ($PSCmdlet.ShouldProcess($webConfig, 'Set OTEL_* variables (restarts the IIS application)')) {
             Copy-Item -LiteralPath $webConfig -Destination "$webConfig.bak-$stamp" -Force
             $xml.Save($webConfig)
-            Write-Ok "$($envVars.Keys -join ', '), OTEL_RESOURCE_ATTRIBUTES ($($ra.GetAttribute('value'))) (kopia: $webConfig.bak-$stamp)"
+            Write-Ok "$($envVars.Keys -join ', '), OTEL_RESOURCE_ATTRIBUTES ($($ra.GetAttribute('value'))) (backup: $webConfig.bak-$stamp)"
         }
     }
 }
 
 if (-not $SkipServiceEnvironment -and $WebconServiceName) {
-    Write-Step 'Zmienne środowiskowe usług WEBCON'
+    Write-Step 'WEBCON service environment variables'
     foreach ($svc in $WebconServiceName) {
         $key = "HKLM:\SYSTEM\CurrentControlSet\Services\$svc"
-        if (-not (Test-Path $key)) { Write-Warn "Brak usługi $svc"; continue }
+        if (-not (Test-Path $key)) { Write-Warn "Service $svc not found"; continue }
         $current = @()
         $prop = Get-ItemProperty -Path $key -Name 'Environment' -ErrorAction SilentlyContinue
         if ($prop) { $current = @($prop.Environment) }
@@ -257,13 +257,13 @@ if (-not $SkipServiceEnvironment -and $WebconServiceName) {
         foreach ($k in $envVars.Keys) { $map[$k] = $envVars[$k] }
         $map['OTEL_RESOURCE_ATTRIBUTES'] = Merge-ResourceAttribute -Current $map['OTEL_RESOURCE_ATTRIBUTES'] -Component 'service'
         $newValue = @($map.Keys | ForEach-Object { "$_=$($map[$_])" })
-        if ($PSCmdlet.ShouldProcess($svc, 'Ustawienie zmiennych OTEL_*')) {
+        if ($PSCmdlet.ShouldProcess($svc, 'Set OTEL_* variables')) {
             New-ItemProperty -Path $key -Name 'Environment' -PropertyType MultiString -Value $newValue -Force | Out-Null
             Write-Ok "$svc : $($envVars.Keys -join ', '), OTEL_RESOURCE_ATTRIBUTES ($($map['OTEL_RESOURCE_ATTRIBUTES']))"
         }
     }
 } elseif (-not $WebconServiceName) {
-    Write-Warn 'Nie wykryto usług WEBCON - pomijam zmienne środowiskowe i restart (podaj -WebconServiceName).'
+    Write-Warn 'No WEBCON services detected - skipping environment variables and restart (specify -WebconServiceName).'
 }
 
 # ---------------------------------------------------------------------
@@ -272,13 +272,13 @@ if (-not $NoRestart) {
     foreach ($svc in $WebconServiceName) {
         if ($PSCmdlet.ShouldProcess($svc, 'Restart-Service')) {
             Restart-Service -Name $svc -Force
-            Write-Ok "Zrestartowano $svc"
+            Write-Ok "Restarted $svc"
         }
     }
     if ($RestartIis -and $PSCmdlet.ShouldProcess('IIS', 'iisreset')) {
         & iisreset.exe | Out-Null
-        Write-Ok 'iisreset wykonany'
+        Write-Ok 'iisreset completed'
     }
 } else {
-    Write-Warn 'Pominięto restart - zmiany zadziałają po restarcie Portalu/Serwisu.'
+    Write-Warn 'Restart skipped - changes take effect after the Portal/Service is restarted.'
 }

@@ -1,11 +1,11 @@
 {
   "uid": "webcon-performance",
-  "title": "WEBCON – Wydajność",
+  "title": "WEBCON – Performance",
   "tags": [
     "webcon",
     "performance"
   ],
-  "description": "Analiza wydajności WEBCON 2026.2+: Portal, formularze i przejścia, Serwis, SQL, Solr, runtime .NET, logi.",
+  "description": "WEBCON 2026.2+ performance analysis: Portal, forms and transitions, Service, SQL, Solr, .NET runtime, logs.",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
@@ -18,7 +18,7 @@
   },
   "links": [
     {
-      "title": "Windows – obciążenie hosta",
+      "title": "Windows – Host load",
       "targetBlank": false,
       "url": "/d/windows-host?${__url_time_range}",
       "type": "link",
@@ -32,18 +32,18 @@
       "icon": "dashboard"
     },
     {
-      "title": "Ślady (Explore)",
+      "title": "Traces (Explore)",
       "targetBlank": true,
       "url": "/explore?schemaVersion=1&panes=%7B%22a%22:%7B%22datasource%22:%22tempo%22%7D%7D",
       "type": "link",
       "icon": "external link"
     },
     {
-      "title": "Dokumentacja",
+      "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/uzytkownik/03-webcon-wydajnosc.md",
-      "tooltip": "Opis paneli i jak je czytać (GitHub)",
+      "url": "{{DOCS_URL}}/docs/user-guide/03-webcon-performance.md",
+      "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,
       "targetBlank": true,
@@ -55,7 +55,7 @@
     "list": [
       {
         "name": "job",
-        "label": "Usługa",
+        "label": "Service",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -82,7 +82,7 @@
       },
       {
         "name": "db_id",
-        "label": "Baza (DB ID)",
+        "label": "Database (DB ID)",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -106,7 +106,7 @@
         },
         "refresh": 2,
         "sort": 3,
-        "description": "Filtruje panele ze spanów i kolejek Serwisu. \"All\" obejmuje też spany bez webcon.db.id."
+        "description": "Filters panels based on spans and Service queues. \"All\" also includes spans without webcon.db.id."
       }
     ]
   },
@@ -125,7 +125,7 @@
         "iconColor": "rgba(0, 211, 255, 1)"
       },
       {
-        "name": "Start procesu WEBCON",
+        "name": "WEBCON process start",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
@@ -133,12 +133,12 @@
         "enable": true,
         "iconColor": "orange",
         "step": "1m",
-        "titleFormat": "Start procesu: {{job}}",
-        "textFormat": "Nowy service.instance.id",
+        "titleFormat": "Process start: {{job}}",
+        "textFormat": "New service.instance.id",
         "expr": "count by (job) (target_info{job=~\"$job\"} unless target_info{job=~\"$job\"} offset 2m)"
       },
       {
-        "name": "Oznaczenie cache do odświeżenia",
+        "name": "Cache marked for refresh",
         "datasource": {
           "type": "prometheus",
           "uid": "prometheus"
@@ -154,7 +154,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Stan",
+      "title": "Status",
       "collapsed": false,
       "panels": [],
       "id": 1,
@@ -167,8 +167,8 @@
     },
     {
       "type": "stat",
-      "title": "Żądania Portalu / s",
-      "description": "Wszystkie żądania HTTP obsłużone przez Portal (bez health check).",
+      "title": "Portal requests /s",
+      "description": "All HTTP requests handled by the Portal (excluding health check).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -229,8 +229,8 @@
     },
     {
       "type": "stat",
-      "title": "p95 HTTP Portalu",
-      "description": "Percentyl 95 czasu odpowiedzi Portalu (bez health check), zakres = interwał wykresu.",
+      "title": "Portal HTTP p95",
+      "description": "95th percentile of Portal response time (excluding health check), range = chart interval.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -273,7 +273,7 @@
             ]
           },
           "decimals": 2,
-          "noValue": "brak ruchu"
+          "noValue": "no traffic"
         },
         "overrides": []
       },
@@ -300,8 +300,8 @@
     },
     {
       "type": "stat",
-      "title": "Błędy 5xx",
-      "description": "Udział odpowiedzi 5xx w żądaniach wybranych usług.",
+      "title": "5xx errors",
+      "description": "Share of 5xx responses in requests of the selected services.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -344,7 +344,7 @@
             ]
           },
           "decimals": 2,
-          "noValue": "brak ruchu"
+          "noValue": "no traffic"
         },
         "overrides": []
       },
@@ -371,8 +371,8 @@
     },
     {
       "type": "stat",
-      "title": "Przejścia ścieżek / min",
-      "description": "Wszystkie przejścia ścieżek (łącznie z nieudanymi), Portal + Serwis.",
+      "title": "Path transitions /min",
+      "description": "All path transitions (including failed ones), Portal + Service.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -434,8 +434,8 @@
     },
     {
       "type": "stat",
-      "title": "Przejścia udane",
-      "description": "Udane / wszystkie przejścia w zakresie dashboardu.",
+      "title": "Successful transitions",
+      "description": "Successful / all transitions in the dashboard time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -477,14 +477,14 @@
             ]
           },
           "decimals": 1,
-          "noValue": "brak przejść",
+          "noValue": "no transitions",
           "mappings": [
             {
               "type": "special",
               "options": {
                 "match": "nan",
                 "result": {
-                  "text": "brak przejść",
+                  "text": "no transitions",
                   "color": "text",
                   "index": 0
                 }
@@ -495,7 +495,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "brak przejść",
+                  "text": "no transitions",
                   "color": "text",
                   "index": 1
                 }
@@ -528,8 +528,8 @@
     },
     {
       "type": "stat",
-      "title": "p95 przejścia ścieżki",
-      "description": "Percentyl 95 czasu przejścia ścieżki (histogram WEBCON).",
+      "title": "Path transition p95",
+      "description": "95th percentile of path transition time (WEBCON histogram).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -571,7 +571,7 @@
               }
             ]
           },
-          "noValue": "brak przejść"
+          "noValue": "no transitions"
         },
         "overrides": []
       },
@@ -598,8 +598,8 @@
     },
     {
       "type": "stat",
-      "title": "Użytkownicy (7 dni)",
-      "description": "Unikalni użytkownicy Portalu z ostatnich 7 dni (nie wcześniej niż od startu aplikacji).",
+      "title": "Users (7 days)",
+      "description": "Unique Portal users in the last 7 days (not earlier than the application start).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -660,8 +660,8 @@
     },
     {
       "type": "stat",
-      "title": "Kolejka Serwisu / min",
-      "description": "Elementy pobrane z kolejek Serwisu do przetworzenia.",
+      "title": "Service queue /min",
+      "description": "Items taken from Service queues for processing.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -723,8 +723,8 @@
     },
     {
       "type": "stat",
-      "title": "Błędy kolejki Serwisu",
-      "description": "Elementy kolejki, których przetwarzanie się nie powiodło (zakres dashboardu).",
+      "title": "Service queue errors",
+      "description": "Queue items whose processing failed (dashboard time range).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -789,8 +789,8 @@
     },
     {
       "type": "stat",
-      "title": "Solr – przyrost zaległości",
-      "description": "Dodane do kolejek indeksowania Solr minus przetworzone (zakres dashboardu). Wartość > 0 = indeksowanie nie nadąża.",
+      "title": "Solr – backlog growth",
+      "description": "Added to Solr indexing queues minus processed (dashboard time range). Value > 0 = indexing is falling behind.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -859,8 +859,8 @@
     },
     {
       "type": "stat",
-      "title": "Serwis żyje",
-      "description": "Czy w ostatnich 5 min były spany heartbeat Serwisu (webcon.service.heartbeat).",
+      "title": "Service alive",
+      "description": "Whether there were Service heartbeat spans (webcon.service.heartbeat) in the last 5 min.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -903,7 +903,7 @@
               "options": {
                 "result": {
                   "color": "green",
-                  "text": "TAK"
+                  "text": "YES"
                 },
                 "from": 0.5,
                 "to": 1000000000000.0
@@ -914,7 +914,7 @@
               "options": {
                 "result": {
                   "color": "red",
-                  "text": "NIE"
+                  "text": "NO"
                 },
                 "from": -1,
                 "to": 0.5
@@ -947,8 +947,8 @@
     },
     {
       "type": "stat",
-      "title": "Uruchomienia procesów",
-      "description": "Procesy WEBCON uruchomione w zakresie dashboardu (nowy service.instance.id). Portal = proces w3wp/Bootstrapper, Serwis = Bootstrapper + ServiceModuleRunner.",
+      "title": "Process starts",
+      "description": "WEBCON processes started in the dashboard time range (new service.instance.id). Portal = w3wp/Bootstrapper process, Service = Bootstrapper + ServiceModuleRunner.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1013,7 +1013,7 @@
     },
     {
       "type": "row",
-      "title": "Portal – doświadczenie użytkownika",
+      "title": "Portal – user experience",
       "collapsed": false,
       "panels": [],
       "id": 14,
@@ -1026,8 +1026,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Żądania / s według grupy tras",
-      "description": "Grupy wyznaczane z http_route (strona główna, formularz, raporty/dashboardy, zadania, inne API).",
+      "title": "Requests /s by route group",
+      "description": "Groups derived from http_route (home page, form, reports/dashboards, tasks, other API).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1038,8 +1038,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (grupa) (label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(http_server_request_duration_seconds_count{job=\"Portal\"}[$__rate_interval]), \"grupa\", \"inne API\", \"http_route\", \".*\"), \"grupa\", \"strona główna / nawigacja\", \"http_route\", \"\\\\{controller=Home\\\\}.*|api/(nav/)?(db/[^/]+/app/[^/]+/)?navigation|api/nav/(allApplications|applications/.*|config/.*|impersonations|authorization/.*)|api/nav/db/[^/]+/(app/[^/]+/)?impersonations|.*/supervisorPicture|.*/components|.*/Layout/.*\"), \"grupa\", \"raporty / dashboardy\", \"http_route\", \".*(dashboard|report|activities|sharedPrivateViews|searchengine).*\"), \"grupa\", \"zadania\", \"http_route\", \".*tasks.*\"), \"grupa\", \"formularz\", \"http_route\", \".*/(element|start)/.*|.*/checkout\"), \"grupa\", \"health\", \"http_route\", \"/?health.*\"))",
-          "legendFormat": "{{grupa}}",
+          "expr": "sum by (route_group) (label_replace(label_replace(label_replace(label_replace(label_replace(label_replace(rate(http_server_request_duration_seconds_count{job=\"Portal\"}[$__rate_interval]), \"route_group\", \"other API\", \"http_route\", \".*\"), \"route_group\", \"home page / navigation\", \"http_route\", \"\\\\{controller=Home\\\\}.*|api/(nav/)?(db/[^/]+/app/[^/]+/)?navigation|api/nav/(allApplications|applications/.*|config/.*|impersonations|authorization/.*)|api/nav/db/[^/]+/(app/[^/]+/)?impersonations|.*/supervisorPicture|.*/components|.*/Layout/.*\"), \"route_group\", \"reports / dashboards\", \"http_route\", \".*(dashboard|report|activities|sharedPrivateViews|searchengine).*\"), \"route_group\", \"tasks\", \"http_route\", \".*tasks.*\"), \"route_group\", \"form\", \"http_route\", \".*/(element|start)/.*|.*/checkout\"), \"route_group\", \"health\", \"http_route\", \"/?health.*\"))",
+          "legendFormat": "{{route_group}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1093,8 +1093,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Czas odpowiedzi Portalu (p50 / p95 / p99)",
-      "description": "Bez health check. Punkty = exemplary – kliknięcie otwiera ślad w Tempo.",
+      "title": "Portal response time (p50 / p95 / p99)",
+      "description": "Excluding health check. Points = exemplars – click to open the trace in Tempo.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1183,8 +1183,8 @@
     },
     {
       "type": "heatmap",
-      "title": "Rozkład czasu odpowiedzi Portalu",
-      "description": "Heatmapa histogramu http.server.request.duration (bez health check).",
+      "title": "Portal response time distribution",
+      "description": "Heatmap of the http.server.request.duration histogram (excluding health check).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1246,8 +1246,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Błędy HTTP według trasy",
-      "description": "Liczba odpowiedzi 4xx i 5xx w przedziale wykresu (min. 5 min). 401 przy wygasłej sesji jest normalne.",
+      "title": "HTTP errors by route",
+      "description": "Number of 4xx and 5xx responses per chart interval (min. 5 min). 401 for an expired session is normal.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1310,8 +1310,8 @@
     },
     {
       "type": "table",
-      "title": "Trasy według łącznego czasu (zakres dashboardu)",
-      "description": "Łączny czas = liczba × średni czas – pokazuje, co najbardziej obciąża Portal. Kliknięcie w trasę: dashboard ASP.NET Core endpoint.",
+      "title": "Routes by total time (dashboard time range)",
+      "description": "Total time = count × average time – shows what loads the Portal the most. Click a route: ASP.NET Core endpoint dashboard.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1386,12 +1386,12 @@
               "Value #D": 6
             },
             "renameByName": {
-              "job": "Usługa",
-              "http_request_method": "Metoda",
-              "http_route": "Trasa",
-              "Value #A": "Wywołania",
+              "job": "Service",
+              "http_request_method": "Method",
+              "http_route": "Route",
+              "Value #A": "Calls",
               "Value #B": "p95",
-              "Value #C": "Łączny czas",
+              "Value #C": "Total time",
               "Value #D": "% 5xx"
             }
           },
@@ -1401,7 +1401,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -1429,7 +1429,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -1495,7 +1495,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -1523,7 +1523,7 @@
               }
             ],
             "matcher": {
-              "options": "Trasa",
+              "options": "Route",
               "id": "byName"
             }
           }
@@ -1546,8 +1546,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Aktywne żądania i kolejka połączeń",
-      "description": "Żądania w trakcie obsługi oraz połączenia czekające w kolejce Kestrel (rosnąca kolejka = brak wątków/przepustowości).",
+      "title": "Active requests and connection queue",
+      "description": "Requests in progress and connections waiting in the Kestrel queue (growing queue = not enough threads/throughput).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1559,7 +1559,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (http_server_active_requests{job=~\"$job\"})",
-          "legendFormat": "aktywne {{job}}",
+          "legendFormat": "active {{job}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1571,7 +1571,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (kestrel_queued_connections{job=~\"$job\"})",
-          "legendFormat": "kolejka Kestrel {{job}}",
+          "legendFormat": "Kestrel queue {{job}}",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -1621,8 +1621,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Otwarcia Portalu i formularzy",
-      "description": "Otwarcia strony głównej Portalu i elementów z przeglądarki.",
+      "title": "Portal and form opens",
+      "description": "Portal home page and instance opens from the browser.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1646,7 +1646,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate({__name__=~\"webcon_(workflow_form_open|elements_management_element_open)_total\",job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "formularze",
+          "legendFormat": "forms",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -1696,8 +1696,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Użytkownicy Portalu",
-      "description": "Unikalni użytkownicy od startu aplikacji i z ostatnich 7 dni.",
+      "title": "Portal users",
+      "description": "Unique users since the application start and in the last 7 days.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1709,7 +1709,7 @@
             "uid": "prometheus"
           },
           "expr": "max(webcon_portal_request_user_unique_since_start)",
-          "legendFormat": "od startu",
+          "legendFormat": "since start",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1721,7 +1721,7 @@
             "uid": "prometheus"
           },
           "expr": "max(webcon_portal_request_user_unique_recently)",
-          "legendFormat": "7 dni",
+          "legendFormat": "7 days",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -1772,7 +1772,7 @@
     },
     {
       "type": "row",
-      "title": "Formularze i przejścia ścieżek",
+      "title": "Forms and path transitions",
       "collapsed": false,
       "panels": [],
       "id": 23,
@@ -1785,8 +1785,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Przejścia ścieżek",
-      "description": "Wszystkie, udane i nieudane (wszystkie − udane) przejścia na minutę.",
+      "title": "Path transitions",
+      "description": "All, successful and failed (all − successful) transitions per minute.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1798,7 +1798,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate({__name__=~\"webcon_(workflow_form_path_transitions|elements_management_path_transitions_all)_total\",job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "wszystkie",
+          "legendFormat": "all",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1810,7 +1810,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate({__name__=~\"webcon_(workflow_form_success_path_transitions|elements_management_path_transitions_success)_total\",job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "udane",
+          "legendFormat": "successful",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -1822,7 +1822,7 @@
             "uid": "prometheus"
           },
           "expr": "clamp_min(60 * (sum(rate({__name__=~\"webcon_(workflow_form_path_transitions|elements_management_path_transitions_all)_total\",job=~\"$job\"}[$__rate_interval])) - sum(rate({__name__=~\"webcon_(workflow_form_success_path_transitions|elements_management_path_transitions_success)_total\",job=~\"$job\"}[$__rate_interval]))), 0)",
-          "legendFormat": "nieudane",
+          "legendFormat": "failed",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -1856,7 +1856,7 @@
               }
             ],
             "matcher": {
-              "options": "nieudane",
+              "options": "failed",
               "id": "byName"
             }
           }
@@ -1888,8 +1888,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Udane przejścia według rodzaju",
-      "description": "webcon.element.new (nowy element), webcon.transition.only_save (sam zapis), webcon.transition.source (źródło wywołania).",
+      "title": "Successful transitions by kind",
+      "description": "webcon.element.new (new instance), webcon.transition.only_save (save only), webcon.transition.source (call source).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1901,7 +1901,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum by (webcon_element_new, webcon_transition_only_save, webcon_transition_source) (rate({__name__=~\"webcon_(workflow_form_success_path_transitions|elements_management_path_transitions_success)_total\",job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "nowy={{webcon_element_new}} zapis={{webcon_transition_only_save}} źródło={{webcon_transition_source}}",
+          "legendFormat": "new={{webcon_element_new}} save_only={{webcon_transition_only_save}} source={{webcon_transition_source}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1955,8 +1955,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Czas przejścia ścieżki (p50 / p95 / p99)",
-      "description": "Histogram WEBCON. Punkty = exemplary (ślad przejścia).",
+      "title": "Path transition time (p50 / p95 / p99)",
+      "description": "WEBCON histogram. Points = exemplars (transition trace).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2045,8 +2045,8 @@
     },
     {
       "type": "heatmap",
-      "title": "Rozkład czasu przejścia ścieżki",
-      "description": "Heatmapa histogramu path.transitions.times.",
+      "title": "Path transition time distribution",
+      "description": "Heatmap of the path.transitions.times histogram.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2108,8 +2108,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Przejścia w toku, historia, cache modeli",
-      "description": "Przejścia w toku (rosnące = blokowanie), nowe wersje historyczne / s, liczba modeli elementów w cache.",
+      "title": "Transitions in progress, history, model cache",
+      "description": "Transitions in progress (growing = blocking), new history versions /s, number of instance models in cache.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2121,7 +2121,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) ({__name__=~\"webcon_(workflow_form_path_transitions_in_progress|elements_management_path_transitions_in_progress)\",job=~\"$job\"})",
-          "legendFormat": "w toku {{job}}",
+          "legendFormat": "in progress {{job}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -2133,7 +2133,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(webcon_elements_management_path_history_insert_total{job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "historia / s",
+          "legendFormat": "history /s",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -2145,7 +2145,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) ({__name__=~\"webcon_(workflow_form_elements_cache|elements_management_element_model_instances)\",job=~\"$job\"})",
-          "legendFormat": "modele w cache {{job}}",
+          "legendFormat": "cached models {{job}}",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -2176,7 +2176,7 @@
               }
             ],
             "matcher": {
-              "options": "historia / s",
+              "options": "history /s",
               "id": "byName"
             }
           }
@@ -2208,8 +2208,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Etapy obsługi formularza – p95",
-      "description": "Spanmetrics: ładowanie modelu, reguły, zapis, przejście, akcje, źródła danych.",
+      "title": "Form handling stages – p95",
+      "description": "Spanmetrics: model loading, rules, save, transition, actions, data sources.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2272,8 +2272,8 @@
     },
     {
       "type": "table",
-      "title": "Etapy obsługi formularza (zakres dashboardu)",
-      "description": "Łączny czas = suma czasów spanów danego etapu. Spany zagnieżdżone liczą się w każdym poziomie (np. rule.execute w element.model.load).",
+      "title": "Form handling stages (dashboard time range)",
+      "description": "Total time = sum of span durations of a given stage. Nested spans count at every level (e.g. rule.execute in element.model.load).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2334,11 +2334,11 @@
               "Value #C": 4
             },
             "renameByName": {
-              "service": "Usługa",
-              "span_name": "Etap (span)",
-              "Value #A": "Wywołania",
+              "service": "Service",
+              "span_name": "Stage (span)",
+              "Value #A": "Calls",
               "Value #B": "p95",
-              "Value #C": "Łączny czas"
+              "Value #C": "Total time"
             }
           },
           "id": "organize"
@@ -2347,7 +2347,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -2375,7 +2375,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -2441,7 +2441,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           }
@@ -2464,7 +2464,7 @@
     },
     {
       "type": "row",
-      "title": "Gdzie ucieka czas (ścieżki, reguły, źródła danych)",
+      "title": "Where the time goes (paths, rules, data sources)",
       "collapsed": true,
       "panels": [],
       "id": 31,
@@ -2477,8 +2477,8 @@
     },
     {
       "type": "table",
-      "title": "Spany WEBCON według łącznego czasu",
-      "description": "Wszystkie spany webcon.* z wyjątkiem potoku filtrów MVC (osobna tabela). Spanmetrics – pełny zakres dashboardu.",
+      "title": "WEBCON spans by total time",
+      "description": "All webcon.* spans except the MVC filter pipeline (separate table). Spanmetrics – full dashboard time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2539,11 +2539,11 @@
               "Value #C": 4
             },
             "renameByName": {
-              "service": "Usługa",
+              "service": "Service",
               "span_name": "Span",
-              "Value #A": "Wywołania",
+              "Value #A": "Calls",
               "Value #B": "p95",
-              "Value #C": "Łączny czas"
+              "Value #C": "Total time"
             }
           },
           "id": "organize"
@@ -2552,7 +2552,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -2580,7 +2580,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -2646,7 +2646,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           }
@@ -2669,8 +2669,8 @@
     },
     {
       "type": "table",
-      "title": "Potok MVC Portalu (filtry)",
-      "description": "webcon.portal.request.filters.* – autoryzacja, filtry akcji i wyników. Długie on_authorization = sprawdzanie uprawnień / aplikacji.",
+      "title": "Portal MVC pipeline (filters)",
+      "description": "webcon.portal.request.filters.* – authorization, action and result filters. Long on_authorization = permission / application checks.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2732,11 +2732,11 @@
               "Value #C": 4
             },
             "renameByName": {
-              "service": "Usługa",
+              "service": "Service",
               "span_name": "Span",
-              "Value #A": "Wywołania",
+              "Value #A": "Calls",
               "Value #B": "p95",
-              "Value #C": "Łączny czas"
+              "Value #C": "Total time"
             }
           },
           "id": "organize"
@@ -2745,7 +2745,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -2773,7 +2773,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -2839,7 +2839,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           }
@@ -2862,8 +2862,8 @@
     },
     {
       "type": "table",
-      "title": "Ścieżki – najdłuższe przejścia",
-      "description": "Span webcon.elements_management.path.transitions według ID ścieżki (WFP_ID). TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Paths – longest transitions",
+      "description": "Span webcon.elements_management.path.transitions by path ID (WFP_ID). TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -2968,7 +2968,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -2976,8 +2976,8 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.path.id": "ID ścieżki"
+              "value": "Calls",
+              "span.webcon.path.id": "Path ID"
             }
           },
           "id": "organize"
@@ -2985,10 +2985,10 @@
         {
           "options": {
             "indexByName": {
-              "ID ścieżki": 0,
-              "Wywołania": 1,
+              "Path ID": 0,
+              "Calls": 1,
               "p95": 2,
-              "Łączny czas": 3
+              "Total time": 3
             }
           },
           "id": "organize"
@@ -2997,7 +2997,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -3079,7 +3079,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -3095,7 +3095,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -3104,15 +3104,15 @@
               {
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.path.transitions%5C%22%20%26%26%20span.webcon.path.id%20%3D%20${__data.fields[\"ID ścieżki\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.path.transitions%5C%22%20%26%26%20span.webcon.path.id%20%3D%20${__data.fields[\"Path ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ],
                 "id": "links"
               }
             ],
             "matcher": {
-              "options": "ID ścieżki",
+              "options": "Path ID",
               "id": "byName"
             }
           }
@@ -3135,8 +3135,8 @@
     },
     {
       "type": "table",
-      "title": "Reguły biznesowe",
-      "description": "Span webcon.rule.execute według ID reguły (atrybut webcon.rule.name jest pusty w 2026.2.5). TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Business rules",
+      "description": "Span webcon.rule.execute by rule ID (the webcon.rule.name attribute is empty in 2026.2.5). TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -3241,7 +3241,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -3249,8 +3249,8 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.rule.id": "ID reguły"
+              "value": "Calls",
+              "span.webcon.rule.id": "Rule ID"
             }
           },
           "id": "organize"
@@ -3258,10 +3258,10 @@
         {
           "options": {
             "indexByName": {
-              "ID reguły": 0,
-              "Wywołania": 1,
+              "Rule ID": 0,
+              "Calls": 1,
               "p95": 2,
-              "Łączny czas": 3
+              "Total time": 3
             }
           },
           "id": "organize"
@@ -3270,7 +3270,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -3352,7 +3352,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -3368,7 +3368,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -3377,15 +3377,15 @@
               {
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.rule.execute%5C%22%20%26%26%20span.webcon.rule.id%20%3D%20${__data.fields[\"ID reguły\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.rule.execute%5C%22%20%26%26%20span.webcon.rule.id%20%3D%20${__data.fields[\"Rule ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ],
                 "id": "links"
               }
             ],
             "matcher": {
-              "options": "ID reguły",
+              "options": "Rule ID",
               "id": "byName"
             }
           }
@@ -3408,8 +3408,8 @@
     },
     {
       "type": "table",
-      "title": "Źródła danych",
-      "description": "Span webcon.data_source.data.load według ID i typu źródła. TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Data sources",
+      "description": "Span webcon.data_source.data.load by data source ID and type. TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -3517,7 +3517,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -3525,9 +3525,9 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.data_source.id": "ID źródła",
-              "span.webcon.data_source.type.name": "Typ"
+              "value": "Calls",
+              "span.webcon.data_source.id": "Data source ID",
+              "span.webcon.data_source.type.name": "Type"
             }
           },
           "id": "organize"
@@ -3535,11 +3535,11 @@
         {
           "options": {
             "indexByName": {
-              "ID źródła": 0,
-              "Typ": 1,
-              "Wywołania": 2,
+              "Data source ID": 0,
+              "Type": 1,
+              "Calls": 2,
               "p95": 3,
-              "Łączny czas": 4
+              "Total time": 4
             }
           },
           "id": "organize"
@@ -3548,7 +3548,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -3630,7 +3630,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -3646,7 +3646,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -3655,15 +3655,15 @@
               {
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"ID źródła\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"Data source ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ],
                 "id": "links"
               }
             ],
             "matcher": {
-              "options": "ID źródła",
+              "options": "Data source ID",
               "id": "byName"
             }
           }
@@ -3686,8 +3686,8 @@
     },
     {
       "type": "table",
-      "title": "Akcje",
-      "description": "Span webcon.action.execute według ID akcji. TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Actions",
+      "description": "Span webcon.action.execute by action ID. TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -3795,7 +3795,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -3803,9 +3803,9 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.action.id": "ID akcji",
-              "span.webcon.action.name": "Akcja"
+              "value": "Calls",
+              "span.webcon.action.id": "Action ID",
+              "span.webcon.action.name": "Action"
             }
           },
           "id": "organize"
@@ -3813,11 +3813,11 @@
         {
           "options": {
             "indexByName": {
-              "ID akcji": 0,
-              "Akcja": 1,
-              "Wywołania": 2,
+              "Action ID": 0,
+              "Action": 1,
+              "Calls": 2,
               "p95": 3,
-              "Łączny czas": 4
+              "Total time": 4
             }
           },
           "id": "organize"
@@ -3826,7 +3826,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -3908,7 +3908,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -3924,7 +3924,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -3933,15 +3933,15 @@
               {
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"ID akcji\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"Action ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ],
                 "id": "links"
               }
             ],
             "matcher": {
-              "options": "ID akcji",
+              "options": "Action ID",
               "id": "byName"
             }
           }
@@ -3964,8 +3964,8 @@
     },
     {
       "type": "table",
-      "title": "Ładowanie formularza według procesu i kroku",
-      "description": "Span webcon.elements_management.element.model.load według ID procesu i kroku. TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Form loading by process and step",
+      "description": "Span webcon.elements_management.element.model.load by process and step ID. TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -4073,7 +4073,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -4081,9 +4081,9 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.process.id": "ID procesu",
-              "span.webcon.step.id": "ID kroku"
+              "value": "Calls",
+              "span.webcon.process.id": "Process ID",
+              "span.webcon.step.id": "Step ID"
             }
           },
           "id": "organize"
@@ -4091,11 +4091,11 @@
         {
           "options": {
             "indexByName": {
-              "ID procesu": 0,
-              "ID kroku": 1,
-              "Wywołania": 2,
+              "Process ID": 0,
+              "Step ID": 1,
+              "Calls": 2,
               "p95": 3,
-              "Łączny czas": 4
+              "Total time": 4
             }
           },
           "id": "organize"
@@ -4104,7 +4104,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -4186,7 +4186,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -4202,7 +4202,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           },
@@ -4211,15 +4211,15 @@
               {
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.element.model.load%5C%22%20%26%26%20span.webcon.step.id%20%3D%20${__data.fields[\"ID kroku\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.element.model.load%5C%22%20%26%26%20span.webcon.step.id%20%3D%20${__data.fields[\"Step ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ],
                 "id": "links"
               }
             ],
             "matcher": {
-              "options": "ID kroku",
+              "options": "Step ID",
               "id": "byName"
             }
           }
@@ -4242,8 +4242,8 @@
     },
     {
       "type": "table",
-      "title": "Budowa modelu JS formularza – kroki",
-      "description": "Span webcon.elements_management.element.model.js.load.step.build według nazwy kroku. TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Form JS model build – steps",
+      "description": "Span webcon.elements_management.element.model.js.load.step.build by step name. TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -4348,7 +4348,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -4356,8 +4356,8 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.elements_management.element.model.js.load.step.name": "Krok"
+              "value": "Calls",
+              "span.webcon.elements_management.element.model.js.load.step.name": "Step"
             }
           },
           "id": "organize"
@@ -4365,10 +4365,10 @@
         {
           "options": {
             "indexByName": {
-              "Krok": 0,
-              "Wywołania": 1,
+              "Step": 0,
+              "Calls": 1,
               "p95": 2,
-              "Łączny czas": 3
+              "Total time": 3
             }
           },
           "id": "organize"
@@ -4377,7 +4377,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -4459,7 +4459,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -4475,7 +4475,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           }
@@ -4498,12 +4498,12 @@
     },
     {
       "type": "table",
-      "title": "Najwolniejsze żądania (ślady > 2 s)",
+      "title": "Slowest requests (traces > 2 s)",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
-      "description": "Ostatnie ślady z żądaniem HTTP Portalu/Serwisu dłuższym niż 2 s. Kliknięcie Trace ID otwiera ślad.",
+      "description": "Recent traces with a Portal/Service HTTP request longer than 2 s. Click the Trace ID to open the trace.",
       "targets": [
         {
           "datasource": {
@@ -4541,7 +4541,7 @@
     },
     {
       "type": "row",
-      "title": "SQL z perspektywy WEBCON",
+      "title": "SQL from the WEBCON perspective",
       "collapsed": true,
       "panels": [],
       "id": 41,
@@ -4554,12 +4554,12 @@
     },
     {
       "type": "table",
-      "title": "Wolne zapytania SQL (ponad próg filtra Alloy)",
+      "title": "Slow SQL queries (above the Alloy filter threshold)",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
-      "description": "Spany SqlClient dłuższe niż próg filtra (domyślnie 1 s; krótsze są odrzucane w Alloy). Pełny tekst zapytania w atrybucie db.query.text.",
+      "description": "SqlClient spans longer than the filter threshold (1 s by default; shorter ones are dropped in Alloy). Full query text in the db.query.text attribute.",
       "targets": [
         {
           "datasource": {
@@ -4597,8 +4597,8 @@
     },
     {
       "type": "table",
-      "title": "Wolne zapytania według operacji",
-      "description": "Spany SQL ponad próg filtra według nazwy spanu SqlClient (np. SELECT [WFElements]). Ślady: tabela obok. TraceQL metrics – zakres dashboardu do 7 dni (limit zapytań Tempo). p95 jest przybliżone (histogram Tempo, kubełki = potęgi 2). Kliknięcie identyfikatora otwiera ślady.",
+      "title": "Slow queries by operation",
+      "description": "SQL spans above the filter threshold by SqlClient span name (e.g. SELECT [WFElements]). Traces: the adjacent table. TraceQL metrics – dashboard time range up to 7 days (Tempo query limit). p95 is approximate (Tempo histogram, buckets = powers of 2). Click an ID to open traces.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -4703,7 +4703,7 @@
         {
           "options": {
             "regex": "^\".*\"$",
-            "renamePattern": "Łączny czas"
+            "renamePattern": "Total time"
           },
           "id": "renameByRegex"
         },
@@ -4711,8 +4711,8 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "name": "Operacja"
+              "value": "Calls",
+              "name": "Operation"
             }
           },
           "id": "organize"
@@ -4720,10 +4720,10 @@
         {
           "options": {
             "indexByName": {
-              "Operacja": 0,
-              "Wywołania": 1,
+              "Operation": 0,
+              "Calls": 1,
               "p95": 2,
-              "Łączny czas": 3
+              "Total time": 3
             }
           },
           "id": "organize"
@@ -4732,7 +4732,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -4814,7 +4814,7 @@
               }
             ],
             "matcher": {
-              "options": "Wywołania",
+              "options": "Calls",
               "id": "byName"
             }
           },
@@ -4830,7 +4830,7 @@
               }
             ],
             "matcher": {
-              "options": "Łączny czas",
+              "options": "Total time",
               "id": "byName"
             }
           }
@@ -4853,8 +4853,8 @@
     },
     {
       "type": "timeseries",
-      "title": "SQL Server – obciążenie",
-      "description": "Batch requests, transakcje i kompilacje / s. Szczegóły: dashboard SQL Server.",
+      "title": "SQL Server – load",
+      "description": "Batch requests, transactions and compilations /s. Details: SQL Server dashboard.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -4878,7 +4878,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(mssql_transactions_total[$__rate_interval]))",
-          "legendFormat": "transakcje",
+          "legendFormat": "transactions",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -4890,7 +4890,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(mssql_sql_compilations_total[$__rate_interval]))",
-          "legendFormat": "kompilacje",
+          "legendFormat": "compilations",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -4940,8 +4940,8 @@
     },
     {
       "type": "timeseries",
-      "title": "SQL Server – oczekiwania (top 5 kategorii)",
-      "description": "Czas oczekiwań według kategorii (sekundy oczekiwań na sekundę).",
+      "title": "SQL Server – waits (top 5 categories)",
+      "description": "Wait time by category (wait seconds per second).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5007,8 +5007,8 @@
     },
     {
       "type": "timeseries",
-      "title": "SQL Server – blokady i pamięć",
-      "description": "Zablokowane sesje, najdłuższe oczekiwanie na blokadę, deadlocki; PLE na osi prawej.",
+      "title": "SQL Server – locks and memory",
+      "description": "Blocked sessions, longest lock wait, deadlocks; PLE on the right axis.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5020,7 +5020,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(mssql_blocked_sessions)",
-          "legendFormat": "zablokowane sesje",
+          "legendFormat": "blocked sessions",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -5032,7 +5032,7 @@
             "uid": "prometheus"
           },
           "expr": "max(mssql_blocked_wait_seconds_max)",
-          "legendFormat": "najdłuższa blokada [s]",
+          "legendFormat": "longest lock wait [s]",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -5044,7 +5044,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(increase(mssql_deadlocks_total[$__interval]))",
-          "legendFormat": "deadlocki",
+          "legendFormat": "deadlocks",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -5123,7 +5123,7 @@
     },
     {
       "type": "row",
-      "title": "Serwis WEBCON",
+      "title": "WEBCON WorkFlow Service",
       "collapsed": true,
       "panels": [],
       "id": 47,
@@ -5136,8 +5136,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Kolejki Serwisu – pobrane elementy według roli",
-      "description": "webcon.service.queue.item.dequeue. Nazwy ról z atrybutów spanów; nieznane = \"rola <id>\".",
+      "title": "Service queues – dequeued items by role",
+      "description": "webcon.service.queue.item.dequeue. Role names from span attributes; unknown = \"role <id>\".",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5148,8 +5148,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (rola) (label_replace(label_replace(label_replace(label_replace(label_replace(rate(webcon_service_queue_item_dequeue_total{webcon_db_id=~\"$db_id\"}[$__rate_interval]), \"rola\", \"rola $1\", \"webcon_service_role_id\", \"(.*)\"), \"rola\", \"UserSynchronization\", \"webcon_service_role_id\", \"25\"), \"rola\", \"SolrActivityQueue\", \"webcon_service_role_id\", \"40\"), \"rola\", \"SolrElementQueue\", \"webcon_service_role_id\", \"41\"), \"rola\", \"SolrFileQueue\", \"webcon_service_role_id\", \"42\"))",
-          "legendFormat": "{{rola}}",
+          "expr": "sum by (role) (label_replace(label_replace(label_replace(label_replace(label_replace(rate(webcon_service_queue_item_dequeue_total{webcon_db_id=~\"$db_id\"}[$__rate_interval]), \"role\", \"role $1\", \"webcon_service_role_id\", \"(.*)\"), \"role\", \"UserSynchronization\", \"webcon_service_role_id\", \"25\"), \"role\", \"SolrActivityQueue\", \"webcon_service_role_id\", \"40\"), \"role\", \"SolrElementQueue\", \"webcon_service_role_id\", \"41\"), \"role\", \"SolrFileQueue\", \"webcon_service_role_id\", \"42\"))",
+          "legendFormat": "{{role}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -5203,8 +5203,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Kolejki Serwisu – błędy według roli",
-      "description": "webcon.service.queue.item.error (licznik pojawia się po pierwszym błędzie).",
+      "title": "Service queues – errors by role",
+      "description": "webcon.service.queue.item.error (the counter appears after the first error).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5215,8 +5215,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (rola) (label_replace(label_replace(label_replace(label_replace(label_replace(increase(webcon_service_queue_item_error_total{webcon_db_id=~\"$db_id\"}[$__interval]), \"rola\", \"rola $1\", \"webcon_service_role_id\", \"(.*)\"), \"rola\", \"UserSynchronization\", \"webcon_service_role_id\", \"25\"), \"rola\", \"SolrActivityQueue\", \"webcon_service_role_id\", \"40\"), \"rola\", \"SolrElementQueue\", \"webcon_service_role_id\", \"41\"), \"rola\", \"SolrFileQueue\", \"webcon_service_role_id\", \"42\"))",
-          "legendFormat": "{{rola}}",
+          "expr": "sum by (role) (label_replace(label_replace(label_replace(label_replace(label_replace(increase(webcon_service_queue_item_error_total{webcon_db_id=~\"$db_id\"}[$__interval]), \"role\", \"role $1\", \"webcon_service_role_id\", \"(.*)\"), \"role\", \"UserSynchronization\", \"webcon_service_role_id\", \"25\"), \"role\", \"SolrActivityQueue\", \"webcon_service_role_id\", \"40\"), \"role\", \"SolrElementQueue\", \"webcon_service_role_id\", \"41\"), \"role\", \"SolrFileQueue\", \"webcon_service_role_id\", \"42\"))",
+          "legendFormat": "{{role}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -5267,8 +5267,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Czas pracy Serwisu według roli – p95",
-      "description": "Spany webcon.service.activity / thread.task.processing według webcon.service.role.name (wymiar spanmetrics).",
+      "title": "Service work time by role – p95",
+      "description": "webcon.service.activity / thread.task.processing spans by webcon.service.role.name (spanmetrics dimension).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5331,8 +5331,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Timery i akcje cykliczne",
-      "description": "W toku (wartość) oraz wykonania / min (liczniki pojawiają się po pierwszym wykonaniu).",
+      "title": "Timers and cyclical actions",
+      "description": "In progress (value) and executions /min (the counters appear after the first execution).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5344,7 +5344,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(webcon_timers_running)",
-          "legendFormat": "timery w toku",
+          "legendFormat": "timers in progress",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -5356,7 +5356,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(webcon_recurrent_actions_running)",
-          "legendFormat": "akcje cykliczne w toku",
+          "legendFormat": "cyclical actions in progress",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -5368,7 +5368,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_timers_execute_total{webcon_db_id=~\"$db_id\"}[$__rate_interval]))",
-          "legendFormat": "timery / min",
+          "legendFormat": "timers /min",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -5380,7 +5380,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_recurrent_actions_execute_total{webcon_db_id=~\"$db_id\"}[$__rate_interval]))",
-          "legendFormat": "akcje cykliczne / min",
+          "legendFormat": "cyclical actions /min",
           "refId": "D",
           "range": true,
           "instant": false,
@@ -5430,8 +5430,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Solr – kolejki indeksowania",
-      "description": "Dodane (linia ciągła) vs przetworzone (przerywana) / min.",
+      "title": "Solr – indexing queues",
+      "description": "Added (solid line) vs processed (dashed) /min.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5443,7 +5443,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_elements_total[$__rate_interval]))",
-          "legendFormat": "elementy – dodane",
+          "legendFormat": "elements – added",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -5455,7 +5455,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_elements_processed_total[$__rate_interval]))",
-          "legendFormat": "elementy – przetworzone",
+          "legendFormat": "elements – processed",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -5467,7 +5467,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_attachments_total[$__rate_interval]))",
-          "legendFormat": "załączniki – dodane",
+          "legendFormat": "attachments – added",
           "refId": "C",
           "range": true,
           "instant": false,
@@ -5479,7 +5479,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_attachments_processed_total[$__rate_interval]))",
-          "legendFormat": "załączniki – przetworzone",
+          "legendFormat": "attachments – processed",
           "refId": "D",
           "range": true,
           "instant": false,
@@ -5491,7 +5491,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_activities_total[$__rate_interval]))",
-          "legendFormat": "aktywności – dodane",
+          "legendFormat": "activities – added",
           "refId": "E",
           "range": true,
           "instant": false,
@@ -5503,7 +5503,7 @@
             "uid": "prometheus"
           },
           "expr": "60 * sum(rate(webcon_solr_queue_activities_processed_total[$__rate_interval]))",
-          "legendFormat": "aktywności – przetworzone",
+          "legendFormat": "activities – processed",
           "refId": "F",
           "range": true,
           "instant": false,
@@ -5540,7 +5540,7 @@
               }
             ],
             "matcher": {
-              "options": ".*przetworzone",
+              "options": ".*processed",
               "id": "byRegexp"
             }
           }
@@ -5572,8 +5572,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Solr – czasy (p95)",
-      "description": "Zapytania do Solr, indeksowanie elementów, ekstrakcja tekstu z załączników.",
+      "title": "Solr – durations (p95)",
+      "description": "Solr queries, instance indexing, attachment text extraction.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5636,8 +5636,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Cache bazy – odświeżenia",
-      "description": "Liczba odświeżeń / ładowań cache konfiguracji i bazy. Częste odświeżanie (np. po publikacji) daje skoki czasu odpowiedzi.",
+      "title": "Database cache – refreshes",
+      "description": "Number of configuration and database cache refreshes / loads. Frequent refreshes (e.g. after publishing) cause response time spikes.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5700,8 +5700,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Cache bazy – czas (p95)",
-      "description": "p95 odświeżania / ładowania cache.",
+      "title": "Database cache – duration (p95)",
+      "description": "p95 of cache refresh / load.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5764,8 +5764,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Heartbeat i health check",
-      "description": "p95 heartbeat Portalu/Serwisu i health check Serwisu; błędy na osi prawej.",
+      "title": "Heartbeat and health check",
+      "description": "p95 of Portal/Service heartbeat and Service health check; errors on the right axis.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5789,7 +5789,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (span_name) (increase(traces_spanmetrics_calls_total{status_code=\"STATUS_CODE_ERROR\",span_name=~\"webcon\\\\.(service|portal)\\\\.heartbeat|webcon\\\\.service\\\\.health\\\\.check\"}[$__interval]))",
-          "legendFormat": "{{span_name}} błędy",
+          "legendFormat": "{{span_name}} errors",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -5831,7 +5831,7 @@
               }
             ],
             "matcher": {
-              "options": ".*błędy",
+              "options": ".*errors",
               "id": "byRegexp"
             }
           }
@@ -5863,7 +5863,7 @@
     },
     {
       "type": "row",
-      "title": "Runtime .NET",
+      "title": ".NET runtime",
       "collapsed": true,
       "panels": [],
       "id": 57,
@@ -5876,8 +5876,8 @@
     },
     {
       "type": "timeseries",
-      "title": "CPU procesów WEBCON",
-      "description": "Czas CPU procesów .NET (rdzenie), suma procesów usługi.",
+      "title": "WEBCON process CPU",
+      "description": "CPU time of .NET processes (cores), sum of the service processes.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5940,8 +5940,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Pamięć: working set i sterta GC",
-      "description": "Working set procesu i rozmiar sterty po ostatnim GC.",
+      "title": "Memory: working set and GC heap",
+      "description": "Process working set and heap size after the last GC.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -5965,7 +5965,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (dotnet_gc_last_collection_heap_size_bytes{job=~\"$job\"})",
-          "legendFormat": "sterta GC {{job}}",
+          "legendFormat": "GC heap {{job}}",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -6015,8 +6015,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Pauzy GC",
-      "description": "Procent czasu, w którym aplikacja była wstrzymana przez GC. > 5% = presja pamięci.",
+      "title": "GC pauses",
+      "description": "Percentage of time the application was paused by GC. > 5% = memory pressure.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -6079,8 +6079,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Kolekcje GC według generacji",
-      "description": "Częste gen2 = obiekty żyją długo (cache, duże modele).",
+      "title": "GC collections by generation",
+      "description": "Frequent gen2 = long-lived objects (cache, large models).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -6142,8 +6142,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Pula wątków",
-      "description": "Wątki puli i elementy w kolejce puli. Rosnąca kolejka przy stałej liczbie wątków = thread pool starvation.",
+      "title": "Thread pool",
+      "description": "Pool threads and items in the pool queue. Growing queue with a constant thread count = thread pool starvation.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -6155,7 +6155,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (dotnet_thread_pool_thread_count_total{job=~\"$job\"})",
-          "legendFormat": "wątki {{job}}",
+          "legendFormat": "threads {{job}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -6167,7 +6167,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (dotnet_thread_pool_queue_length_total{job=~\"$job\"})",
-          "legendFormat": "kolejka {{job}}",
+          "legendFormat": "queue {{job}}",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -6217,8 +6217,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Wyjątki i rywalizacja o blokady",
-      "description": "Wyjątki .NET / s i lock contention / s.",
+      "title": "Exceptions and lock contention",
+      "description": ".NET exceptions /s and lock contention /s.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -6230,7 +6230,7 @@
             "uid": "prometheus"
           },
           "expr": "sum by (job) (rate(dotnet_exceptions_total{job=~\"$job\"}[$__rate_interval]))",
-          "legendFormat": "wyjątki {{job}}",
+          "legendFormat": "exceptions {{job}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -6292,7 +6292,7 @@
     },
     {
       "type": "row",
-      "title": "Logi",
+      "title": "Logs",
       "collapsed": true,
       "panels": [],
       "id": 64,
@@ -6305,8 +6305,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Logi według poziomu",
-      "description": "Liczba rekordów logu OTLP według usługi i poziomu.",
+      "title": "Logs by level",
+      "description": "Number of OTLP log records by service and level.",
       "datasource": {
         "type": "loki",
         "uid": "loki"
@@ -6370,12 +6370,12 @@
     },
     {
       "type": "logs",
-      "title": "Błędy i ostrzeżenia",
+      "title": "Errors and warnings",
       "datasource": {
         "type": "loki",
         "uid": "loki"
       },
-      "description": "Rekordy Warning/Error/Fatal. Rozwiń wiersz – trace_id prowadzi do śladu.",
+      "description": "Warning/Error/Fatal records. Expand a row – trace_id leads to the trace.",
       "targets": [
         {
           "datasource": {

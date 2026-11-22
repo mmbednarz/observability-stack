@@ -1,146 +1,146 @@
 # Observability Stack (WEBCON)
 
-Nieoficjalny, samodzielnie hostowany stos obserwowalności (metryki, ślady, logi) do analizy wydajności instalacji **WEBCON 2026.2+** na Windows Server – pokaz możliwości monitorowania.
+An unofficial, self-hosted observability stack (metrics, traces, logs) for analyzing the performance of **WEBCON 2026.2+** installations on Windows Server – a demonstration of monitoring capabilities.
 
-> **Zastrzeżenia.** Projekt prywatny, udostępniony jako demonstracja możliwości monitorowania. Nie jest produktem WEBCON, nie jest przez WEBCON rozwijany, wspierany ani zatwierdzony. Brak wsparcia i gwarancji – używasz na własne ryzyko; przed użyciem w środowisku produkcyjnym przetestuj rozwiązanie. Szczegóły: licencja MIT ([LICENSE](LICENSE)). WEBCON, Grafana i inne nazwy są znakami towarowymi ich właścicieli.
+> **Disclaimer.** A private project shared as a demonstration of monitoring capabilities. It is not a WEBCON product and is not developed, supported, or endorsed by WEBCON. No support and no warranty – use at your own risk; test the solution before using it in a production environment. Details: MIT license ([LICENSE](LICENSE)). WEBCON, Grafana, and other names are trademarks of their respective owners.
 
-| Sygnał | Źródło | Komponent |
+| Signal | Source | Component |
 |---|---|---|
-| Metryki | WEBCON Portal/Serwis (OTLP), host Windows/IIS, SQL Server | **Prometheus** |
-| Ślady (OTLP) | WEBCON Portal/Serwis | **Grafana Tempo** |
-| Logi | Portal i Serwis (OTLP; od 2026.2), opcjonalnie pliki Serilog | **Grafana Loki** |
-| Collector | wszystko powyżej | **Grafana Alloy** |
-| Wizualizacja | korelacja metryki ↔ ślady ↔ logi | **Grafana** |
+| Metrics | WEBCON Portal/Service (OTLP), Windows/IIS host, SQL Server | **Prometheus** |
+| Traces (OTLP) | WEBCON Portal/Service | **Grafana Tempo** |
+| Logs | Portal and Service (OTLP; since 2026.2), optionally Serilog files | **Grafana Loki** |
+| Collector | everything above | **Grafana Alloy** |
+| Visualization | metrics ↔ traces ↔ logs correlation | **Grafana** |
 
 ```
-WEBCON Portal ──OTLP/HTTP :4318──┐
-WEBCON Serwis ──OTLP/HTTP :4318──┤
-Serilog (pliki Serwisu) ─────────┤                  ┌─> Prometheus :9090 (remote write + exemplary)
-windows_exporter (wbudowany) ────┼─> Grafana Alloy ─┼─> Tempo      :3200 (OTLP gRPC :14317)
-SQL Server (dedykowany login) ───┘   :12345 (UI)    └─> Loki       :3100 (/otlp, push)
-                                                              │
-                                Tempo metrics-generator ──────┘ (span metrics, service graph -> Prometheus)
-                                                    Grafana :3000 (datasources z korelacją)
+WEBCON Portal ───OTLP/HTTP :4318──┐
+WEBCON Service ──OTLP/HTTP :4318──┤
+Serilog (Service files) ──────────┤                  ┌─> Prometheus :9090 (remote write + exemplars)
+windows_exporter (built-in) ──────┼─> Grafana Alloy ─┼─> Tempo      :3200 (OTLP gRPC :14317)
+SQL Server (dedicated login) ─────┘   :12345 (UI)    └─> Loki       :3100 (/otlp, push)
+                                                               │
+                                 Tempo metrics-generator ──────┘ (span metrics, service graph -> Prometheus)
+                                                     Grafana :3000 (data sources with correlation)
 ```
 
-Wszystkie komponenty działają jako **usługi Windows** (WinSW, prefiks `obs-`) i nasłuchują wyłącznie na `127.0.0.1` (Grafana opcjonalnie na wszystkich interfejsach).
+All components run as **Windows services** (WinSW, prefix `obs-`) and listen on `127.0.0.1` only (Grafana optionally on all interfaces).
 
-## Dokumentacja
+## Documentation
 
-**[docs/README.md](docs/README.md)** – spis treści. Najważniejsze:
+**[docs/README.md](docs/README.md)** – table of contents. Key pages:
 
-- [Szybki start (all-in-one)](docs/instalacja/01-szybki-start.md) · [Wymagania i SQL Server](docs/instalacja/02-wymagania-i-przygotowanie.md) · [Konfiguracja WEBCON](docs/instalacja/03-konfiguracja-webcon.md)
-- [Tryb zdalny (stos na osobnej VM)](docs/instalacja/04-tryb-zdalny.md) · [Aktualizacja](docs/instalacja/05-aktualizacja.md) · [Odinstalowanie](docs/instalacja/06-odinstalowanie.md)
-- [Rozwiązywanie problemów](docs/instalacja/07-rozwiazywanie-problemow.md) · [Parametry instalatora](docs/instalacja/08-parametry-instalatora.md)
+- [Quick start (all-in-one)](docs/installation/01-quick-start.md) · [Requirements and SQL Server](docs/installation/02-requirements-and-preparation.md) · [WEBCON configuration](docs/installation/03-webcon-configuration.md)
+- [Remote mode (stack on a separate VM)](docs/installation/04-remote-mode.md) · [Upgrade](docs/installation/05-upgrade.md) · [Uninstall](docs/installation/06-uninstall.md)
+- [Troubleshooting](docs/installation/07-troubleshooting.md) · [Installer parameters](docs/installation/08-installer-parameters.md)
 
-## Szybki start (skrót)
+## Quick start (summary)
 
-Wymagania: Windows Server 2019+ / Windows 10+, administrator, internet, WEBCON 2026.2+ na tej samej maszynie.
+Requirements: Windows Server 2019+ / Windows 10+, administrator, internet access, WEBCON 2026.2+ on the same machine.
 
-1. Pobierz `observability-stack-<wersja>.zip` z [Releases](https://github.com/mmbednarz/observability-stack/releases), odblokuj (`Unblock-File`) i rozpakuj, np. do `C:\Install`.
-2. PowerShell jako administrator, w katalogu rozpakowanej paczki:
+1. Download `observability-stack-<version>.zip` from [Releases](https://github.com/mmbednarz/observability-stack/releases), unblock it (`Unblock-File`), and extract it, e.g., to `C:\Install`.
+2. In PowerShell as administrator, in the extracted package folder:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass -Force
-.\Install-ObservabilityStack.ps1 -SqlServer 'localhost,1433' -SqlLogin svc_obs_mssql_exporter   # albo -SqlServer '' (bez SQL)
-C:\Observability\app\scripts\Set-WebconTelemetry.ps1    # włącza telemetrię WEBCON (restart WEBCON)
+.\Install-ObservabilityStack.ps1 -SqlServer 'localhost,1433' -SqlLogin svc_obs_mssql_exporter   # or -SqlServer '' (without SQL)
+C:\Observability\app\scripts\Set-WebconTelemetry.ps1    # enables WEBCON telemetry (restarts WEBCON)
 C:\Observability\app\Test-ObservabilityStack.ps1        # smoke test
 ```
 
-Instalator kopiuje skrypty do `C:\Observability\app` – paczkę można potem usunąć.
+The installer copies the scripts to `C:\Observability\app` – the package can be deleted afterward.
 
-Grafana: <http://localhost:3000> – użytkownik `admin`, hasło w `C:\Observability\secrets\grafana-admin.txt`. Krok po kroku (loginy SQL, SQL Express, weryfikacja): [Szybki start](docs/instalacja/01-szybki-start.md).
+Grafana: <http://localhost:3000> – user `admin`, password in `C:\Observability\secrets\grafana-admin.txt`. Step by step (SQL logins, SQL Express, verification): [Quick start](docs/installation/01-quick-start.md).
 
-## Dashboardy
+## Dashboards
 
-| Folder / dashboard | Zawartość |
+| Folder / dashboard | Contents |
 |---|---|
-| `webcon` / WEBCON – Wydajność | stan, Portal, formularze i przejścia, „gdzie ucieka czas” (ścieżki, reguły, źródła danych, akcje – TraceQL metrics), SQL z perspektywy WEBCON, Serwis (kolejki, timery, Solr, cache), runtime .NET, logi. |
-| `webcon` / WEBCON – Utrzymanie | przegląd tygodniowy (7 dni): host, wejścia do Portalu, TOP 10 akcji i ścieżek (średnia, mediana, p95, min, max; nazwy ścieżek z bazy), aktywne zadania wg użytkowników (stan bieżący z bazy), zewnętrzne API wołane przez WEBCON (wywołania, p95, błędy), błędy źródeł danych i akcji. Panele z bazy wymagają `-WebconSqlReaderLogin`. |
-| `webcon` / WEBCON – Dostępność i zaległości | sonda `/health` Portalu (adresy z powiązań IIS; kod HTTP, czas, certyfikat), zaległości w bazie treści (przeterminowane timeouty, akcje cykliczne z błędem, kolejka maili, tabele kolejek i logów). Metryki z bazy wymagają `-WebconDbMetrics $true`. |
-| `host` / Windows – obciążenie hosta | CPU, pamięć, dyski, sieć, procesy (WEBCON, IIS, SQL), IIS |
-| `sql` / SQL Server – WEBCON | obciążenie, oczekiwania wg kategorii, blokady, I/O i rozmiar baz, pamięć, wolne zapytania SQL z Tempo |
+| `webcon` / WEBCON – Performance | status, Portal, forms and path transitions, “where the time goes” (paths, business rules, data sources, actions – TraceQL metrics), SQL from the WEBCON perspective, Service (queues, timers, Solr, cache), .NET runtime, logs. |
+| `webcon` / WEBCON – Operations | weekly overview (7 days): host, Portal visits, top 10 actions and paths (average, median, p95, min, max; path names from the database), active tasks by user (current state from the database), external APIs called by WEBCON (calls, p95, errors), data source and action errors. Panels based on the database require `-WebconSqlReaderLogin`. |
+| `webcon` / WEBCON – Availability and backlog | Portal `/health` probe (the `-PortalUrl` address or from IIS bindings; HTTP code, time, certificate), backlog in the content database (overdue timeouts, cyclical actions with errors, email queue, queue and log tables). Database metrics require `-WebconDbMetrics $true`. |
+| `host` / Windows – Host load | CPU, memory, disks, network, processes (WEBCON, IIS, SQL), IIS |
+| `sql` / SQL Server – WEBCON | load, waits by category, locks, I/O and database size, memory, slow SQL queries from Tempo |
 | `dotnet` | ASP.NET Core (grafana.com 19924, 19925) |
 
-Metryki SQL Server definiuje `config-templates/alloy/mssql-queries.yaml` (domyślne metryki exportera + rozszerzenia), metryki z bazy treści WEBCON – `config-templates/alloy/webcon-db-queries.yaml`.
+SQL Server metrics are defined in `config-templates/alloy/mssql-queries.yaml` (default exporter metrics + extensions), WEBCON content database metrics in `config-templates/alloy/webcon-db-queries.yaml`.
 
-Katalog dashboardów na serwerze jest zarządzany przez instalator: pliki `.json` spoza repozytorium i spoza `CommunityDashboards` są przy instalacji usuwane. Własne dashboardy zapisuj w Grafanie (baza) albo dodaj do `dashboards/`.
+The dashboard folder on the server is managed by the installer: `.json` files that are not in the repository and not in `CommunityDashboards` are removed during installation. Save your own dashboards in Grafana (database) or add them to `dashboards/`.
 
-## Alerty
+## Alerts
 
-30 reguł Grafana Alerting provisionowanych z `config-templates/grafana/provisioning/alerting/` (opis: [Alerty](docs/uzytkownik/07-alerty.md)):
+30 Grafana Alerting rules provisioned from `config-templates/grafana/provisioning/alerting/` (description: [Alerts](docs/user-guide/07-alerts.md)):
 
-| Folder | Reguły |
+| Folder | Rules |
 |---|---|
-| WEBCON – alerty | W1–W10: p95 przejść ścieżek (> 5 s) i Portalu (> 3 s), 5xx Portalu (> 5 %), brak / błędy heartbeat Serwisu, błędy kolejki Serwisu, rosnące zaległości Solr, błędy źródeł danych (Loki), błędy wywołań zewnętrznych API, skok błędów w logach; B1–B2: Portal niedostępny, certyfikat wkrótce wygaśnie; D1–D3: zaległe timeouty, maile nie wychodzą, akcje cykliczne z błędem; S1–S3: zakleszczenia, blokady, Page Life Expectancy; H1–H4: CPU, pamięć, dysk (per host) |
-| Stos obserwowalności – alerty | O1–O7: komponent stosu nie odpowiada, host przestał wysyłać metryki (także agenci zdalni), brak telemetrii Serwisu, błędy zapytań Tempo, limit serii spanmetrics, odrzucona telemetria w Alloy, dysk danych stosu |
+| WEBCON – alerts | W1–W10: p95 of path transitions (> 5 s) and of the Portal (> 3 s), Portal 5xx (> 5 %), missing Service heartbeat / heartbeat errors, Service queue errors, growing Solr backlog, data source errors (Loki), external API call errors, spike in log errors; B1–B2: Portal unavailable, certificate expiring soon; D1–D3: overdue timeouts, emails not being sent, cyclical actions with errors; S1–S3: deadlocks, blocking, Page Life Expectancy; H1–H4: CPU, memory, disk (per host) |
+| Observability stack – alerts | O1–O7: stack component not responding, host stopped sending metrics (including remote agents), no telemetry from the Service, Tempo query errors, spanmetrics series limit, telemetry dropped in Alloy, stack data disk |
 
-- Powiadomienia: **tylko UI Grafany** (Alerting → Alert rules / Active notifications) – bez kontaktpunktów. Wyciszanie: Alerting → Silences.
-- Brak danych nie alarmuje (maszyna bez WEBCON / SQL jest cicha); zatrzymanie Serwisu lub agenta wykrywają reguły „dane były w ciągu 24 h, brak od 10–15 min” (W4, O2, O3).
-- Awaria Prometheusa / Loki = stan `Error` (`DatasourceError`) reguł korzystających z danego źródła.
-- Reguły są tylko do odczytu w UI – zmiana = edycja YAML w repozytorium i ponowna instalacja. Błąd w pliku reguł blokuje start Grafany (log: `Failed to provision alerting`).
-- `Test-ObservabilityStack.ps1` (sekcja „Alerty”) liczy reguły, zgłasza błędy ewaluacji i wypisuje aktywne alerty.
+- Notifications: **Grafana UI only** (Alerting → Alert rules / Active notifications) – no contact points. Silencing: Alerting → Silences.
+- No data does not trigger alerts (a machine without WEBCON / SQL stays silent); a stopped Service or agent is detected by rules of the form “data present within the last 24 h, missing for 10–15 min” (W4, O2, O3).
+- A Prometheus / Loki failure = `Error` state (`DatasourceError`) for the rules that use that data source.
+- The rules are read-only in the UI – to change them, edit the YAML in the repository and reinstall. An error in a rule file prevents Grafana from starting (log: `Failed to provision alerting`).
+- `Test-ObservabilityStack.ps1` (“Alerts” section) counts the rules, reports evaluation errors, and lists firing alerts.
 
-## Bezpieczeństwo danych telemetrii
+## Telemetry data security
 
-Alloy usuwa ze spanów atrybut `webcon.db.cs` (dane połączenia z bazą) przed zapisem (`otelcol.processor.attributes "webcon_secrets"`), a `Test-ObservabilityStack.ps1` to sprawdza.
+Alloy removes the `webcon.db.cs` attribute (database connection details) from spans before they are stored (`otelcol.processor.attributes "webcon_secrets"`), and `Test-ObservabilityStack.ps1` checks this.
 
-## Tryby SQL tracingu
+## SQL tracing modes
 
-| Tryb | WEBCON `SqlTracing` | Alloy | Zastosowanie |
+| Mode | WEBCON `SqlTracing` | Alloy | Use case |
 |---|---|---|---|
-| Próg (domyślny) | włączony | odrzuca spany SQL < `-SqlSpanThresholdSeconds` | analiza wolnych zapytań przy rozsądnym wolumenie |
-| Wszystkie | włączony | `-SqlSpanThresholdSeconds 0` | pełny obraz, duży wolumen |
-| Wyłączony | `Set-WebconTelemetry.ps1 -SqlTracing Off` | – | minimalny wolumen |
+| Threshold (default) | enabled | drops SQL spans < `-SqlSpanThresholdSeconds` | analysis of slow queries at a reasonable volume |
+| All | enabled | `-SqlSpanThresholdSeconds 0` | full picture, high volume |
+| Disabled | `Set-WebconTelemetry.ps1 -SqlTracing Off` | – | minimum volume |
 
-Filtr obejmuje span WEBCON `SqlQuery` oraz spany SqlClient (`db.system` / `db.system.name`).
+The filter covers the WEBCON `SqlQuery` span and SqlClient spans (`db.system` / `db.system.name`).
 
-## Wersje
+## Versions
 
-Wydania: [Releases](https://github.com/mmbednarz/observability-stack/releases), zmiany i kroki ręczne przy aktualizacji: [CHANGELOG.md](CHANGELOG.md). Zainstalowaną wersję pokazuje smoke test (`C:\Observability\config\install-settings.json`, pole `StackVersion`). Aktualizacja: [docs/instalacja/05-aktualizacja.md](docs/instalacja/05-aktualizacja.md).
+Releases: [Releases](https://github.com/mmbednarz/observability-stack/releases), changes and manual upgrade steps: [CHANGELOG.md](CHANGELOG.md). The installed version is shown by the smoke test (`C:\Observability\config\install-settings.json`, field `StackVersion`). Upgrade: [docs/installation/05-upgrade.md](docs/installation/05-upgrade.md).
 
-## Struktura paczki
+## Package structure
 
 ```
-Install-ObservabilityStack.ps1     instalacja / aktualizacja stosu
-Uninstall-ObservabilityStack.ps1   usunięcie usług (-RemoveFiles: także danych)
-Test-ObservabilityStack.ps1        smoke test end-to-end
-Install-ObservabilityAgent.ps1     agent na hoście WEBCON / SQL (tryb zdalny, uruchamiany z paczki agent-bundle)
-Uninstall-ObservabilityAgent.ps1   usunięcie agenta
-versions.psd1                      przypięte wersje + URL-e + dashboardy społecznościowe
+Install-ObservabilityStack.ps1     stack installation / upgrade
+Uninstall-ObservabilityStack.ps1   removal of services (-RemoveFiles: data as well)
+Test-ObservabilityStack.ps1        end-to-end smoke test
+Install-ObservabilityAgent.ps1     agent on a WEBCON / SQL host (remote mode, run from the agent-bundle package)
+Uninstall-ObservabilityAgent.ps1   agent removal
+versions.psd1                      pinned versions + URLs + community dashboards
 scripts/
-  Set-WebconTelemetry.ps1          konfiguracja OpenTelemetry w appsettings WEBCON
-  Test-SqlExporterLogin.ps1        samodzielna weryfikacja loginu SQL
-  modules/ObservabilityStack.psm1  funkcje wspólne
-config-templates/                  szablony konfiguracji ({{ZMIENNE}}, bloki @@BEGIN/@@END)
-dashboards/                        dashboardy provisionowane do Grafany (podkatalog = folder)
-config-templates/grafana/provisioning/alerting/   reguły alertów Grafany
-sql/                               T-SQL dla DBA
-webcon/                            przykładowa sekcja OpenTelemetry WEBCON
-docs/                              dokumentacja (instalacja/, uzytkownik/)
-VERSION, CHANGELOG.md, LICENSE     wersja, historia zmian, licencja MIT
+  Set-WebconTelemetry.ps1          OpenTelemetry configuration in WEBCON appsettings
+  Test-SqlExporterLogin.ps1        standalone verification of the SQL login
+  modules/ObservabilityStack.psm1  shared functions
+config-templates/                  configuration templates ({{VARIABLES}}, @@BEGIN/@@END blocks)
+dashboards/                        dashboards provisioned to Grafana (subfolder = folder)
+config-templates/grafana/provisioning/alerting/   Grafana alert rules
+sql/                               T-SQL for the DBA
+webcon/                            sample WEBCON OpenTelemetry section
+docs/                              documentation (installation/, user-guide/)
+VERSION, CHANGELOG.md, LICENSE     version, changelog, MIT license
 ```
 
-## Układ na serwerze
+## Layout on the server
 
 ```
 C:\Observability\
-  bin\<komponent>\        binarki (plik .version = zainstalowana wersja)
-  config\                 wygenerowane konfiguracje + install-settings.json
-  data\                   TSDB, bloki Tempo, chunki Loki, baza Grafany
-  logs\<komponent>\       logi usług (WinSW, rotacja 10 MB x 8)
-  services\obs-*\         wrappery WinSW (exe + xml)
-  secrets\                hasło Grafany, connection string SQL, hasło loginu Grafany do bazy (ACL: SYSTEM + Administrators)
-  downloads\              cache pobranych archiwów
-  app\                    kopia skryptów zainstalowanej wersji (smoke test, odinstalowanie, zmiana parametrów)
+  bin\<component>\        binaries (.version file = installed version)
+  config\                 generated configurations + install-settings.json
+  data\                   TSDB, Tempo blocks, Loki chunks, Grafana database
+  logs\<component>\       service logs (WinSW, rotation 10 MB x 8)
+  services\obs-*\         WinSW wrappers (exe + xml)
+  secrets\                Grafana password, SQL connection string, password of the Grafana database login (ACL: SYSTEM + Administrators)
+  downloads\              cache of downloaded archives
+  app\                    copy of the installed version's scripts (smoke test, uninstall, parameter changes)
 ```
 
-## Diagnostyka
+## Diagnostics
 
-Tabela problemów i rozwiązań, logi komponentów, naprawa indeksu Tempo: [Rozwiązywanie problemów](docs/instalacja/07-rozwiazywanie-problemow.md).
+Table of problems and solutions, component logs, Tempo index repair: [Troubleshooting](docs/installation/07-troubleshooting.md).
 
-## Bezpieczeństwo (dev)
+## Security (dev)
 
-- Usługi tylko na localhost, brak uwierzytelnienia między komponentami.
-- `ShowDbStatements = true` – treść zapytań SQL trafia do śladów (założenie: dostęp administracyjny/DBA).
-- Sekrety w plikach z ACL ograniczonym do SYSTEM i Administrators; nigdy w repozytorium.
+- Services on localhost only, no authentication between components.
+- `ShowDbStatements = true` – SQL query text is included in traces (assumption: administrative/DBA access).
+- Secrets in files with an ACL restricted to SYSTEM and Administrators; never in the repository.

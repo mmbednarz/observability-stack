@@ -1,25 +1,25 @@
 /*
-  Uprawnienia loginu exportera mssql (svc_obs_mssql_exporter) do metryk z bazy treści WEBCON
-  (config-templates/alloy/webcon-db-queries.yaml, instalator: -WebconDbMetrics).
+  Permissions of the mssql exporter login (svc_obs_mssql_exporter) for metrics from the WEBCON content database
+  (config-templates/alloy/webcon-db-queries.yaml, installer: -WebconDbMetrics).
 
-    - użytkownik loginu w bazie treści (sys.partitions / sys.tables - rozmiary tabel kolejek i logów z metadanych;
-      widoczność metadanych daje VIEW ANY DEFINITION z sql/grant-sql-exporter-permissions.sql)
-    - SELECT wyłącznie na kolumnach używanych w zapytaniach: ID, statusy, liczniki i daty -
-      bez treści maili, formularzy i logów (bez db_datareader)
+    - a database user for the login in the content database (sys.partitions / sys.tables - queue and log table sizes from metadata;
+      metadata visibility comes from VIEW ANY DEFINITION in sql/grant-sql-exporter-permissions.sql)
+    - SELECT only on the columns used in the queries: IDs, statuses, counters and dates -
+      no email, form or log content (no db_datareader)
 
-  Uruchamia DBA (sysadmin / securityadmin + db_owner w bazie treści). Skrypt jest idempotentny.
-  Po aktualizacji WEBCON uruchom go ponownie - aktualizacja może odtworzyć tabele i usunąć uprawnienia.
-  Najpierw sql/grant-sql-exporter-permissions.sql (login + VIEW SERVER STATE, VIEW ANY DEFINITION).
+  Run by a DBA (sysadmin / securityadmin + db_owner in the content database). The script is idempotent.
+  Run it again after a WEBCON upgrade - the upgrade may recreate tables and remove the permissions.
+  Run sql/grant-sql-exporter-permissions.sql first (login + VIEW SERVER STATE, VIEW ANY DEFINITION).
 */
 USE [master];
 GO
 
-DECLARE @login     sysname       = N'svc_obs_mssql_exporter';   -- <== login exportera
-DECLARE @databases nvarchar(max) = N'WEBCON_Content';           -- <== bazy treści WEBCON, oddzielone przecinkami
+DECLARE @login     sysname       = N'svc_obs_mssql_exporter';   -- <== exporter login
+DECLARE @databases nvarchar(max) = N'WEBCON_Content';           -- <== WEBCON content databases, comma-separated
 
 IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @login)
 BEGIN
-    RAISERROR(N'Login %s nie istnieje - najpierw sql/grant-sql-exporter-permissions.sql.', 16, 1, @login);
+    RAISERROR(N'Login %s does not exist - run sql/grant-sql-exporter-permissions.sql first.', 16, 1, @login);
     RETURN;
 END;
 
@@ -32,7 +32,7 @@ FETCH NEXT FROM dbs INTO @db;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     IF DB_ID(@db) IS NULL
-        RAISERROR(N'Baza %s nie istnieje - pominięta.', 10, 1, @db) WITH NOWAIT;
+        RAISERROR(N'Database %s does not exist - skipped.', 10, 1, @db) WITH NOWAIT;
     ELSE
     BEGIN
         SET @exec = QUOTENAME(@db) + N'.sys.sp_executesql';
@@ -50,7 +50,7 @@ BEGIN
             N'GRANT SELECT (WF_ID, WF_WFDEFID) ON dbo.WorkFlows TO ' + @u + N';' +
             N'GRANT SELECT (DEF_ID, DEF_EnableTimeouts) ON dbo.WFDefinitions TO ' + @u + N';';
         EXEC @exec @sql;
-        RAISERROR(N'Baza %s: uprawnienia nadane.', 10, 1, @db) WITH NOWAIT;
+        RAISERROR(N'Database %s: permissions granted.', 10, 1, @db) WITH NOWAIT;
     END;
     FETCH NEXT FROM dbs INTO @db;
 END;
@@ -59,11 +59,11 @@ DEALLOCATE dbs;
 GO
 
 /*
-  Weryfikacja (jako DBA, w bazie treści) - pierwsze zapytanie powinno zwrócić liczbę, drugie błąd uprawnień:
+  Verification (as a DBA, in the content database) - the first query should return a number, the second a permission error:
 
   USE [WEBCON_Content];
   EXECUTE AS LOGIN = 'svc_obs_mssql_exporter';
       SELECT COUNT(MAIL_AttemptsNumber) FROM dbo.WFMails;
-      SELECT TOP 1 * FROM dbo.WFMails;              -- oczekiwany błąd: The SELECT permission was denied
+      SELECT TOP 1 * FROM dbo.WFMails;              -- expected error: The SELECT permission was denied
   REVERT;
 */

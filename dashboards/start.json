@@ -1,7 +1,7 @@
 {
   "uid": "start",
   "title": "Start – WEBCON Observability",
-  "description": "Ekran domowy: stan WEBCON w skrócie, odnośniki do dashboardów i dokumentacji, aktywne alerty.",
+  "description": "Home screen: WEBCON status at a glance, links to dashboards and documentation, active alerts.",
   "tags": [
     "webcon",
     "start"
@@ -17,11 +17,11 @@
   "schemaVersion": 39,
   "links": [
     {
-      "title": "Dokumentacja",
+      "title": "Documentation",
       "type": "link",
       "icon": "doc",
       "url": "{{DOCS_URL}}/docs/README.md",
-      "tooltip": "Dokumentacja stosu (GitHub)",
+      "tooltip": "Stack documentation (GitHub)",
       "keepTime": false,
       "includeVars": false,
       "targetBlank": true,
@@ -45,13 +45,13 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "## Stos obserwowalności WEBCON\n\nMetryki, ślady i logi z **Portalu** i **Serwisu** WEBCON oraz metryki **SQL Server** i **Windows**. Kafelki poniżej: stan WEBCON z ostatnich 30 minut (\uD83D\uDFE2 OK · \uD83D\uDFE1 uwaga · \uD83D\uDD34 problem). Kliknij kafelek, aby przejść do szczegółów.\n\n| Dashboard | Kiedy otworzyć |\n|---|---|\n| [**WEBCON – Wydajność**](/d/webcon-performance) | wolny Portal, formularz albo przejście ścieżki – **gdzie** WEBCON traci czas (reguły, źródła danych, akcje, SQL, Serwis) |\n| [**WEBCON – Utrzymanie**](/d/webcon-operations) | przegląd tygodnia: TOP 10 akcji i ścieżek, zadania użytkowników, błędy zewnętrznych API |\n| [**SQL Server – WEBCON**](/d/sqlserver-webcon) | czy baza danych jest wąskim gardłem (oczekiwania, blokady, I/O, pamięć) |\n| [**Windows – obciążenie hosta**](/d/windows-host) | CPU, pamięć, dyski, procesy serwera |\n| [**WEBCON – Dostępność i zaległości**](/d/webcon-availability) | czy Portal odpowiada (health, certyfikat) i czy w bazie nie rosną zaległości: timeouty, akcje cykliczne, maile |\n| [**Alerty**](/alerting/list) | reguły alertów i ich stan |\n\n**Pierwszy raz?** [Grafana w 10 minut]({{DOCS_URL}}/docs/uzytkownik/01-grafana-w-10-minut.md) · [Scenariusze: od objawu do przyczyny]({{DOCS_URL}}/docs/uzytkownik/08-scenariusze.md) · [Pojęcia (p95, ślad, span)]({{DOCS_URL}}/docs/uzytkownik/02-pojecia.md) · [Cała dokumentacja]({{DOCS_URL}}/docs/README.md)\n\n<small>Projekt nieoficjalny – nie jest produktem WEBCON; bez wsparcia i gwarancji (licencja MIT).</small>"
+        "content": "## WEBCON observability stack\n\nMetrics, traces and logs from the WEBCON **Portal** and **Service**, plus **SQL Server** and **Windows** metrics. Tiles below: WEBCON status for the last 30 minutes (\uD83D\uDFE2 OK · \uD83D\uDFE1 warning · \uD83D\uDD34 problem). Click a tile to see the details.\n\n| Dashboard | When to open |\n|---|---|\n| [**WEBCON – Performance**](/d/webcon-performance) | slow Portal, form or path transition – **where** WEBCON loses time (rules, data sources, actions, SQL, Service) |\n| [**WEBCON – Operations**](/d/webcon-operations) | weekly overview: top 10 actions and paths, user tasks, external API errors |\n| [**SQL Server – WEBCON**](/d/sqlserver-webcon) | whether the database is the bottleneck (waits, locks, I/O, memory) |\n| [**Windows – Host load**](/d/windows-host) | server CPU, memory, disks, processes |\n| [**WEBCON – Availability and backlog**](/d/webcon-availability) | whether the Portal responds (health, certificate) and whether the database backlog is growing: timeouts, cyclical actions, emails |\n| [**Alerts**](/alerting/list) | alert rules and their state |\n\n**First time?** [Grafana in 10 minutes]({{DOCS_URL}}/docs/user-guide/01-grafana-in-10-minutes.md) · [Scenarios: from symptom to cause]({{DOCS_URL}}/docs/user-guide/08-scenarios.md) · [Concepts (p95, trace, span)]({{DOCS_URL}}/docs/user-guide/02-concepts.md) · [All documentation]({{DOCS_URL}}/docs/README.md)\n\n<small>Unofficial project – not a WEBCON product; no support or warranty (MIT license).</small>"
       }
     },
     {
       "type": "stat",
-      "title": "p95 HTTP Portalu",
-      "description": "Percentyl 95 czasu odpowiedzi Portalu (bez health check), zakres = interwał wykresu.",
+      "title": "Portal HTTP p95",
+      "description": "95th percentile of Portal response time (excluding health check), range = chart interval.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -94,7 +94,7 @@
             ]
           },
           "decimals": 2,
-          "noValue": "brak ruchu"
+          "noValue": "no traffic"
         },
         "overrides": []
       },
@@ -120,15 +120,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Błędy 5xx",
-      "description": "Udział odpowiedzi 5xx w żądaniach wybranych usług.",
+      "title": "5xx errors",
+      "description": "Share of 5xx responses in requests of the selected services.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -171,7 +171,7 @@
             ]
           },
           "decimals": 2,
-          "noValue": "brak ruchu"
+          "noValue": "no traffic"
         },
         "overrides": []
       },
@@ -197,15 +197,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "p95 przejścia ścieżki",
-      "description": "Percentyl 95 czasu przejścia ścieżki (histogram WEBCON).",
+      "title": "Path transition p95",
+      "description": "95th percentile of path transition time (WEBCON histogram).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -247,7 +247,7 @@
               }
             ]
           },
-          "noValue": "brak przejść"
+          "noValue": "no transitions"
         },
         "overrides": []
       },
@@ -273,15 +273,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Przejścia udane",
-      "description": "Udane / wszystkie przejścia w zakresie dashboardu.",
+      "title": "Successful transitions",
+      "description": "Successful / all transitions in the dashboard time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -323,14 +323,14 @@
             ]
           },
           "decimals": 1,
-          "noValue": "brak przejść",
+          "noValue": "no transitions",
           "mappings": [
             {
               "type": "special",
               "options": {
                 "match": "nan",
                 "result": {
-                  "text": "brak przejść",
+                  "text": "no transitions",
                   "color": "text",
                   "index": 0
                 }
@@ -341,7 +341,7 @@
               "options": {
                 "match": "null",
                 "result": {
-                  "text": "brak przejść",
+                  "text": "no transitions",
                   "color": "text",
                   "index": 1
                 }
@@ -373,15 +373,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Serwis żyje",
-      "description": "Czy w ostatnich 5 min były spany heartbeat Serwisu (webcon.service.heartbeat).",
+      "title": "Service alive",
+      "description": "Whether there were Service heartbeat spans (webcon.service.heartbeat) in the last 5 min.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -424,7 +424,7 @@
               "options": {
                 "result": {
                   "color": "green",
-                  "text": "TAK"
+                  "text": "YES"
                 },
                 "from": 0.5,
                 "to": 1000000000000.0
@@ -435,7 +435,7 @@
               "options": {
                 "result": {
                   "color": "red",
-                  "text": "NIE"
+                  "text": "NO"
                 },
                 "from": -1,
                 "to": 0.5
@@ -467,15 +467,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Błędy kolejki Serwisu",
-      "description": "Elementy kolejki, których przetwarzanie się nie powiodło (zakres dashboardu).",
+      "title": "Service queue errors",
+      "description": "Queue items whose processing failed (dashboard time range).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -539,15 +539,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Wydajność",
+          "title": "WEBCON – Performance",
           "url": "/d/webcon-performance?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Portal dostępny",
-      "description": "Sonda /health Portalu (adresy z powiązań IIS): odpowiedź 200 i stan Healthy w ostatnim pomiarze.",
+      "title": "Portal available",
+      "description": "Portal /health probe (addresses from IIS bindings): response 200 and Healthy status in the last check.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -590,18 +590,18 @@
               "options": {
                 "1": {
                   "color": "green",
-                  "text": "TAK",
+                  "text": "YES",
                   "index": 0
                 },
                 "0": {
                   "color": "red",
-                  "text": "NIE",
+                  "text": "NO",
                   "index": 1
                 }
               }
             }
           ],
-          "noValue": "brak sondy"
+          "noValue": "no probe"
         },
         "overrides": []
       },
@@ -627,15 +627,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Dostępność i zaległości",
+          "title": "WEBCON – Availability and backlog",
           "url": "/d/webcon-availability?${__url_time_range}"
         }
       ]
     },
     {
       "type": "stat",
-      "title": "Zaległości w bazie",
-      "description": "Przeterminowane timeouty + akcje cykliczne z błędem + nowe (30 min) maile po co najmniej 3 nieudanych próbach - odczyt z bazy treści.",
+      "title": "Database backlog",
+      "description": "Overdue timeouts + cyclical actions with errors + new (30 min) emails after at least 3 failed attempts - read from the content database.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -673,7 +673,7 @@
             ]
           },
           "mappings": [],
-          "noValue": "brak danych z bazy"
+          "noValue": "no database data"
         },
         "overrides": []
       },
@@ -699,15 +699,15 @@
       },
       "links": [
         {
-          "title": "WEBCON – Dostępność i zaległości",
+          "title": "WEBCON – Availability and backlog",
           "url": "/d/webcon-availability?${__url_time_range}"
         }
       ]
     },
     {
       "type": "alertlist",
-      "title": "Aktywne alerty",
-      "description": "Alerty w stanie Firing i Pending. Szczegóły: Alerting → Alert rules; znaczenie reguł: dokumentacja „Alerty”.",
+      "title": "Active alerts",
+      "description": "Alerts in the Firing and Pending state. Details: Alerting › Alert rules; rule meaning: “Alerts” documentation.",
       "id": 20,
       "gridPos": {
         "x": 0,

@@ -1,28 +1,28 @@
 /*
-  Odczyt bieżącego stanu z bazy treści WEBCON przez Grafanę (źródło danych Microsoft SQL Server):
-    - ActiveTasks                         - aktywne zadania (TOP użytkowników według liczby zadań)
-    - WFAvaiblePaths, WFSteps, WorkFlows, WFDefinitions - nazwy ścieżek, kroków, obiegów i procesów
-      (słownik do rankingów ze śladów: PATH_STPID -> STP_ID, STP_WFID -> WF_ID, WF_WFDEFID -> DEF_ID)
+  Reading the current state from the WEBCON content database in Grafana (Microsoft SQL Server data source):
+    - ActiveTasks                         - active tasks (top users by task count)
+    - WFAvaiblePaths, WFSteps, WorkFlows, WFDefinitions - names of paths, steps, workflows and processes
+      (dictionary for rankings from traces: PATH_STPID -> STP_ID, STP_WFID -> WF_ID, WF_WFDEFID -> DEF_ID)
 
-  Osobny login tylko do odczytu (NIE login exportera mssql): zapytania w Grafanie może pisać każdy edytor
-  dashboardów, a login exportera ma VIEW SERVER STATE (podgląd tekstu zapytań innych sesji).
-  Login dostaje wyłącznie SELECT na powyższych tabelach - bez db_datareader i bez dostępu do danych formularzy.
+  A separate read-only login (NOT the mssql exporter login): any dashboard editor can write queries in Grafana,
+  and the exporter login has VIEW SERVER STATE (can see the query text of other sessions).
+  The login gets only SELECT on the tables above - no db_datareader and no access to form data.
 
-  Uruchamia DBA (sysadmin / securityadmin + db_owner w bazach treści). Skrypt jest idempotentny.
-  Po aktualizacji WEBCON uruchom go ponownie - aktualizacja może odtworzyć tabele i usunąć uprawnienia.
+  Run by a DBA (sysadmin / securityadmin + db_owner in the content databases). The script is idempotent.
+  Run it again after a WEBCON upgrade - the upgrade may recreate tables and remove the permissions.
 */
 USE [master];
 GO
 
-DECLARE @login     sysname       = N'svc_obs_grafana_reader';   -- <== nazwa loginu
-DECLARE @databases nvarchar(max) = N'WEBCON_Content';           -- <== bazy treści WEBCON, oddzielone przecinkami
+DECLARE @login     sysname       = N'svc_obs_grafana_reader';   -- <== login name
+DECLARE @databases nvarchar(max) = N'WEBCON_Content';           -- <== WEBCON content databases, comma-separated
 
--- Utworzenie loginu (jeśli nie istnieje) - hasło ustaw ręcznie i zapisz w C:\Observability\secrets (Set-SecretFile):
--- CREATE LOGIN [svc_obs_grafana_reader] WITH PASSWORD = N'<silne_haslo>', CHECK_POLICY = ON, DEFAULT_DATABASE = [master];
+-- Create the login (if it does not exist) - set the password manually and store it in C:\Observability\secrets (Set-SecretFile):
+-- CREATE LOGIN [svc_obs_grafana_reader] WITH PASSWORD = N'<strong_password>', CHECK_POLICY = ON, DEFAULT_DATABASE = [master];
 
 IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @login)
 BEGIN
-    RAISERROR(N'Login %s nie istnieje - utwórz go (CREATE LOGIN wyżej) i uruchom skrypt ponownie.', 16, 1, @login);
+    RAISERROR(N'Login %s does not exist - create it (CREATE LOGIN above) and run the script again.', 16, 1, @login);
     RETURN;
 END;
 
@@ -34,7 +34,7 @@ FETCH NEXT FROM dbs INTO @db;
 WHILE @@FETCH_STATUS = 0
 BEGIN
     IF DB_ID(@db) IS NULL
-        RAISERROR(N'Baza %s nie istnieje - pominięta.', 10, 1, @db) WITH NOWAIT;
+        RAISERROR(N'Database %s does not exist - skipped.', 10, 1, @db) WITH NOWAIT;
     ELSE
     BEGIN
         SET @exec = QUOTENAME(@db) + N'.sys.sp_executesql';
@@ -47,7 +47,7 @@ BEGIN
             N'GRANT SELECT ON dbo.WorkFlows      TO ' + QUOTENAME(@login) + N';' +
             N'GRANT SELECT ON dbo.WFDefinitions  TO ' + QUOTENAME(@login) + N';';
         EXEC @exec @sql;
-        RAISERROR(N'Baza %s: uprawnienia nadane.', 10, 1, @db) WITH NOWAIT;
+        RAISERROR(N'Database %s: permissions granted.', 10, 1, @db) WITH NOWAIT;
     END;
     FETCH NEXT FROM dbs INTO @db;
 END;
@@ -56,14 +56,14 @@ DEALLOCATE dbs;
 GO
 
 /*
-  Weryfikacja (jako DBA, w bazie treści) - powinny zwrócić dane, a ostatnie zapytanie błąd uprawnień:
+  Verification (as a DBA, in the content database) - the queries should return data, and the last one a permission error:
 
   USE [WEBCON_Content];
   EXECUTE AS LOGIN = 'svc_obs_grafana_reader';
-      SELECT TOP 10 TSK_User, TSK_UserName, COUNT(*) AS zadania
+      SELECT TOP 10 TSK_User, TSK_UserName, COUNT(*) AS tasks
       FROM dbo.ActiveTasks WHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0
-      GROUP BY TSK_User, TSK_UserName ORDER BY zadania DESC;
+      GROUP BY TSK_User, TSK_UserName ORDER BY tasks DESC;
       SELECT TOP 5 PATH_ID, PATH_Name FROM dbo.WFAvaiblePaths;
-      SELECT TOP 1 * FROM dbo.WFElements;   -- oczekiwany błąd: The SELECT permission was denied
+      SELECT TOP 1 * FROM dbo.WFElements;   -- expected error: The SELECT permission was denied
   REVERT;
 */

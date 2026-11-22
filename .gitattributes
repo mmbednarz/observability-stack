@@ -1,10 +1,10 @@
-# Skrypty PowerShell: CRLF. Pliki są w repo jako UTF-8 z BOM (polskie znaki w Windows PowerShell 5.1) - nie usuwaj BOM.
+# PowerShell scripts: CRLF. Files are stored as UTF-8 with BOM (non-ASCII characters in Windows PowerShell 5.1) - do not remove the BOM.
 *.ps1   text eol=crlf
 *.psm1  text eol=crlf
 *.psd1  text eol=crlf
 *.sql   text eol=crlf
 
-# Konfiguracje: LF
+# Configuration files: LF
 *.yml   text eol=lf
 *.yaml  text eol=lf
 *.alloy text eol=lf
@@ -12,7 +12,7 @@
 *.json  text eol=lf
 *.md    text eol=lf
 
-# Pliki wydania: LF
+# Release files: LF
 VERSION   text eol=lf
 LICENSE   text eol=lf
 *.txt     text eol=lf

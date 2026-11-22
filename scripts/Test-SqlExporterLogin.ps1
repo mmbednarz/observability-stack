@@ -1,12 +1,12 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-    Weryfikuje dedykowany login SQL dla prometheus.exporter.mssql (bez instalacji stosu).
+    Verifies the dedicated SQL login for prometheus.exporter.mssql (without installing the stack).
 
 .DESCRIPTION
-    Sprawdza: połączenie, brak roli sysadmin, VIEW SERVER STATE, VIEW ANY DEFINITION
-    oraz faktyczny odczyt DMV używanych przez exporter. Przy brakach wypisuje T-SQL dla DBA.
-    Ta sama weryfikacja jest wykonywana automatycznie przez Install-ObservabilityStack.ps1.
+    Checks: connection, no sysadmin role, VIEW SERVER STATE, VIEW ANY DEFINITION
+    and actual reads of the DMVs used by the exporter. If anything is missing, prints T-SQL for the DBA.
+    Install-ObservabilityStack.ps1 runs the same verification automatically.
 
 .EXAMPLE
     .\scripts\Test-SqlExporterLogin.ps1 -SqlServer 'SQLDEV01\BPS' -SqlLogin 'svc_obs_mssql_exporter'
@@ -23,9 +23,9 @@ param(
 $ErrorActionPreference = 'Stop'
 Import-Module (Join-Path $PSScriptRoot 'modules\ObservabilityStack.psm1') -Force -DisableNameChecking
 
-if (-not $SqlPassword) { $SqlPassword = Read-Host "Hasło dla $SqlLogin" -AsSecureString }
+if (-not $SqlPassword) { $SqlPassword = Read-Host "Password for $SqlLogin" -AsSecureString }
 
-Write-Step "Weryfikacja loginu $SqlLogin na $SqlServer"
+Write-Step "Verifying login $SqlLogin on $SqlServer"
 $result = Test-SqlExporterPermissions -Server $SqlServer -Login $SqlLogin -Password $SqlPassword -Encrypt $SqlEncrypt -TrustServerCertificate $SqlTrustServerCertificate
 foreach ($c in $result.Checks) {
     $line = $c.Check
@@ -34,8 +34,8 @@ foreach ($c in $result.Checks) {
 }
 if ($result.Remediation) {
     Write-Host ''
-    Write-Host 'Do wykonania przez DBA:' -ForegroundColor Yellow
+    Write-Host 'To be run by the DBA:' -ForegroundColor Yellow
     Write-Host $result.Remediation
 }
-if ($result.Success) { Write-Ok 'Login gotowy do użycia przez exporter.'; exit 0 }
+if ($result.Success) { Write-Ok 'The login is ready for use by the exporter.'; exit 0 }
 exit 1

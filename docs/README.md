@@ -1,44 +1,44 @@
-# Dokumentacja – Observability Stack (WEBCON)
+# Documentation – Observability Stack (WEBCON)
 
-Stos do analizy wydajności WEBCON 2026.2+: metryki, ślady i logi z Portalu i Serwisu WEBCON, metryki SQL Server i Windows, dashboardy i alerty w Grafanie. Wszystko jako usługi Windows, instalowane jednym skryptem PowerShell.
+A stack for analyzing WEBCON 2026.2+ performance: metrics, traces, and logs from the WEBCON Portal and WEBCON WorkFlow Service, SQL Server and Windows metrics, dashboards and alerts in Grafana. Everything runs as Windows services installed by a single PowerShell script.
 
-> **Zastrzeżenia.** Projekt prywatny, udostępniony jako demonstracja możliwości monitorowania. Nie jest produktem WEBCON, nie jest przez WEBCON rozwijany, wspierany ani zatwierdzony. Brak wsparcia i gwarancji – używasz na własne ryzyko; przed użyciem w środowisku produkcyjnym przetestuj rozwiązanie. Szczegóły: licencja MIT ([LICENSE](../LICENSE)). WEBCON, Grafana i inne nazwy są znakami towarowymi ich właścicieli.
+> **Disclaimer.** A private project shared as a demonstration of monitoring capabilities. It is not a WEBCON product and is not developed, supported, or endorsed by WEBCON. No support and no warranty – use at your own risk; test the solution before using it in a production environment. Details: MIT license ([LICENSE](../LICENSE)). WEBCON, Grafana, and other names are trademarks of their respective owners.
 
-## Zacznij tutaj
+## Start here
 
-| Chcę… | Przeczytaj |
+| I want to… | Read |
 |---|---|
-| zainstalować stos na maszynie z WEBCON (dev / test) | [Szybki start](instalacja/01-szybki-start.md) |
-| zainstalować stos na osobnej VM | [Tryb zdalny](instalacja/04-tryb-zdalny.md) |
-| zaktualizować stos albo zmienić parametry | [Aktualizacja](instalacja/05-aktualizacja.md) |
-| usunąć stos | [Odinstalowanie](instalacja/06-odinstalowanie.md) |
-| coś nie działa | [Rozwiązywanie problemów](instalacja/07-rozwiazywanie-problemow.md) |
-| zacząć korzystać z dashboardów | [Grafana w 10 minut](uzytkownik/01-grafana-w-10-minut.md), potem [Scenariusze](uzytkownik/08-scenariusze.md) |
-| zrozumieć alert | [Alerty](uzytkownik/07-alerty.md) |
+| install the stack on a machine with WEBCON (dev / test) | [Quick start](installation/01-quick-start.md) |
+| install the stack on a separate VM | [Remote mode](installation/04-remote-mode.md) |
+| upgrade the stack or change parameters | [Upgrade](installation/05-upgrade.md) |
+| remove the stack | [Uninstall](installation/06-uninstall.md) |
+| something does not work | [Troubleshooting](installation/07-troubleshooting.md) |
+| start using the dashboards | [Grafana in 10 minutes](user-guide/01-grafana-in-10-minutes.md), then [Scenarios](user-guide/08-scenarios.md) |
+| understand an alert | [Alerts](user-guide/07-alerts.md) |
 
-## Instalacja i utrzymanie
+## Installation and maintenance
 
-Dla administratora / konsultanta instalującego stos.
+For the administrator / consultant installing the stack.
 
-1. [Szybki start – all-in-one](instalacja/01-szybki-start.md)
-2. [Wymagania i przygotowanie (SQL Server, porty)](instalacja/02-wymagania-i-przygotowanie.md)
-3. [Konfiguracja WEBCON (`Set-WebconTelemetry.ps1`)](instalacja/03-konfiguracja-webcon.md)
-4. [Tryb zdalny – stos na osobnej maszynie](instalacja/04-tryb-zdalny.md)
-5. [Aktualizacja i zmiana parametrów](instalacja/05-aktualizacja.md)
-6. [Odinstalowanie](instalacja/06-odinstalowanie.md)
-7. [Rozwiązywanie problemów](instalacja/07-rozwiazywanie-problemow.md)
-8. [Parametry instalatora](instalacja/08-parametry-instalatora.md)
+1. [Quick start – all-in-one](installation/01-quick-start.md)
+2. [Requirements and preparation (SQL Server, ports)](installation/02-requirements-and-preparation.md)
+3. [WEBCON configuration (`Set-WebconTelemetry.ps1`)](installation/03-webcon-configuration.md)
+4. [Remote mode – stack on a separate machine](installation/04-remote-mode.md)
+5. [Upgrade and parameter changes](installation/05-upgrade.md)
+6. [Uninstall](installation/06-uninstall.md)
+7. [Troubleshooting](installation/07-troubleshooting.md)
+8. [Installer parameters](installation/08-installer-parameters.md)
 
-## Dokumentacja użytkownika
+## User guide
 
-Dla osób tworzących aplikacje WEBCON, które chcą zrozumieć, gdzie aplikacja traci czas i co się w niej psuje. Znajomość Grafany nie jest potrzebna.
+For people building WEBCON applications who want to understand where an application loses time and what breaks in it. No knowledge of Grafana is required.
 
-1. [Grafana w 10 minut](uzytkownik/01-grafana-w-10-minut.md) – nawigacja, zakres czasu, filtry, drążenie od wykresu do śladu
-2. [Pojęcia](uzytkownik/02-pojecia.md) – metryka, ślad, p95; jak WEBCON przekłada się na telemetrię
-3. [Dashboard WEBCON – Wydajność](uzytkownik/03-webcon-wydajnosc.md)
-4. [Dashboard WEBCON – Utrzymanie](uzytkownik/04-webcon-utrzymanie.md)
-5. [Dashboard SQL Server – WEBCON](uzytkownik/05-sql-server.md)
-6. [Dashboard Windows – obciążenie hosta](uzytkownik/06-host-windows.md)
-7. [Alerty](uzytkownik/07-alerty.md)
-8. [Scenariusze – od objawu do przyczyny](uzytkownik/08-scenariusze.md)
-9. [Dashboard WEBCON – Dostępność i zaległości](uzytkownik/09-dostepnosc-i-zaleglosci.md)
+1. [Grafana in 10 minutes](user-guide/01-grafana-in-10-minutes.md) – navigation, time range, filters, drilling down from a chart to a trace
+2. [Concepts](user-guide/02-concepts.md) – metric, trace, p95; how WEBCON maps to telemetry
+3. [WEBCON – Performance dashboard](user-guide/03-webcon-performance.md)
+4. [WEBCON – Operations dashboard](user-guide/04-webcon-operations.md)
+5. [SQL Server – WEBCON dashboard](user-guide/05-sql-server.md)
+6. [Windows – Host load dashboard](user-guide/06-windows-host.md)
+7. [Alerts](user-guide/07-alerts.md)
+8. [Scenarios – from symptom to cause](user-guide/08-scenarios.md)
+9. [WEBCON – Availability and backlog dashboard](user-guide/09-availability-and-backlog.md)

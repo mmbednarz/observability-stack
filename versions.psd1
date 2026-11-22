@@ -1,8 +1,8 @@
 ﻿@{
-    # Przypięte wersje komponentów. Zmiana wersji = edycja tego pliku + ponowne uruchomienie Install-ObservabilityStack.ps1.
-    # {0} w URL zastępowane jest wersją (bez prefiksu "v").
-    # Exe = nazwa pliku wykonywalnego szukana rekurencyjnie po rozpakowaniu.
-    # ChecksumUrl = plik z sumami SHA256 (format "<hash>  <nazwa pliku>") lub pojedynczy hash; brak = tylko ostrzeżenie.
+    # Pinned component versions. Changing a version = edit this file + run Install-ObservabilityStack.ps1 again.
+    # {0} in the URL is replaced with the version (without the "v" prefix).
+    # Exe = executable file name, searched recursively after extraction.
+    # ChecksumUrl = SHA256 checksum file (format "<hash>  <file name>") or a single hash; missing = warning only.
 
     WinSW = @{
         Version     = '2.12.0'
@@ -26,7 +26,7 @@
     }
 
     Tempo = @{
-        # 2.10.x celowo: 3.0 zmienia architekturę i konfigurację (usunięte sekcje ingester/compactor).
+        # 2.10.x on purpose: 3.0 changes the architecture and configuration (ingester/compactor sections removed).
         Version     = '2.10.7'
         Url         = 'https://github.com/grafana/tempo/releases/download/v{0}/tempo_{0}_windows_amd64.tar.gz'
         Exe         = 'tempo.exe'
@@ -47,10 +47,10 @@
         ChecksumUrl = 'https://dl.grafana.com/oss/release/grafana-{0}.windows-amd64.zip.sha256'
     }
 
-    # Dashboardy społecznościowe pobierane z grafana.com przy instalacji (błąd pobrania = ostrzeżenie, nie przerywa instalacji).
+    # Community dashboards downloaded from grafana.com during installation (download error = warning, installation continues).
     CommunityDashboards = @(
         @{ Id = 19924; File = 'aspnetcore.json';          Folder = 'dotnet' }
         @{ Id = 19925; File = 'aspnetcore-endpoint.json'; Folder = 'dotnet' }
-        # 19957 (windows_exporter) usunięty - niezgodny z windows_exporter w Alloy 1.17; zastąpiony dashboards\host\windows-host.json
+        # 19957 (windows_exporter) removed - incompatible with windows_exporter in Alloy 1.17; replaced by dashboards\host\windows-host.json
     )
 }

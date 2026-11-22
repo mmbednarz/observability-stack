@@ -1,11 +1,11 @@
 {
   "uid": "webcon-operations",
-  "title": "WEBCON – Utrzymanie",
+  "title": "WEBCON – Operations",
   "tags": [
     "webcon",
     "operations"
   ],
-  "description": "Przegląd dzienny / tygodniowy dla utrzymania: host, wejścia do Portalu, TOP akcji i ścieżek, aktywne zadania, zewnętrzne API.",
+  "description": "Daily / weekly overview for operations: host, Portal visits, top actions and paths, active tasks, external APIs.",
   "timezone": "browser",
   "editable": true,
   "graphTooltip": 1,
@@ -18,14 +18,14 @@
   },
   "links": [
     {
-      "title": "WEBCON – Wydajność",
+      "title": "WEBCON – Performance",
       "icon": "dashboard",
       "url": "/d/webcon-performance?${__url_time_range}",
       "type": "link",
       "targetBlank": false
     },
     {
-      "title": "Windows – obciążenie hosta",
+      "title": "Windows – Host load",
       "icon": "dashboard",
       "url": "/d/windows-host?${__url_time_range}",
       "type": "link",
@@ -39,11 +39,11 @@
       "targetBlank": false
     },
     {
-      "title": "Dokumentacja",
+      "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/uzytkownik/04-webcon-utrzymanie.md",
-      "tooltip": "Opis paneli i jak je czytać (GitHub)",
+      "url": "{{DOCS_URL}}/docs/user-guide/04-webcon-operations.md",
+      "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,
       "targetBlank": true,
@@ -55,7 +55,7 @@
     "list": [
       {
         "name": "job",
-        "label": "Usługa",
+        "label": "Service",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -82,29 +82,29 @@
       },
       {
         "name": "exclude_ports",
-        "label": "Pomiń porty",
+        "label": "Exclude ports",
         "type": "textbox",
         "query": "4317|4318",
         "current": {
           "value": "4317|4318",
           "text": "4317|4318"
         },
-        "description": "Regex portów pomijanych w panelach zewnętrznych API (domyślnie eksport OTLP do Alloy – własna telemetria)."
+        "description": "Regex of ports excluded from the external API panels (by default OTLP export to Alloy – the stack's own telemetry)."
       },
       {
         "name": "exclude_hosts",
-        "label": "Pomiń hosty",
+        "label": "Exclude hosts",
         "type": "textbox",
         "query": "localhost",
         "current": {
           "text": "localhost",
           "value": "localhost"
         },
-        "description": "Regex (bez rozróżniania wielkości liter) hostów pomijanych w panelach zewnętrznych API. Domyślnie localhost - komunikacja wewnętrzna WEBCON (Solr, moduły Serwisu). Nazwy hostów WEBCON (zmienna self_host) są pomijane zawsze."
+        "description": "Case-insensitive regex of hosts excluded from the external API panels. Default: localhost - internal WEBCON communication (Solr, Service modules). WEBCON host names (self_host variable) are always excluded."
       },
       {
         "name": "self_host",
-        "label": "Hosty WEBCON",
+        "label": "WEBCON hosts",
         "type": "query",
         "hide": 2,
         "datasource": {
@@ -127,7 +127,7 @@
           ]
         },
         "refresh": 2,
-        "description": "Nazwy hostów z Portalem / Serwisem (target_info) - wywołania do nich to ruch wewnętrzny (np. Portal -> Serwis :8002)."
+        "description": "Names of hosts running Portal / Service (target_info) - calls to them are internal traffic (e.g. Portal -> Service :8002)."
       }
     ]
   },
@@ -163,8 +163,8 @@
     },
     {
       "type": "stat",
-      "title": "CPU – średnio",
-      "description": "Średnie obciążenie CPU w zakresie dashboardu (próbki 5 min).",
+      "title": "CPU – average",
+      "description": "Average CPU utilization in the dashboard time range (5 min samples).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -232,8 +232,8 @@
     },
     {
       "type": "stat",
-      "title": "CPU – maksimum",
-      "description": "Najwyższe 5-minutowe obciążenie CPU w zakresie dashboardu.",
+      "title": "CPU – maximum",
+      "description": "Highest 5-minute CPU utilization in the dashboard time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -301,8 +301,8 @@
     },
     {
       "type": "stat",
-      "title": "Pamięć – maksimum",
-      "description": "Najwyższe zajęcie pamięci fizycznej w zakresie dashboardu.",
+      "title": "Memory – maximum",
+      "description": "Highest physical memory usage in the dashboard time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -370,8 +370,8 @@
     },
     {
       "type": "stat",
-      "title": "Najbardziej zajęty dysk",
-      "description": "Zajętość najbardziej zapełnionego woluminu (teraz).",
+      "title": "Fullest disk",
+      "description": "Usage of the fullest volume (now).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -439,8 +439,8 @@
     },
     {
       "type": "stat",
-      "title": "Wolne miejsce (min)",
-      "description": "Najmniej wolnego miejsca na woluminie (teraz).",
+      "title": "Free space (min)",
+      "description": "Lowest free space on a volume (now).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -500,8 +500,8 @@
     },
     {
       "type": "stat",
-      "title": "Opóźnienie dysku – maks.",
-      "description": "Najwyższe 5-minutowe średnie opóźnienie operacji I/O (odczyt + zapis) w zakresie, najgorszy wolumin. > 20 ms = dysk jest wąskim gardłem.",
+      "title": "Disk latency – max",
+      "description": "Highest 5-minute average I/O latency (read + write) in the time range, worst volume. > 20 ms = the disk is a bottleneck.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -569,8 +569,8 @@
     },
     {
       "type": "timeseries",
-      "title": "CPU i pamięć",
-      "description": "Obciążenie CPU i zajęcie pamięci fizycznej. Szczegóły: dashboard „Windows – obciążenie hosta”.",
+      "title": "CPU and memory",
+      "description": "CPU utilization and physical memory usage. Details: the “Windows – Host load” dashboard.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -594,7 +594,7 @@
             "uid": "prometheus"
           },
           "expr": "100 * (1 - windows_memory_available_bytes / windows_memory_physical_total_bytes)",
-          "legendFormat": "pamięć",
+          "legendFormat": "memory",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -646,7 +646,7 @@
     },
     {
       "type": "row",
-      "title": "Portal – wejścia",
+      "title": "Portal – visits",
       "collapsed": false,
       "panels": [],
       "id": 9,
@@ -659,8 +659,8 @@
     },
     {
       "type": "stat",
-      "title": "Otwarcia strony głównej – dziś",
-      "description": "webcon.portal.open: otwarcia strony głównej Portalu od północy.",
+      "title": "Home page opens – today",
+      "description": "webcon.portal.open: Portal home page opens since midnight.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -723,8 +723,8 @@
     },
     {
       "type": "stat",
-      "title": "Logowania – dziś",
-      "description": "aspnetcore.authentication.sign_ins od północy. Logowanie ≠ wizyta: użytkownik z zapamiętaną sesją nie loguje się ponownie. Jedno logowanie bywa raportowane dla kilku schematów uwierzytelniania – liczony jest maksymalny schemat na instancję.",
+      "title": "Sign-ins – today",
+      "description": "aspnetcore.authentication.sign_ins since midnight. Sign-in ≠ visit: a user with a remembered session does not sign in again. One sign-in may be reported for several authentication schemes – the maximum scheme per instance is counted.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -787,8 +787,8 @@
     },
     {
       "type": "stat",
-      "title": "Unikalni użytkownicy (7 dni)",
-      "description": "webcon.portal.request.user.unique.recently: użytkownicy z ostatnich 7 dni, ale nie wcześniej niż od startu aplikacji (restart Portalu zeruje licznik). Ostatnia wartość w zakresie – bezczynny Portal (IIS) nie eksportuje metryk. Dziennej liczby unikalnych WEBCON nie udostępnia.",
+      "title": "Unique users (7 days)",
+      "description": "webcon.portal.request.user.unique.recently: users from the last 7 days, but not earlier than the application start (a Portal restart resets the counter). Last value in the time range – an idle Portal (IIS) does not export metrics. WEBCON does not provide a daily unique user count.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -848,8 +848,8 @@
     },
     {
       "type": "stat",
-      "title": "Unikalni od startu Portalu",
-      "description": "webcon.portal.request.user.unique.since_start – od ostatniego startu procesu Portalu.",
+      "title": "Unique since Portal start",
+      "description": "webcon.portal.request.user.unique.since_start – since the last Portal process start.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -909,8 +909,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Otwarcia i logowania dziennie",
-      "description": "Liczba na dobę (doby UTC).",
+      "title": "Opens and sign-ins per day",
+      "description": "Count per day (UTC days).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -922,7 +922,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(increase(webcon_portal_open_total{job=\"Portal\"}[$__interval] offset -$__interval))",
-          "legendFormat": "otwarcia strony głównej",
+          "legendFormat": "home page opens",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -934,7 +934,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(max by (instance) (increase(aspnetcore_authentication_sign_ins_total{job=\"Portal\"}[$__interval] offset -$__interval)))",
-          "legendFormat": "logowania",
+          "legendFormat": "sign-ins",
           "refId": "B",
           "range": true,
           "instant": false,
@@ -985,7 +985,7 @@
     },
     {
       "type": "row",
-      "title": "Akcje – TOP 10",
+      "title": "Actions – top 10",
       "collapsed": false,
       "panels": [],
       "id": 15,
@@ -998,8 +998,8 @@
     },
     {
       "type": "table",
-      "title": "Akcje – TOP 10 według średniego czasu",
-      "description": "Span webcon.action.execute według ID akcji (WEBCON Designer Studio). Min i max – TraceQL metrics (ślady, retencja 8 dni). Liczba, średnia, mediana, p95 – spanmetrics (histogram, wartości przybliżone do kubełków). Mediana i p95 z histogramu spanmetrics (kubełki = potęgi 2) są przybliżone i mogą wypaść poza zakres Min–Max (min/max dokładne, z Tempo).",
+      "title": "Actions – top 10 by average time",
+      "description": "Span webcon.action.execute by action ID (WEBCON Designer Studio). Min and max – TraceQL metrics (traces, 8-day retention). Count, average, median, p95 – spanmetrics (histogram, values approximated to buckets). Median and p95 from the spanmetrics histogram (buckets = powers of 2) are approximate and may fall outside the Min–Max range (min/max are exact, from Tempo).",
       "datasource": {
         "type": "datasource",
         "uid": "-- Mixed --"
@@ -1207,11 +1207,11 @@
               "max": 7
             },
             "renameByName": {
-              "webcon_action_id": "ID akcji",
-              "webcon_action_name": "Akcja",
-              "Value #A": "Liczba",
-              "Value #B": "Średnia",
-              "Value #C": "Mediana",
+              "webcon_action_id": "Action ID",
+              "webcon_action_name": "Action",
+              "Value #A": "Count",
+              "Value #B": "Average",
+              "Value #C": "Median",
               "Value #D": "p95",
               "min": "Min",
               "max": "Max"
@@ -1227,7 +1227,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Liczba"
+              "options": "Count"
             },
             "properties": [
               {
@@ -1243,7 +1243,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Średnia"
+              "options": "Average"
             },
             "properties": [
               {
@@ -1286,7 +1286,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Mediana"
+              "options": "Median"
             },
             "properties": [
               {
@@ -1350,15 +1350,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ID akcji"
+              "options": "Action ID"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"ID akcji\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"Action ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ]
               }
@@ -1390,8 +1390,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Akcje TOP 10 – średni czas dziennie",
-      "description": "Średni czas wykonania na dobę dla 10 akcji o najwyższej średniej w zakresie.",
+      "title": "Top 10 actions – average time per day",
+      "description": "Average execution time per day for the 10 actions with the highest average in the time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1454,7 +1454,7 @@
     },
     {
       "type": "row",
-      "title": "Ścieżki – TOP 10",
+      "title": "Paths – top 10",
       "collapsed": false,
       "panels": [],
       "id": 18,
@@ -1467,8 +1467,8 @@
     },
     {
       "type": "table",
-      "title": "Ścieżki – TOP 10 według średniego czasu przejścia",
-      "description": "Span webcon.elements_management.path.transitions według ID ścieżki; nazwy ścieżki, kroku, obiegu i procesu z bazy treści (źródło WEBCON SQL). Min i max – TraceQL metrics (ślady, retencja 8 dni). Liczba, średnia, mediana, p95 – spanmetrics (histogram, wartości przybliżone do kubełków). Mediana i p95 z histogramu spanmetrics (kubełki = potęgi 2) są przybliżone i mogą wypaść poza zakres Min–Max (min/max dokładne, z Tempo).",
+      "title": "Paths – top 10 by average transition time",
+      "description": "Span webcon.elements_management.path.transitions by path ID; path, step, workflow and process names from the content database (WEBCON SQL data source). Min and max – TraceQL metrics (traces, 8-day retention). Count, average, median, p95 – spanmetrics (histogram, values approximated to buckets). Median and p95 from the spanmetrics histogram (buckets = powers of 2) are approximate and may fall outside the Min–Max range (min/max are exact, from Tempo).",
       "datasource": {
         "type": "datasource",
         "uid": "-- Mixed --"
@@ -1557,7 +1557,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT CAST(p.PATH_ID AS varchar(20)) AS webcon_path_id, p.PATH_Name AS sciezka, s.STP_Name AS krok, w.WF_Name AS obieg, d.DEF_Name AS proces\nFROM dbo.WFAvaiblePaths p\nJOIN dbo.WFSteps s ON s.STP_ID = p.PATH_STPID\nJOIN dbo.WorkFlows w ON w.WF_ID = s.STP_WFID\nJOIN dbo.WFDefinitions d ON d.DEF_ID = w.WF_WFDEFID"
+          "rawSql": "SELECT CAST(p.PATH_ID AS varchar(20)) AS webcon_path_id, p.PATH_Name AS path_name, s.STP_Name AS step_name, w.WF_Name AS workflow_name, d.DEF_Name AS process_name\nFROM dbo.WFAvaiblePaths p\nJOIN dbo.WFSteps s ON s.STP_ID = p.PATH_STPID\nJOIN dbo.WorkFlows w ON w.WF_ID = s.STP_WFID\nJOIN dbo.WFDefinitions d ON d.DEF_ID = w.WF_WFDEFID"
         }
       ],
       "transformations": [
@@ -1678,10 +1678,10 @@
           "options": {
             "indexByName": {
               "webcon_path_id": 0,
-              "sciezka": 1,
-              "krok": 2,
-              "obieg": 3,
-              "proces": 4,
+              "path_name": 1,
+              "step_name": 2,
+              "workflow_name": 3,
+              "process_name": 4,
               "Value #A": 5,
               "Value #B": 6,
               "Value #C": 7,
@@ -1690,14 +1690,14 @@
               "max": 10
             },
             "renameByName": {
-              "webcon_path_id": "ID ścieżki",
-              "sciezka": "Ścieżka",
-              "krok": "Krok",
-              "obieg": "Obieg",
-              "proces": "Proces",
-              "Value #A": "Liczba",
-              "Value #B": "Średnia",
-              "Value #C": "Mediana",
+              "webcon_path_id": "Path ID",
+              "path_name": "Path",
+              "step_name": "Step",
+              "workflow_name": "Workflow",
+              "process_name": "Process",
+              "Value #A": "Count",
+              "Value #B": "Average",
+              "Value #C": "Median",
               "Value #D": "p95",
               "min": "Min",
               "max": "Max"
@@ -1713,7 +1713,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Liczba"
+              "options": "Count"
             },
             "properties": [
               {
@@ -1729,7 +1729,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Średnia"
+              "options": "Average"
             },
             "properties": [
               {
@@ -1772,7 +1772,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Mediana"
+              "options": "Median"
             },
             "properties": [
               {
@@ -1836,15 +1836,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ID ścieżki"
+              "options": "Path ID"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.path.transitions%5C%22%20%26%26%20span.webcon.path.id%20%3D%20${__data.fields[\"ID ścieżki\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.elements_management.path.transitions%5C%22%20%26%26%20span.webcon.path.id%20%3D%20${__data.fields[\"Path ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ]
               }
@@ -1876,8 +1876,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Ścieżki TOP 10 – średni czas przejścia dziennie",
-      "description": "Średni czas przejścia na dobę dla 10 ścieżek o najwyższej średniej w zakresie (ID ścieżki – nazwy w tabeli wyżej).",
+      "title": "Top 10 paths – average transition time per day",
+      "description": "Average transition time per day for the 10 paths with the highest average in the time range (path ID – names in the table above).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1889,7 +1889,7 @@
             "uid": "prometheus"
           },
           "expr": "(sum by (webcon_path_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval)) / sum by (webcon_path_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__interval] offset -$__interval))) and on (webcon_path_id) topk(10, sum by (webcon_path_id) (increase(traces_spanmetrics_latency_sum{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)) / sum by (webcon_path_id) (increase(traces_spanmetrics_latency_count{span_name=\"webcon.elements_management.path.transitions\",webcon_path_id!=\"\",service=~\"$job\"}[$__range] @ end() offset -$__interval)))",
-          "legendFormat": "ścieżka {{webcon_path_id}}",
+          "legendFormat": "path {{webcon_path_id}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -1940,7 +1940,7 @@
     },
     {
       "type": "row",
-      "title": "Zadania – stan bieżący",
+      "title": "Tasks – current status",
       "collapsed": false,
       "panels": [],
       "id": 21,
@@ -1953,8 +1953,8 @@
     },
     {
       "type": "stat",
-      "title": "Aktywne zadania",
-      "description": "Stan bieżący z bazy treści (nie zależy od zakresu dashboardu).",
+      "title": "Active tasks",
+      "description": "Current status from the content database (does not depend on the dashboard time range).",
       "datasource": {
         "type": "mssql",
         "uid": "webcon-sql"
@@ -1969,7 +1969,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT COUNT(*) AS aktywne,\n       ISNULL(SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END), 0) AS przeterminowane\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0"
+          "rawSql": "SELECT COUNT(*) AS active,\n       ISNULL(SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END), 0) AS overdue\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0"
         }
       ],
       "fieldConfig": {
@@ -1977,24 +1977,24 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "aktywne"
+              "options": "active"
             },
             "properties": [
               {
                 "id": "displayName",
-                "value": "Aktywne"
+                "value": "Active"
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "przeterminowane"
+              "options": "overdue"
             },
             "properties": [
               {
                 "id": "displayName",
-                "value": "Przeterminowane"
+                "value": "Overdue"
               },
               {
                 "id": "thresholds",
@@ -2056,8 +2056,8 @@
     },
     {
       "type": "table",
-      "title": "Użytkownicy z największą liczbą aktywnych zadań",
-      "description": "Stan bieżący z ActiveTasks (niezakończone, nieusunięte). \"Grupowe\" = zadania przypisane do grupy (TSK_ToGroup) – login jest wtedy loginem grupy.",
+      "title": "Users with the most active tasks",
+      "description": "Current status from ActiveTasks (not finished, not deleted). “Group” = tasks assigned to a group (TSK_ToGroup) – the login is then the group login.",
       "datasource": {
         "type": "mssql",
         "uid": "webcon-sql"
@@ -2072,7 +2072,7 @@
           "format": "table",
           "rawQuery": true,
           "editorMode": "code",
-          "rawSql": "SELECT TOP 10 TSK_UserName AS uzytkownik, TSK_User AS login, COUNT(*) AS zadania,\n       SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END) AS przeterminowane,\n       SUM(CASE WHEN TSK_ToGroup = 1 THEN 1 ELSE 0 END) AS grupowe\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0\nGROUP BY TSK_User, TSK_UserName\nORDER BY zadania DESC"
+          "rawSql": "SELECT TOP 10 TSK_UserName AS user_name, TSK_User AS login, COUNT(*) AS tasks,\n       SUM(CASE WHEN TSK_Overdue = 1 THEN 1 ELSE 0 END) AS overdue,\n       SUM(CASE WHEN TSK_ToGroup = 1 THEN 1 ELSE 0 END) AS group_tasks\nFROM dbo.ActiveTasks\nWHERE TSK_IsFinished = 0 AND TSK_IsDeleted = 0\nGROUP BY TSK_User, TSK_UserName\nORDER BY tasks DESC"
         }
       ],
       "transformations": [
@@ -2080,10 +2080,10 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "przeterminowane": "Przeterminowane",
-              "grupowe": "Grupowe",
-              "zadania": "Zadania",
-              "uzytkownik": "Użytkownik",
+              "overdue": "Overdue",
+              "group_tasks": "Group",
+              "tasks": "Tasks",
+              "user_name": "User",
               "login": "Login"
             }
           }
@@ -2094,7 +2094,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Przeterminowane"
+              "options": "Overdue"
             },
             "properties": [
               {
@@ -2147,7 +2147,7 @@
     },
     {
       "type": "row",
-      "title": "Zewnętrzne API wołane przez WEBCON",
+      "title": "External APIs called by WEBCON",
       "collapsed": false,
       "panels": [],
       "id": 24,
@@ -2160,8 +2160,8 @@
     },
     {
       "type": "table",
-      "title": "Serwery docelowe – TOP 10 według liczby wywołań",
-      "description": "Wywołania HTTP wychodzące z Portalu i Serwisu (http.client.request.duration): źródła danych i akcje REST/SOAP, Solr, uwierzytelnianie, licencje. Własna telemetria (porty z $exclude_ports) pominięta.",
+      "title": "Target servers – top 10 by call count",
+      "description": "Outgoing HTTP calls from Portal and Service (http.client.request.duration): REST/SOAP data sources and actions, authentication, licenses. Internal calls (Solr, Service modules - hosts from $exclude_hosts; Portal -> Service) and the stack's own telemetry (ports from $exclude_ports) are excluded.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2172,7 +2172,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
+          "expr": "sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\"))",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -2184,7 +2184,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (serwer, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "expr": "histogram_quantile(0.95, sum by (server, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")))",
           "legendFormat": "",
           "refId": "B",
           "instant": true,
@@ -2196,7 +2196,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "100 * (sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) or (0 * sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))) / sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
+          "expr": "100 * (sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")) or (0 * sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")))) / sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\"))",
           "legendFormat": "",
           "refId": "C",
           "instant": true,
@@ -2208,7 +2208,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "count by (serwer) (count by (serwer, job) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
+          "expr": "count by (server) (count by (server, job) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")))",
           "legendFormat": "",
           "refId": "D",
           "instant": true,
@@ -2225,18 +2225,18 @@
           "id": "organize",
           "options": {
             "indexByName": {
-              "serwer": 0,
+              "server": 0,
               "Value #A": 1,
               "Value #B": 2,
               "Value #C": 3,
               "Value #D": 4
             },
             "renameByName": {
-              "serwer": "Serwer",
-              "Value #A": "Wywołania",
+              "server": "Server",
+              "Value #A": "Calls",
               "Value #B": "p95",
-              "Value #C": "Błędy %",
-              "Value #D": "Usługi WEBCON"
+              "Value #C": "Errors %",
+              "Value #D": "WEBCON services"
             },
             "excludeByName": {
               "Time": true
@@ -2248,7 +2248,7 @@
           "options": {
             "sort": [
               {
-                "field": "Wywołania",
+                "field": "Calls",
                 "desc": true
               }
             ]
@@ -2266,7 +2266,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Wywołania"
+              "options": "Calls"
             },
             "properties": [
               {
@@ -2294,7 +2294,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Błędy %"
+              "options": "Errors %"
             },
             "properties": [
               {
@@ -2359,8 +2359,8 @@
     },
     {
       "type": "table",
-      "title": "Błędy według serwera i typu",
-      "description": "error.type: kod HTTP (4xx/5xx), connection_error (odmowa połączenia albo timeout połączenia TCP ~21 s – WEBCON nie rozróżnia, różni je tylko czas trwania) lub name_resolution_error (błąd DNS).",
+      "title": "Errors by server and type",
+      "description": "error.type: HTTP code (4xx/5xx), connection_error (connection refused or TCP connection timeout ~21 s – WEBCON does not distinguish them, only the duration differs) or name_resolution_error (DNS error).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2371,7 +2371,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (serwer, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) > 0",
+          "expr": "sum by (server, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__range]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")) > 0",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -2388,14 +2388,14 @@
           "id": "organize",
           "options": {
             "indexByName": {
-              "serwer": 0,
+              "server": 0,
               "error_type": 1,
               "Value": 2
             },
             "renameByName": {
-              "serwer": "Serwer",
-              "error_type": "Typ błędu",
-              "Value": "Liczba"
+              "server": "Server",
+              "error_type": "Error type",
+              "Value": "Count"
             },
             "excludeByName": {
               "Time": true
@@ -2407,7 +2407,7 @@
           "options": {
             "sort": [
               {
-                "field": "Liczba",
+                "field": "Count",
                 "desc": true
               }
             ]
@@ -2419,7 +2419,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Liczba"
+              "options": "Count"
             },
             "properties": [
               {
@@ -2453,8 +2453,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Wywołania na godzinę według serwera (TOP 10)",
-      "description": "Liczba wywołań HTTP na godzinę; 10 serwerów z największą liczbą wywołań w zakresie.",
+      "title": "Calls per hour by server (top 10)",
+      "description": "HTTP calls per hour; the 10 servers with the most calls in the time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2465,8 +2465,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")) and on (serwer) topk(10, sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
-          "legendFormat": "{{serwer}}",
+          "expr": "sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")) and on (server) topk(10, sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")))",
+          "legendFormat": "{{server}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -2521,8 +2521,8 @@
     },
     {
       "type": "timeseries",
-      "title": "Błędy na godzinę według serwera i typu",
-      "description": "Wywołania zakończone błędem (error.type) na godzinę.",
+      "title": "Errors per hour by server and type",
+      "description": "Calls that ended with an error (error.type) per hour.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2533,8 +2533,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (serwer, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))",
-          "legendFormat": "{{serwer}} – {{error_type}}",
+          "expr": "sum by (server, error_type) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\",error_type!=\"\"}[$__interval]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\"))",
+          "legendFormat": "{{server}} – {{error_type}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -2589,8 +2589,8 @@
     },
     {
       "type": "timeseries",
-      "title": "p95 czasu odpowiedzi według serwera (TOP 10)",
-      "description": "Percentyl 95 czasu wywołania HTTP w oknach godzinnych.",
+      "title": "p95 response time by server (top 10)",
+      "description": "95th percentile of HTTP call duration in hourly windows.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -2601,8 +2601,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(0.95, sum by (serwer, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\"))) and on (serwer) topk(10, sum by (serwer) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"serwer\", \":\", \"server_address\", \"server_port\"), \"serwer\", \"$1\", \"serwer\", \"(.*):\")))",
-          "legendFormat": "{{serwer}}",
+          "expr": "histogram_quantile(0.95, sum by (server, le) (label_replace(label_join(increase(http_client_request_duration_seconds_bucket{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__interval]), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\"))) and on (server) topk(10, sum by (server) (label_replace(label_join(increase(http_client_request_duration_seconds_count{job=~\"$job\",server_port!~\"$exclude_ports\",server_address!~\"(?i)($exclude_hosts|$self_host)\"}[$__range] @ end()), \"server\", \":\", \"server_address\", \"server_port\"), \"server\", \"$1\", \"server\", \"(.*):\")))",
+          "legendFormat": "{{server}}",
           "refId": "A",
           "range": true,
           "instant": false,
@@ -2654,8 +2654,8 @@
     },
     {
       "type": "table",
-      "title": "Źródła danych według łącznego czasu",
-      "description": "Span webcon.data_source.data.load według ID i typu źródła. TraceQL metrics, zakres dashboardu. Ślad pokazuje wywołanie HTTP i serwer docelowy.",
+      "title": "Data sources by total time",
+      "description": "Span webcon.data_source.data.load by data source ID and type. TraceQL metrics, dashboard time range. The trace shows the HTTP call and the target server.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -2763,7 +2763,7 @@
         {
           "id": "renameByRegex",
           "options": {
-            "renamePattern": "Łączny czas",
+            "renamePattern": "Total time",
             "regex": "^\".*\"$"
           }
         },
@@ -2772,9 +2772,9 @@
           "options": {
             "renameByName": {
               "0.95": "p95",
-              "value": "Wywołania",
-              "span.webcon.data_source.id": "ID źródła",
-              "span.webcon.data_source.type.name": "Typ"
+              "value": "Calls",
+              "span.webcon.data_source.id": "Data source ID",
+              "span.webcon.data_source.type.name": "Type"
             }
           }
         },
@@ -2782,11 +2782,11 @@
           "id": "organize",
           "options": {
             "indexByName": {
-              "ID źródła": 0,
-              "Typ": 1,
-              "Wywołania": 2,
+              "Data source ID": 0,
+              "Type": 1,
+              "Calls": 2,
               "p95": 3,
-              "Łączny czas": 4
+              "Total time": 4
             }
           }
         },
@@ -2795,7 +2795,7 @@
           "options": {
             "sort": [
               {
-                "field": "Łączny czas",
+                "field": "Total time",
                 "desc": true
               }
             ]
@@ -2850,7 +2850,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Wywołania"
+              "options": "Calls"
             },
             "properties": [
               {
@@ -2866,7 +2866,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Łączny czas"
+              "options": "Total time"
             },
             "properties": [
               {
@@ -2882,15 +2882,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ID źródła"
+              "options": "Data source ID"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"ID źródła\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Pokaż ślady"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"Data source ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show traces"
                   }
                 ]
               }
@@ -2932,8 +2932,8 @@
     },
     {
       "type": "table",
-      "title": "Źródła danych zakończone błędem",
-      "description": "Błędy pobierania danych ze źródeł (wyjątek \"Error getting data for DataSource\" w logach Portalu / Serwisu, po jednym rekordzie na błąd). Spany webcon.data_source.data.load nie mają statusu error - błąd widać tylko w spanie HTTP i w logu. Zakres dashboardu.",
+      "title": "Data sources with errors",
+      "description": "Errors getting data from data sources (the \"Error getting data for DataSource\" exception in Portal / Service logs, one record per error). webcon.data_source.data.load spans never have the error status - the error is visible only in the HTTP span and in the log. Dashboard time range.",
       "datasource": {
         "uid": "loki",
         "type": "loki"
@@ -2945,7 +2945,7 @@
             "type": "loki"
           },
           "refId": "A",
-          "expr": "sum by (zrodlo_id, zrodlo, service_name) (count_over_time({service_name=~\"$job\"} | exception_message=~\"(?s)Error getting data for DataSource.*\" | scope_name!=\"Serilog.AspNetCore.RequestLoggingMiddleware\" | line_format \"{{.exception_message}}\" | regexp \"DataSource name: (?P<zrodlo>.*?) ID: (?P<zrodlo_id>[0-9]+)\" [$__range]))",
+          "expr": "sum by (data_source_id, data_source, service_name) (count_over_time({service_name=~\"$job\"} | exception_message=~\"(?s)Error getting data for DataSource.*\" | scope_name!=\"Serilog.AspNetCore.RequestLoggingMiddleware\" | line_format \"{{.exception_message}}\" | regexp \"DataSource name: (?P<data_source>.*?) ID: (?P<data_source_id>[0-9]+)\" [$__range]))",
           "queryType": "instant",
           "editorMode": "code"
         }
@@ -2965,15 +2965,15 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "zrodlo_id": "ID źródła",
-              "service_name": "Usługa",
-              "zrodlo": "Źródło",
-              "Value": "Błędy",
-              "Value #A": "Błędy"
+              "data_source_id": "Data source ID",
+              "service_name": "Service",
+              "data_source": "Data source",
+              "Value": "Errors",
+              "Value #A": "Errors"
             },
             "indexByName": {
-              "zrodlo_id": 0,
-              "zrodlo": 1,
+              "data_source_id": 0,
+              "data_source": 1,
               "service_name": 2,
               "Value": 3,
               "Value #A": 3
@@ -2988,7 +2988,7 @@
           "options": {
             "sort": [
               {
-                "field": "Błędy",
+                "field": "Errors",
                 "desc": true
               }
             ]
@@ -3007,7 +3007,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Błędy"
+              "options": "Errors"
             },
             "properties": [
               {
@@ -3041,15 +3041,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ID źródła"
+              "options": "Data source ID"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "title": "Pokaż logi",
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22expr%22%3A%22%7Bservice_name%3D~%5C%22Portal%7CWebCon.WorkFlow%5C%22%7D%20%7C%20exception_message%3D~%5C%22%28%3Fs%29Error%20getting%20data%20for%20DataSource.%2A%20ID%3A%20${__data.fields[\"ID źródła\"]:percentencode}%5C%5C%5C%5Cb.%2A%5C%22%2C%22datasource%22%3A%7B%22uid%22%3A%22loki%22%2C%22type%22%3A%22loki%22%7D%2C%22refId%22%3A%22A%22%7D%5D%2C%22datasource%22%3A%22loki%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
+                    "title": "Show logs",
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22expr%22%3A%22%7Bservice_name%3D~%5C%22Portal%7CWebCon.WorkFlow%5C%22%7D%20%7C%20exception_message%3D~%5C%22%28%3Fs%29Error%20getting%20data%20for%20DataSource.%2A%20ID%3A%20${__data.fields[\"Data source ID\"]:percentencode}%5C%5C%5C%5Cb.%2A%5C%22%2C%22datasource%22%3A%7B%22uid%22%3A%22loki%22%2C%22type%22%3A%22loki%22%7D%2C%22refId%22%3A%22A%22%7D%5D%2C%22datasource%22%3A%22loki%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
                   }
                 ]
               }
@@ -3074,8 +3074,8 @@
     },
     {
       "type": "table",
-      "title": "Akcje z błędem wywołania HTTP",
-      "description": "Akcje (webcon.action.execute), w których wywołanie HTTP zwróciło błąd (error.type: kod 4xx/5xx, błąd połączenia, DNS). Spany akcji nie mają statusu error - WEBCON może zakończyć akcję mimo błędu HTTP. Zapytanie strukturalne TraceQL: liczba przybliżona (pomija ślady niekompletne w Tempo). Zakres dashboardu.",
+      "title": "Actions with HTTP call errors",
+      "description": "Actions (webcon.action.execute) in which an HTTP call returned an error (error.type: 4xx/5xx code, connection error, DNS). Action spans never have the error status - WEBCON may complete an action despite an HTTP error. Structural TraceQL query: approximate count (skips incomplete traces in Tempo). Dashboard time range.",
       "datasource": {
         "uid": "tempo",
         "type": "tempo"
@@ -3115,10 +3115,10 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "value": "Błędy",
-              "span.webcon.action.id": "ID akcji",
-              "resource.service.name": "Usługa",
-              "span.webcon.action.name": "Akcja"
+              "value": "Errors",
+              "span.webcon.action.id": "Action ID",
+              "resource.service.name": "Service",
+              "span.webcon.action.name": "Action"
             },
             "indexByName": {
               "span.webcon.action.id": 0,
@@ -3136,7 +3136,7 @@
           "options": {
             "sort": [
               {
-                "field": "Błędy",
+                "field": "Errors",
                 "desc": true
               }
             ]
@@ -3155,7 +3155,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Błędy"
+              "options": "Errors"
             },
             "properties": [
               {
@@ -3189,7 +3189,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Akcja"
+              "options": "Action"
             },
             "properties": [
               {
@@ -3211,7 +3211,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Usługa"
+              "options": "Service"
             },
             "properties": [
               {
@@ -3233,15 +3233,15 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "ID akcji"
+              "options": "Action ID"
             },
             "properties": [
               {
                 "id": "links",
                 "value": [
                   {
-                    "title": "Pokaż ślady",
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22datasource%22%3A%7B%22uid%22%3A%22tempo%22%2C%22type%22%3A%22tempo%22%7D%2C%22refId%22%3A%22A%22%2C%22query%22%3A%22%7B%20span.error.type%20%21%3D%20nil%20%7D%20%3C%20%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"ID akcji\"]:percentencode}%20%7D%22%7D%5D%2C%22datasource%22%3A%22tempo%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
+                    "title": "Show traces",
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22queries%22%3A%5B%7B%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22datasource%22%3A%7B%22uid%22%3A%22tempo%22%2C%22type%22%3A%22tempo%22%7D%2C%22refId%22%3A%22A%22%2C%22query%22%3A%22%7B%20span.error.type%20%21%3D%20nil%20%7D%20%3C%20%7B%20name%20%3D%20%5C%22webcon.action.execute%5C%22%20%26%26%20span.webcon.action.id%20%3D%20${__data.fields[\"Action ID\"]:percentencode}%20%7D%22%7D%5D%2C%22datasource%22%3A%22tempo%22%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D"
                   }
                 ]
               }

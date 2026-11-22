@@ -1,7 +1,7 @@
 {
   "uid": "sqlserver-webcon",
   "title": "SQL Server – WEBCON",
-  "description": "Wydajność SQL Server hostującego bazy WEBCON: obciążenie, oczekiwania, blokady, I/O, pamięć, rozmiar baz, wolne zapytania z Tempo.",
+  "description": "Performance of the SQL Server hosting WEBCON databases: load, waits, locks, I/O, memory, database size, slow queries from Tempo.",
   "tags": [
     "sql",
     "webcon"
@@ -20,7 +20,7 @@
       "tooltip": "",
       "asDropdown": false,
       "type": "link",
-      "title": "WEBCON – Wydajność",
+      "title": "WEBCON – Performance",
       "icon": "dashboard",
       "tags": [],
       "targetBlank": false,
@@ -32,7 +32,7 @@
       "tooltip": "",
       "asDropdown": false,
       "type": "link",
-      "title": "Windows – obciążenie hosta",
+      "title": "Windows – Host load",
       "icon": "dashboard",
       "tags": [],
       "targetBlank": false,
@@ -41,11 +41,11 @@
       "includeVars": false
     },
     {
-      "title": "Dokumentacja",
+      "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/uzytkownik/05-sql-server.md",
-      "tooltip": "Opis paneli i jak je czytać (GitHub)",
+      "url": "{{DOCS_URL}}/docs/user-guide/05-sql-server.md",
+      "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,
       "targetBlank": true,
@@ -57,7 +57,7 @@
     "list": [
       {
         "name": "db",
-        "label": "Bazy",
+        "label": "Databases",
         "type": "query",
         "datasource": {
           "type": "prometheus",
@@ -89,7 +89,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Przegląd",
+      "title": "Overview",
       "id": 1,
       "collapsed": false,
       "gridPos": {
@@ -102,9 +102,9 @@
     },
     {
       "type": "stat",
-      "title": "Zapytania / s",
+      "title": "Batches /s",
       "id": 2,
-      "description": "Batch Requests/sec - ogólna miara obciążenia SQL Server.",
+      "description": "Batch Requests/sec - general measure of SQL Server load.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -163,9 +163,9 @@
     },
     {
       "type": "stat",
-      "title": "Połączenia",
+      "title": "Connections",
       "id": 3,
-      "description": "Aktywne połączenia do wybranych baz.",
+      "description": "Active connections to the selected databases.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -226,7 +226,7 @@
       "type": "stat",
       "title": "Page life expectancy",
       "id": 4,
-      "description": "Jak długo strona zostaje w buforze. Spadki / niskie wartości = presja pamięci, więcej odczytów z dysku.",
+      "description": "How long a page stays in the buffer pool. Drops / low values = memory pressure, more reads from disk.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -297,9 +297,9 @@
     },
     {
       "type": "stat",
-      "title": "Pamięć SQL Server",
+      "title": "SQL Server memory",
       "id": 5,
-      "description": "Pamięć zajęta przez SQL Server (committed).",
+      "description": "Memory used by SQL Server (committed).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -358,9 +358,9 @@
     },
     {
       "type": "stat",
-      "title": "Zablokowane sesje",
+      "title": "Blocked sessions",
       "id": 6,
-      "description": "Żądania czekające na blokadę innej sesji (stan bieżący).",
+      "description": "Requests waiting for a lock held by another session (current state).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -427,9 +427,9 @@
     },
     {
       "type": "stat",
-      "title": "Zakleszczenia (zakres)",
+      "title": "Deadlocks (range)",
       "id": 7,
-      "description": "Liczba deadlocków w wybranym zakresie czasu.",
+      "description": "Number of deadlocks in the selected time range.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -468,12 +468,8 @@
                 "value": null
               },
               {
-                "color": null,
+                "color": "red",
                 "value": 1
-              },
-              {
-                "color": "e",
-                "value": "r"
               }
             ],
             "mode": "absolute"
@@ -496,7 +492,7 @@
     },
     {
       "type": "row",
-      "title": "Obciążenie",
+      "title": "Load",
       "id": 8,
       "collapsed": false,
       "gridPos": {
@@ -509,9 +505,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Zapytania i kompilacje / s",
+      "title": "Batches and compilations /s",
       "id": 9,
-      "description": "Kompilacje > 10% zapytań = słabe wykorzystanie planów (zapytania ad hoc, brak parametryzacji).",
+      "description": "Compilations > 10% of batches = poor plan reuse (ad hoc queries, no parameterization).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -529,7 +525,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(mssql_batch_requests_total{job=\"integrations/mssql\"}[$__rate_interval]))",
-          "legendFormat": "zapytania (batch)",
+          "legendFormat": "batches",
           "refId": "A",
           "range": true
         },
@@ -539,7 +535,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(mssql_sql_compilations_total{job=\"integrations/mssql\"}[$__rate_interval]))",
-          "legendFormat": "kompilacje",
+          "legendFormat": "compilations",
           "refId": "B",
           "range": true
         },
@@ -549,7 +545,7 @@
             "uid": "prometheus"
           },
           "expr": "sum(rate(mssql_sql_recompilations_total{job=\"integrations/mssql\"}[$__rate_interval]))",
-          "legendFormat": "rekompilacje",
+          "legendFormat": "recompilations",
           "refId": "C",
           "range": true
         }
@@ -588,9 +584,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Transakcje / s wg bazy",
+      "title": "Transactions /s by database",
       "id": 10,
-      "description": "Transactions/sec per baza.",
+      "description": "Transactions/sec per database.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -647,9 +643,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Aktywne żądania",
+      "title": "Active requests",
       "id": 11,
-      "description": "Żądania użytkowników w trakcie wykonywania (running/runnable/suspended). Dużo suspended = czekają na zasób.",
+      "description": "User requests currently executing (running/runnable/suspended). Many suspended = waiting for a resource.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -710,7 +706,7 @@
     },
     {
       "type": "row",
-      "title": "Oczekiwania (na co czeka SQL Server)",
+      "title": "Waits (what SQL Server is waiting for)",
       "id": 12,
       "collapsed": false,
       "gridPos": {
@@ -723,9 +719,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Czas oczekiwań wg kategorii",
+      "title": "Wait time by category",
       "id": 13,
-      "description": "Sekundy oczekiwań na sekundę (suma po wszystkich wątkach), bez oczekiwań w tle. Dominująca kategoria wskazuje wąskie gardło.",
+      "description": "Wait seconds per second (sum across all threads), excluding background waits. The dominant category points to the bottleneck.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -786,9 +782,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Średni czas pojedynczego oczekiwania",
+      "title": "Average time per wait",
       "id": 14,
-      "description": "Czas oczekiwań / liczba oczekiwań wg kategorii.",
+      "description": "Wait time / number of waits by category.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -845,9 +841,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Presja CPU (signal wait %)",
+      "title": "CPU pressure (signal wait %)",
       "id": 15,
-      "description": "Część oczekiwań spędzona w kolejce na CPU. Trwale > 20-25% = niedobór CPU.",
+      "description": "Share of wait time spent queued for CPU. Consistently > 20-25% = CPU shortage.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -906,7 +902,7 @@
     },
     {
       "type": "row",
-      "title": "Blokady",
+      "title": "Locks",
       "id": 16,
       "collapsed": false,
       "gridPos": {
@@ -919,9 +915,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Zablokowane sesje",
+      "title": "Blocked sessions",
       "id": 17,
-      "description": "Liczba zablokowanych żądań i najdłuższe bieżące czekanie (prawa oś). Próbka co 30 s - krótkie blokady mogą nie być widoczne.",
+      "description": "Number of blocked requests and the longest current wait (right axis). Sampled every 30 s - short blocking may not be visible.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -939,7 +935,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_blocked_sessions{job=\"integrations/mssql\"}",
-          "legendFormat": "zablokowane",
+          "legendFormat": "blocked",
           "refId": "A",
           "range": true
         },
@@ -949,7 +945,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_blocked_wait_seconds_max{job=\"integrations/mssql\"}",
-          "legendFormat": "najdłuższe czekanie",
+          "legendFormat": "longest wait",
           "refId": "B",
           "range": true
         }
@@ -1009,9 +1005,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Oczekiwania na blokady / s",
+      "title": "Lock waits /s",
       "id": 18,
-      "description": "Żądania blokad, które musiały czekać / przekroczyły limit czasu.",
+      "description": "Lock requests that had to wait / timed out.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1078,9 +1074,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Zakleszczenia / min",
+      "title": "Deadlocks /min",
       "id": 19,
-      "description": "Deadlocki na minutę. Szczegóły: Extended Events system_health.",
+      "description": "Deadlocks per minute. Details: Extended Events system_health.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1137,7 +1133,7 @@
     },
     {
       "type": "row",
-      "title": "I/O baz",
+      "title": "Database I/O",
       "id": 20,
       "collapsed": false,
       "gridPos": {
@@ -1150,9 +1146,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Średnie opóźnienie I/O wg bazy",
+      "title": "Average I/O latency by database",
       "id": 21,
-      "description": "Czas oczekiwania na operację I/O plików bazy. Dane: < 20 ms, log: < 5 ms.",
+      "description": "Wait time per I/O operation on database files. Data: < 20 ms, log: < 5 ms.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1209,9 +1205,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Operacje I/O / s wg bazy",
+      "title": "I/O operations /s by database",
       "id": 22,
-      "description": "Odczyty i zapisy plików bazy.",
+      "description": "Reads and writes on database files.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1268,9 +1264,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Przepustowość I/O wg bazy",
+      "title": "I/O throughput by database",
       "id": 23,
-      "description": "Bajty odczytane / zapisane.",
+      "description": "Bytes read / written.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1327,7 +1323,7 @@
     },
     {
       "type": "row",
-      "title": "Pamięć",
+      "title": "Memory",
       "id": 24,
       "collapsed": false,
       "gridPos": {
@@ -1340,9 +1336,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Pamięć SQL Server",
+      "title": "SQL Server memory",
       "id": 25,
-      "description": "Zajęta stale poniżej docelowej = SQL ma zapas; zajęta = docelowa przy niskim PLE = za mało pamięci.",
+      "description": "Committed consistently below target = SQL has headroom; committed = target with low PLE = not enough memory.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1360,7 +1356,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_server_total_memory_bytes{job=\"integrations/mssql\"}",
-          "legendFormat": "zajęta (committed)",
+          "legendFormat": "committed",
           "refId": "A",
           "range": true
         },
@@ -1370,7 +1366,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_server_target_memory_bytes{job=\"integrations/mssql\"}",
-          "legendFormat": "docelowa (target)",
+          "legendFormat": "target",
           "refId": "B",
           "range": true
         },
@@ -1380,7 +1376,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_os_memory{job=\"integrations/mssql\",state=\"available\"}",
-          "legendFormat": "wolna w systemie",
+          "legendFormat": "available in OS",
           "refId": "C",
           "range": true
         }
@@ -1421,7 +1417,7 @@
       "type": "timeseries",
       "title": "Page life expectancy",
       "id": 26,
-      "description": "Spadki PLE = bufor jest wypłukiwany (duże skany, za mało pamięci).",
+      "description": "PLE drops = the buffer pool is being flushed (large scans, not enough memory).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1478,9 +1474,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Przydziały pamięci i bufor",
+      "title": "Memory grants and buffer cache",
       "id": 27,
-      "description": "Memory Grants Pending > 0 = zapytania czekają na pamięć (sortowania, hash join). Trafienia w buforze (prawa oś) powinny być bliskie 100%.",
+      "description": "Memory Grants Pending > 0 = queries are waiting for memory (sorts, hash joins). Buffer cache hits (right axis) should be close to 100%.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1498,7 +1494,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_memory_grants_pending{job=\"integrations/mssql\"}",
-          "legendFormat": "oczekujące przydziały",
+          "legendFormat": "pending grants",
           "refId": "A",
           "range": true
         },
@@ -1508,7 +1504,7 @@
             "uid": "prometheus"
           },
           "expr": "mssql_buffer_cache_hit_ratio{job=\"integrations/mssql\"}",
-          "legendFormat": "trafienia w buforze %",
+          "legendFormat": "buffer cache hits %",
           "refId": "B",
           "range": true
         }
@@ -1568,7 +1564,7 @@
     },
     {
       "type": "row",
-      "title": "Bazy danych",
+      "title": "Database size",
       "id": 28,
       "collapsed": false,
       "gridPos": {
@@ -1581,13 +1577,13 @@
     },
     {
       "type": "bargauge",
-      "title": "Rozmiar danych",
+      "title": "Data size",
       "id": 29,
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Rozmiar plików danych.",
+      "description": "Size of data files.",
       "gridPos": {
         "w": 8,
         "x": 0,
@@ -1641,13 +1637,13 @@
     },
     {
       "type": "bargauge",
-      "title": "Rozmiar logu",
+      "title": "Log size",
       "id": 30,
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Rozmiar plików logu transakcji.",
+      "description": "Size of transaction log files.",
       "gridPos": {
         "w": 8,
         "x": 8,
@@ -1701,13 +1697,13 @@
     },
     {
       "type": "bargauge",
-      "title": "Zapełnienie logu",
+      "title": "Log usage",
       "id": 31,
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Wysokie stałe zapełnienie przy modelu FULL = brak backupów logu.",
+      "description": "Consistently high usage with the FULL recovery model = no log backups.",
       "gridPos": {
         "w": 8,
         "x": 16,
@@ -1770,9 +1766,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Wzrost baz",
+      "title": "Database growth",
       "id": 32,
-      "description": "Rozmiar plików danych i logu w czasie.",
+      "description": "Size of data and log files over time.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1829,9 +1825,9 @@
     },
     {
       "type": "timeseries",
-      "title": "Przyrosty logu",
+      "title": "Log growths",
       "id": 33,
-      "description": "Autogrow logu - częste przyrosty spowalniają zapisy (ustaw większy krok / rozmiar początkowy).",
+      "description": "Log autogrow - frequent growths slow down writes (set a larger growth increment / initial size).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1888,7 +1884,7 @@
     },
     {
       "type": "row",
-      "title": "Wolne zapytania SQL (ślady WEBCON)",
+      "title": "Slow SQL queries (WEBCON traces)",
       "id": 34,
       "collapsed": false,
       "gridPos": {
@@ -1901,13 +1897,13 @@
     },
     {
       "type": "table",
-      "title": "Wolne zapytania SQL",
+      "title": "Slow SQL queries",
       "id": 35,
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
       },
-      "description": "Spany SQL z WEBCON (SqlClient / SqlQuery) zapisane w Tempo. Alloy odrzuca spany SQL krótsze niż próg instalacji (domyślnie 1 s). Kliknij Trace ID, aby otworzyć cały ślad.",
+      "description": "SQL spans from WEBCON (SqlClient / SqlQuery) stored in Tempo. Alloy drops SQL spans shorter than the installation threshold (1 s by default). Click Trace ID to open the whole trace.",
       "gridPos": {
         "w": 24,
         "x": 0,
