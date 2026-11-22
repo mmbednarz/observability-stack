@@ -1,0 +1,1531 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Metrics, traces and logs for WEBCON performance analysis">
+      
+      
+      
+        <link rel="canonical" href="https://mmbednarz.github.io/observability-stack/0.9.1/user-guide/07-alerts/">
+      
+      
+        <link rel="prev" href="../06-windows-host/">
+      
+      
+        <link rel="next" href="../08-scenarios/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>Alerts - Observability Stack (WEBCON)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#alerts" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-header__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Observability Stack (WEBCON)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Alerts
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-nav__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Observability Stack (WEBCON)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/01-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start – installation on a single machine (all-in-one)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/02-requirements-and-preparation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements and preparation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/03-webcon-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WEBCON configuration (Set-WebconTelemetry.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/04-remote-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote mode – stack on a separate machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/05-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/06-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/07-troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/08-installer-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installer parameters (Install-ObservabilityStack.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-grafana-in-10-minutes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grafana in 10 minutes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-webcon-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Performance” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-webcon-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Operations” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-sql-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “SQL Server – WEBCON” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-windows-host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “Windows – Host load” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-see-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to see them
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rule-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rule states
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webcon-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WEBCON rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#availability-and-database-backlog-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Availability and database backlog rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sql-server-and-host-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL Server and host rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-stack-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability stack rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#silencing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Silencing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing thresholds
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios – from symptom to cause
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-availability-and-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Dashboard WEBCON – Availability and backlog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#where-to-see-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where to see them
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rule-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rule states
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webcon-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WEBCON rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#availability-and-database-backlog-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Availability and database backlog rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sql-server-and-host-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL Server and host rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#observability-stack-rules" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Observability stack rules
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#silencing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Silencing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#changing-thresholds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Changing thresholds
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="alerts">Alerts<a class="headerlink" href="#alerts" title="Permanent link">&para;</a></h1>
+<p>Grafana checks 30 rules every minute and marks a problem as an <strong>alert</strong>. Alerts are visible <strong>only in Grafana</strong> – they do not send emails or Teams messages (this can be added later).</p>
+<h2 id="where-to-see-them">Where to see them<a class="headerlink" href="#where-to-see-them" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>What is there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menu → <strong>Alerting → Alert rules</strong></td>
+<td>all rules in two folders: <em>WEBCON – alerts</em> and <em>Observability stack – alerts</em>; the state of each rule</td>
+</tr>
+<tr>
+<td>Menu → <strong>Alerting → Active notifications</strong></td>
+<td>currently firing alerts</td>
+</tr>
+<tr>
+<td>Menu → <strong>Alerting → Silences</strong></td>
+<td>silences (e.g. for the duration of planned maintenance)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="rule-states">Rule states<a class="headerlink" href="#rule-states" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Normal</strong></td>
+<td>condition not met – everything is fine</td>
+</tr>
+<tr>
+<td><strong>Normal (NoData)</strong></td>
+<td>no data – e.g. a machine without SQL Server; this is <strong>not</strong> a problem (the rules intentionally do not alert when there is no data)</td>
+</tr>
+<tr>
+<td><strong>Pending</strong></td>
+<td>condition met, but not for long enough yet (e.g. the rule requires 10 min)</td>
+</tr>
+<tr>
+<td><strong>Firing</strong> (Alerting)</td>
+<td>firing alert</td>
+</tr>
+<tr>
+<td><strong>Error</strong></td>
+<td>the rule could not be evaluated – usually Prometheus or Loki is not running (<code>DatasourceError</code>); affects many rules at once</td>
+</tr>
+</tbody>
+</table>
+<p>Click a rule to see its description, current value, state history, and the <strong>View panel</strong> link to the dashboard panel it refers to.</p>
+<p>Severity (the <code>severity</code> label): <strong>critical</strong> – respond immediately; <strong>warning</strong> – check within the day.</p>
+<h2 id="webcon-rules">WEBCON rules<a class="headerlink" href="#webcon-rules" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Alert</th>
+<th>When</th>
+<th>Severity</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>W1</td>
+<td>Slow path transitions (p95)</td>
+<td>transition p95 &gt; 5 s for 10 min (min. 10 transitions)</td>
+<td>warning</td>
+<td><a href="../08-scenarios/#2-path-transition-takes-a-long-time">Scenario: slow transition</a></td>
+</tr>
+<tr>
+<td>W2</td>
+<td>Slow Portal (p95)</td>
+<td>Portal p95 &gt; 3 s for 10 min (min. 50 requests)</td>
+<td>warning</td>
+<td><a href="../08-scenarios/#1-form-opens-slowly">Scenario: slow form</a></td>
+</tr>
+<tr>
+<td>W3</td>
+<td>Portal 5xx errors</td>
+<td>&gt; 5 % of responses with a server error (min. 10 errors) for 5 min</td>
+<td><strong>critical</strong></td>
+<td><em>Performance → HTTP errors by route</em>, <em>Logs</em></td>
+</tr>
+<tr>
+<td>W4</td>
+<td>No Service heartbeat</td>
+<td>the Service was running within the last 24 h, but has shown no sign of life for 10 min</td>
+<td><strong>critical</strong></td>
+<td>the <code>WebCon WorkFlow Service</code> service – status, event log; <a href="../08-scenarios/#4-service-is-not-processing">scenario</a>. Service in the <em>Running</em> state while the alert persists (e.g. after a virtual machine was paused) = the Service work loop has stalled – restart the service</td>
+</tr>
+<tr>
+<td>W5</td>
+<td>Heartbeat / health check errors</td>
+<td>heartbeat or health check ended with an error</td>
+<td>warning</td>
+<td>Service and Portal logs; database connectivity</td>
+</tr>
+<tr>
+<td>W6</td>
+<td>Service queue errors</td>
+<td>a Service queue item was not processed</td>
+<td>warning</td>
+<td><em>Performance → WEBCON WorkFlow Service</em>, <code>WebCon.WorkFlow</code> logs</td>
+</tr>
+<tr>
+<td>W7</td>
+<td>Growing Solr indexing backlog</td>
+<td>&gt; 1000 backlog items within 30 min and growing</td>
+<td>warning</td>
+<td><em>Solr – indexing queues</em>; the Solr service</td>
+</tr>
+<tr>
+<td>W8</td>
+<td>Data source errors</td>
+<td>≥ 5 data retrieval errors from a single data source in 15 min</td>
+<td>warning</td>
+<td><em>Operations → Data sources with errors</em>; <a href="../08-scenarios/#3-data-source-or-rest-action-returns-errors">scenario</a></td>
+</tr>
+<tr>
+<td>W9</td>
+<td>External API call errors</td>
+<td>≥ 10 HTTP errors to a single server in 15 min</td>
+<td>warning</td>
+<td><em>Operations → External APIs called by WEBCON</em></td>
+</tr>
+<tr>
+<td>W10</td>
+<td>Spike in log errors</td>
+<td>≥ 50 errors in a service's logs in 10 min</td>
+<td>warning</td>
+<td><em>Performance → Logs</em></td>
+</tr>
+</tbody>
+</table>
+<h2 id="availability-and-database-backlog-rules">Availability and database backlog rules<a class="headerlink" href="#availability-and-database-backlog-rules" title="Permanent link">&para;</a></h2>
+<p>Dashboard: <a href="../09-availability-and-backlog/">WEBCON – Availability and backlog</a>. Rules D1–D3 work when content database metrics are enabled (<code>-WebconDbMetrics</code>).</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Alert</th>
+<th>When</th>
+<th>Severity</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B1</td>
+<td>Portal unavailable</td>
+<td>the Portal <code>/health</code> probe (or an additional address) without a 200 response / Healthy status for 3 min</td>
+<td><strong>critical</strong></td>
+<td><em>HTTP code</em> panel: 0 = no connection (IIS, DNS, certificate), 5xx / <code>Unhealthy</code> = WEBCON (e.g. no access to the configuration database), 401 = see <a href="../../installation/07-troubleshooting/">Troubleshooting</a></td>
+</tr>
+<tr>
+<td>B2</td>
+<td>Certificate expiring soon</td>
+<td>the address certificate expires in less than 14 days</td>
+<td>warning</td>
+<td>renew the IIS binding certificate</td>
+</tr>
+<tr>
+<td>D1</td>
+<td>Overdue timeouts</td>
+<td>overdue timeouts have not dropped to zero for 30 min</td>
+<td>warning</td>
+<td>the Service is not picking them up – check alert W4 and the <a href="../08-scenarios/#4-service-is-not-processing">scenario</a></td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Failed emails increasing</td>
+<td>in the last 30 min, new emails appeared with ≥ 3 failed attempts (emails that have exhausted their attempts stay in the queue, so the increase is what counts)</td>
+<td>warning</td>
+<td>SMTP configuration, Service logs</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Cyclical actions with errors</td>
+<td>cyclical actions whose last execution ended with an error for 30 min</td>
+<td>warning</td>
+<td>Designer Studio (cyclical actions), Service logs</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sql-server-and-host-rules">SQL Server and host rules<a class="headerlink" href="#sql-server-and-host-rules" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Alert</th>
+<th>When</th>
+<th>Severity</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td>SQL deadlocks</td>
+<td>a deadlock occurred (15 min)</td>
+<td>warning</td>
+<td><a href="../05-sql-server/#locks">SQL Server → Locks</a></td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Long SQL blocking</td>
+<td>sessions blocked for 10 min</td>
+<td>warning</td>
+<td>as above; <a href="../08-scenarios/#5-database-slows-down">scenario</a></td>
+</tr>
+<tr>
+<td>S3</td>
+<td>SQL memory pressure (Page Life Expectancy)</td>
+<td>Page Life Expectancy &lt; 300 s for 15 min</td>
+<td>warning</td>
+<td><a href="../05-sql-server/#memory">SQL Server → Memory</a></td>
+</tr>
+<tr>
+<td>H1</td>
+<td>High host CPU utilization</td>
+<td>&gt; 90 % for 15 min</td>
+<td>warning</td>
+<td><a href="../06-windows-host/#processes-webcon-iis-sql-server-stack">Host → Processes</a> – which process</td>
+</tr>
+<tr>
+<td>H2</td>
+<td>Low host free memory</td>
+<td>&gt; 90 % for 15 min</td>
+<td>warning</td>
+<td><a href="../06-windows-host/#memory">Host → Memory</a></td>
+</tr>
+<tr>
+<td>H3 / H4</td>
+<td>Low disk space / Critically low disk space</td>
+<td>&lt; 10 % (H3, warning) / &lt; 5 % (H4, critical)</td>
+<td>warning / <strong>critical</strong></td>
+<td>free up space; logs, backups, temporary files</td>
+</tr>
+</tbody>
+</table>
+<h2 id="observability-stack-rules">Observability stack rules<a class="headerlink" href="#observability-stack-rules" title="Permanent link">&para;</a></h2>
+<p>These concern the tool itself – whether data is being collected at all.</p>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Alert</th>
+<th>When</th>
+<th>Severity</th>
+<th>What to do</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>O1</td>
+<td>Stack component not responding</td>
+<td>an <code>obs-*</code> service stopped responding</td>
+<td><strong>critical</strong></td>
+<td><a href="../../installation/07-troubleshooting/">Troubleshooting</a></td>
+</tr>
+<tr>
+<td>O2</td>
+<td>Host stopped sending metrics</td>
+<td>host metrics were present within the last 24 h, but have been missing for 10 min</td>
+<td><strong>critical</strong></td>
+<td>Alloy / agent on the host; after a paused VM is resumed, the alert is expected and clears by itself</td>
+</tr>
+<tr>
+<td>O3</td>
+<td>No telemetry from WEBCON WorkFlow Service</td>
+<td>the Service was sending data (last 24 h), but has sent nothing for 15 min</td>
+<td><strong>critical</strong></td>
+<td>Service stopped? configuration overwritten by a WEBCON upgrade? (the Portal is not checked – under IIS without traffic it stops sending, which is normal)</td>
+</tr>
+<tr>
+<td>O4</td>
+<td>Tempo - query errors</td>
+<td>trace queries end with an error</td>
+<td>warning</td>
+<td><a href="../../installation/07-troubleshooting/#corrupted-tempo-index">corrupted Tempo index</a></td>
+</tr>
+<tr>
+<td>O5 / O5b</td>
+<td>Tempo - spanmetrics near series limit / Tempo - spanmetrics dropping series</td>
+<td>O5: &gt; 80 % of the <code>max_active_series</code> limit for 15 min; O5b: series dropped because the limit was exceeded</td>
+<td>O5 warning / O5b <strong>critical</strong></td>
+<td>a very large number of paths / actions – report to the stack administrator</td>
+</tr>
+<tr>
+<td>O6</td>
+<td>Alloy - telemetry dropped or not sent</td>
+<td>Alloy does not accept or write data for 5 min</td>
+<td>warning</td>
+<td>Alloy logs (event log), disk space</td>
+</tr>
+<tr>
+<td>O7</td>
+<td>Low disk space for stack data</td>
+<td>&lt; 15 % on the <code>C:\Observability\data</code> volume</td>
+<td><strong>critical</strong></td>
+<td>shorten the retention or free up space</td>
+</tr>
+</tbody>
+</table>
+<h2 id="silencing">Silencing<a class="headerlink" href="#silencing" title="Permanent link">&para;</a></h2>
+<p>For planned maintenance (WEBCON upgrade, server restart):</p>
+<ol>
+<li><strong>Alerting → Silences → New silence</strong>.</li>
+<li>Duration (e.g. 2 h) and a matcher, e.g. <code>severity = critical</code> or <code>alertname = W4 No Service heartbeat</code>.</li>
+<li>Comment (reason) → <strong>Save silence</strong>.</li>
+</ol>
+<h2 id="changing-thresholds">Changing thresholds<a class="headerlink" href="#changing-thresholds" title="Permanent link">&para;</a></h2>
+<p>The rules are in the repository (<code>config-templates/grafana/provisioning/alerting/</code>) and are read-only in Grafana. Changing a threshold = changing the file in the repository and reinstalling (<a href="../../installation/05-upgrade/">Upgrade</a>).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Unofficial project – not a WEBCON product; no support or warranty (MIT license).
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
