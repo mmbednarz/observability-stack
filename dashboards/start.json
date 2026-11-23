@@ -20,7 +20,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/README.md",
+      "url": "{{DOCS_URL}}/",
       "tooltip": "Stack documentation (GitHub)",
       "keepTime": false,
       "includeVars": false,
@@ -45,7 +45,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "## WEBCON observability stack\n\nMetrics, traces and logs from the WEBCON **Portal** and **Service**, plus **SQL Server** and **Windows** metrics. Tiles below: WEBCON status for the last 30 minutes (\uD83D\uDFE2 OK · \uD83D\uDFE1 warning · \uD83D\uDD34 problem). Click a tile to see the details.\n\n| Dashboard | When to open |\n|---|---|\n| [**WEBCON – Performance**](/d/webcon-performance) | slow Portal, form or path transition – **where** WEBCON loses time (rules, data sources, actions, SQL, Service) |\n| [**WEBCON – Operations**](/d/webcon-operations) | weekly overview: top 10 actions and paths, user tasks, external API errors |\n| [**SQL Server – WEBCON**](/d/sqlserver-webcon) | whether the database is the bottleneck (waits, locks, I/O, memory) |\n| [**Windows – Host load**](/d/windows-host) | server CPU, memory, disks, processes |\n| [**WEBCON – Availability and backlog**](/d/webcon-availability) | whether the Portal responds (health, certificate) and whether the database backlog is growing: timeouts, cyclical actions, emails |\n| [**Alerts**](/alerting/list) | alert rules and their state |\n\n**First time?** [Grafana in 10 minutes]({{DOCS_URL}}/docs/user-guide/01-grafana-in-10-minutes.md) · [Scenarios: from symptom to cause]({{DOCS_URL}}/docs/user-guide/08-scenarios.md) · [Concepts (p95, trace, span)]({{DOCS_URL}}/docs/user-guide/02-concepts.md) · [All documentation]({{DOCS_URL}}/docs/README.md)\n\n<small>Unofficial project – not a WEBCON product; no support or warranty (MIT license).</small>"
+        "content": "## WEBCON observability stack\n\nMetrics, traces and logs from the WEBCON **Portal** and **Service**, plus **SQL Server** and **Windows** metrics. Tiles below: WEBCON status for the last 30 minutes (\uD83D\uDFE2 OK · \uD83D\uDFE1 warning · \uD83D\uDD34 problem). Click a tile to see the details.\n\n| Dashboard | When to open |\n|---|---|\n| [**WEBCON – Performance**](/d/webcon-performance) | slow Portal, form or path transition – **where** WEBCON loses time (rules, data sources, actions, SQL, Service) |\n| [**WEBCON – Operations**](/d/webcon-operations) | weekly overview: top 10 actions and paths, user tasks, external API errors |\n| [**SQL Server – WEBCON**](/d/sqlserver-webcon) | whether the database is the bottleneck (waits, locks, I/O, memory) |\n| [**Windows – Host load**](/d/windows-host) | server CPU, memory, disks, processes |\n| [**WEBCON – Availability and backlog**](/d/webcon-availability) | whether the Portal responds (health, certificate) and whether the database backlog is growing: timeouts, cyclical actions, emails |\n| [**Alerts**](/alerting/list) | alert rules and their state |\n\n**First time?** [Grafana in 10 minutes]({{DOCS_URL}}/user-guide/01-grafana-in-10-minutes/) · [Scenarios: from symptom to cause]({{DOCS_URL}}/user-guide/08-scenarios/) · [Concepts (p95, trace, span)]({{DOCS_URL}}/user-guide/02-concepts/) · [All documentation]({{DOCS_URL}}/)\n\n<small>Unofficial project – not a WEBCON product; no support or warranty (MIT license).</small>"
       }
     },
     {

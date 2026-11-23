@@ -42,7 +42,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/user-guide/03-webcon-performance.md",
+      "url": "{{DOCS_URL}}/user-guide/03-webcon-performance/",
       "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,

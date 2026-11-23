@@ -27,11 +27,11 @@ All components run as **Windows services** (WinSW, prefix `obs-`) and listen on 
 
 ## Documentation
 
-**[docs/README.md](docs/README.md)** – table of contents. Key pages:
+**[Documentation site](https://mmbednarz.github.io/observability-stack/)** (one copy per release; the same pages are in `docs/` of the package for offline reading). Key pages:
 
-- [Quick start (all-in-one)](docs/installation/01-quick-start.md) · [Requirements and SQL Server](docs/installation/02-requirements-and-preparation.md) · [WEBCON configuration](docs/installation/03-webcon-configuration.md)
-- [Remote mode (stack on a separate VM)](docs/installation/04-remote-mode.md) · [Upgrade](docs/installation/05-upgrade.md) · [Uninstall](docs/installation/06-uninstall.md)
-- [Troubleshooting](docs/installation/07-troubleshooting.md) · [Installer parameters](docs/installation/08-installer-parameters.md)
+- [Quick start (all-in-one)](https://mmbednarz.github.io/observability-stack/latest/installation/01-quick-start/) · [Requirements and SQL Server](https://mmbednarz.github.io/observability-stack/latest/installation/02-requirements-and-preparation/) · [WEBCON configuration](https://mmbednarz.github.io/observability-stack/latest/installation/03-webcon-configuration/)
+- [Remote mode (stack on a separate VM)](https://mmbednarz.github.io/observability-stack/latest/installation/04-remote-mode/) · [Upgrade](https://mmbednarz.github.io/observability-stack/latest/installation/05-upgrade/) · [Uninstall](https://mmbednarz.github.io/observability-stack/latest/installation/06-uninstall/)
+- [Troubleshooting](https://mmbednarz.github.io/observability-stack/latest/installation/07-troubleshooting/) · [Installer parameters](https://mmbednarz.github.io/observability-stack/latest/installation/08-installer-parameters/)
 
 ## Quick start (summary)
 
@@ -49,7 +49,7 @@ C:\Observability\app\Test-ObservabilityStack.ps1        # smoke test
 
 The installer copies the scripts to `C:\Observability\app` – the package can be deleted afterward.
 
-Grafana: <http://localhost:3000> – user `admin`, password in `C:\Observability\secrets\grafana-admin.txt`. Step by step (SQL logins, SQL Express, verification): [Quick start](docs/installation/01-quick-start.md).
+Grafana: <http://localhost:3000> – user `admin`, password in `C:\Observability\secrets\grafana-admin.txt`. Step by step (SQL logins, SQL Express, verification): [Quick start](https://mmbednarz.github.io/observability-stack/latest/installation/01-quick-start/).
 
 ## Dashboards
 
@@ -68,7 +68,7 @@ The dashboard folder on the server is managed by the installer: `.json` files th
 
 ## Alerts
 
-30 Grafana Alerting rules provisioned from `config-templates/grafana/provisioning/alerting/` (description: [Alerts](docs/user-guide/07-alerts.md)):
+30 Grafana Alerting rules provisioned from `config-templates/grafana/provisioning/alerting/` (description: [Alerts](https://mmbednarz.github.io/observability-stack/latest/user-guide/07-alerts/)):
 
 | Folder | Rules |
 |---|---|
@@ -97,7 +97,7 @@ The filter covers the WEBCON `SqlQuery` span and SqlClient spans (`db.system` / 
 
 ## Versions
 
-Releases: [Releases](https://github.com/mmbednarz/observability-stack/releases), changes and manual upgrade steps: [CHANGELOG.md](CHANGELOG.md). The installed version is shown by the smoke test (`C:\Observability\config\install-settings.json`, field `StackVersion`). Upgrade: [docs/installation/05-upgrade.md](docs/installation/05-upgrade.md).
+Releases: [Releases](https://github.com/mmbednarz/observability-stack/releases), changes and manual upgrade steps: [CHANGELOG.md](CHANGELOG.md). The installed version is shown by the smoke test (`C:\Observability\config\install-settings.json`, field `StackVersion`). Upgrade guide: [Upgrade](https://mmbednarz.github.io/observability-stack/latest/installation/05-upgrade/).
 
 ## Package structure
 
@@ -137,7 +137,7 @@ C:\Observability\
 
 ## Diagnostics
 
-Table of problems and solutions, component logs, Tempo index repair: [Troubleshooting](docs/installation/07-troubleshooting.md).
+Table of problems and solutions, component logs, Tempo index repair: [Troubleshooting](https://mmbednarz.github.io/observability-stack/latest/installation/07-troubleshooting/).
 
 ## Security (dev)
 

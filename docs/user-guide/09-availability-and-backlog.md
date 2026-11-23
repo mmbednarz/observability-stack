@@ -1,4 +1,4 @@
-# Dashboard WEBCON – Availability and backlog
+# “WEBCON – Availability and backlog” dashboard
 
 Folder `webcon`, dashboard **WEBCON – Availability and backlog** (the *Portal available* and *Database backlog* tiles on the **Start** screen). It answers two questions:
 

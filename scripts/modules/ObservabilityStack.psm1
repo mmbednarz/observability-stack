@@ -1085,6 +1085,8 @@ function New-AgentBundle {
 # Releases, version, app\ copy (docs/projekt/projekt-dystrybucja-i-wersje.md)
 # ---------------------------------------------------------------------
 $script:PublicRepoUrl = 'https://github.com/mmbednarz/observability-stack'
+# Documentation site (GitHub Pages of the public repository, one copy per release - mkdocs.yml, mike)
+$script:DocsSiteUrl = 'https://mmbednarz.github.io/observability-stack'
 $script:Disclaimer = 'Unofficial project, without support or warranty (MIT license) - not a WEBCON product. Details: README.md.'
 
 # Contents of the release package and of the C:\Observability\app copy. Directory = entry ending with "\" (recursive).
@@ -1208,10 +1210,10 @@ function Copy-StackApp {
 }
 
 function Get-StackDocsUrl {
-    <# Documentation URL for the version: release tag or main (clone / dev version). #>
+    <# Documentation site URL for the version: copy of the release or latest (clone / dev version). #>
     param([Parameter(Mandatory)]$Release)
-    if ($Release.Dev) { return "$script:PublicRepoUrl/blob/main" }
-    return "$script:PublicRepoUrl/blob/v$($Release.Version)"
+    if ($Release.Dev) { return "$script:DocsSiteUrl/latest" }
+    return "$script:DocsSiteUrl/$($Release.Version)"
 }
 
 function Assert-SafeRemoveRoot {

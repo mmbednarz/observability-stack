@@ -42,7 +42,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/user-guide/04-webcon-operations.md",
+      "url": "{{DOCS_URL}}/user-guide/04-webcon-operations/",
       "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,

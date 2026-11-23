@@ -32,7 +32,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/user-guide/06-windows-host.md",
+      "url": "{{DOCS_URL}}/user-guide/06-windows-host/",
       "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,

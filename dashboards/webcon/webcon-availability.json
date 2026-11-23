@@ -32,7 +32,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/user-guide/09-availability-and-backlog.md",
+      "url": "{{DOCS_URL}}/user-guide/09-availability-and-backlog/",
       "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,

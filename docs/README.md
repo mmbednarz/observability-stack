@@ -2,7 +2,9 @@
 
 A stack for analyzing WEBCON 2026.2+ performance: metrics, traces, and logs from the WEBCON Portal and WEBCON WorkFlow Service, SQL Server and Windows metrics, dashboards and alerts in Grafana. Everything runs as Windows services installed by a single PowerShell script.
 
-> **Disclaimer.** A private project shared as a demonstration of monitoring capabilities. It is not a WEBCON product and is not developed, supported, or endorsed by WEBCON. No support and no warranty – use at your own risk; test the solution before using it in a production environment. Details: MIT license ([LICENSE](../LICENSE)). WEBCON, Grafana, and other names are trademarks of their respective owners.
+> **Disclaimer.** A private project shared as a demonstration of monitoring capabilities. It is not a WEBCON product and is not developed, supported, or endorsed by WEBCON. No support and no warranty – use at your own risk; test the solution before using it in a production environment. Details: MIT license ([LICENSE](https://github.com/mmbednarz/observability-stack/blob/main/LICENSE)). WEBCON, Grafana, and other names are trademarks of their respective owners.
+
+Online: <https://mmbednarz.github.io/observability-stack/> (one copy per release – version selector in the header). The same pages are in the `docs` folder of the release package for offline reading.
 
 ## Start here
 

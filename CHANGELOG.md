@@ -2,6 +2,17 @@
 
 Format: one section per version – **Changes** and **Requires action** (manual steps when upgrading from the previous version). Numbering follows [SemVer](https://semver.org/): major = a change that requires manual migration, minor = new features, patch = fixes.
 
+## [0.10.0] – 2026-11-23
+
+### Changes
+
+- Documentation published as a website: <https://mmbednarz.github.io/observability-stack/> – navigation, search, one copy per release (version selector; `latest` = newest release). The `.md` files stay in `docs/` of the package for offline reading.
+- *Documentation* links in the dashboards and on the Start dashboard open the website pages of the installed version.
+
+### Requires action
+
+- None – the dashboard links are updated by the installer.
+
 ## [0.9.1] – 2026-11-22
 
 ### Changes

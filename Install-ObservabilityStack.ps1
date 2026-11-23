@@ -210,7 +210,7 @@ if (-not $previous) {
         Write-Ok "Upgrading $PreviousVersion -> $($Release.Version)"
     }
 }
-if ($Release.Dev) { Write-Info 'Development version (repository clone) - documentation links point to the main branch.' }
+if ($Release.Dev) { Write-Info 'Development version (repository clone) - documentation links point to the latest release (/latest).' }
 # Files from a ZIP downloaded from the internet (Zone.Identifier) - the copy in app\ must be unblocked
 foreach ($f in $PackageFiles) { Unblock-File -LiteralPath (Join-Path $RepoRoot $f) -ErrorAction SilentlyContinue }
 

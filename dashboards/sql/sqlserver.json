@@ -44,7 +44,7 @@
       "title": "Documentation",
       "type": "link",
       "icon": "doc",
-      "url": "{{DOCS_URL}}/docs/user-guide/05-sql-server.md",
+      "url": "{{DOCS_URL}}/user-guide/05-sql-server/",
       "tooltip": "Panel descriptions and how to read them (GitHub)",
       "keepTime": false,
       "includeVars": false,
