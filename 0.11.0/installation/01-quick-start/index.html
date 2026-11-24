@@ -1,0 +1,1432 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Metrics, traces and logs for WEBCON performance analysis">
+      
+      
+      
+        <link rel="canonical" href="https://mmbednarz.github.io/observability-stack/0.11.0/installation/01-quick-start/">
+      
+      
+        <link rel="prev" href="../..">
+      
+      
+        <link rel="next" href="../02-requirements-and-preparation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>Quick start – installation on a single machine (all-in-one) - Observability Stack (WEBCON)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#quick-start--installation-on-a-single-machine-all-in-one" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-header__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Observability Stack (WEBCON)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Quick start – installation on a single machine (all-in-one)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-nav__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Observability Stack (WEBCON)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start – installation on a single machine (all-in-one)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start – installation on a single machine (all-in-one)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets installed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-check-the-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 0. Check the requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-download-the-installation-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1. Download the installation files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-prepare-the-sql-logins-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2. Prepare the SQL logins (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-the-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3. Run the installer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-point-webcon-telemetry-to-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4. Point WEBCON telemetry to the stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-check-that-everything-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5. Check that everything works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-sign-in-to-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6. Sign in to Grafana
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-requirements-and-preparation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements and preparation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-webcon-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WEBCON configuration (Set-WebconTelemetry.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-remote-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote mode – stack on a separate machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-installer-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installer parameters (Install-ObservabilityStack.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/01-grafana-in-10-minutes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grafana in 10 minutes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/02-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/03-webcon-performance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Performance” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/04-webcon-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Operations” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/05-sql-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “SQL Server – WEBCON” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/06-windows-host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “Windows – Host load” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/07-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/08-scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios – from symptom to cause
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../user-guide/09-availability-and-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Availability and backlog” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-gets-installed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What gets installed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-0-check-the-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 0. Check the requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-download-the-installation-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1. Download the installation files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-prepare-the-sql-logins-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2. Prepare the SQL logins (recommended)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-run-the-installer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3. Run the installer
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-point-webcon-telemetry-to-the-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4. Point WEBCON telemetry to the stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-check-that-everything-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5. Check that everything works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-sign-in-to-grafana" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6. Sign in to Grafana
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="quick-start--installation-on-a-single-machine-all-in-one">Quick start – installation on a single machine (all-in-one)<a class="headerlink" href="#quick-start--installation-on-a-single-machine-all-in-one" title="Permanent link">&para;</a></h1>
+<p>This guide takes you from zero to working dashboards in Grafana when <strong>WEBCON, SQL Server, and the observability stack run on the same machine</strong> (a typical dev / test environment). It takes about 30 minutes, of which about 10 minutes are spent downloading and installing the components.</p>
+<p>Stack on a separate machine (WEBCON and SQL on other hosts): <a href="../04-remote-mode/">Remote mode</a>.</p>
+<blockquote>
+<p><strong>What you do not need to know:</strong> Prometheus, Grafana, Tempo, or OpenTelemetry. The installer configures everything on its own, and this guide tells you what you should see after each step.</p>
+</blockquote>
+<h2 id="what-gets-installed">What gets installed<a class="headerlink" href="#what-gets-installed" title="Permanent link">&para;</a></h2>
+<p>Five Windows services (names start with <code>obs-</code>) in the <code>C:\Observability</code> folder:</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>obs-alloy</code></td>
+<td>receives telemetry from WEBCON, collects Windows and SQL Server metrics</td>
+</tr>
+<tr>
+<td><code>obs-prometheus</code></td>
+<td>stores metrics (counters, durations, load)</td>
+</tr>
+<tr>
+<td><code>obs-tempo</code></td>
+<td>stores traces – the detailed course of individual WEBCON operations</td>
+</tr>
+<tr>
+<td><code>obs-loki</code></td>
+<td>stores WEBCON logs</td>
+</tr>
+<tr>
+<td><code>obs-grafana</code></td>
+<td>website with dashboards and alerts – <a href="http://localhost:3000">http://localhost:3000</a></td>
+</tr>
+</tbody>
+</table>
+<p>All services listen on <code>127.0.0.1</code> only – they are not visible from other computers (to change this: <a href="../08-installer-parameters/">parameters</a>, <code>-GrafanaListenAll</code>).</p>
+<h2 id="step-0-check-the-requirements">Step 0. Check the requirements<a class="headerlink" href="#step-0-check-the-requirements" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Windows Server 2019+ or Windows 10/11, an account with <strong>administrator privileges</strong>.</li>
+<li><strong>WEBCON 2026.2 or later</strong> (2026.1 is not supported).</li>
+<li>Internet access from the server (GitHub, dl.grafana.com, grafana.com) – the installer downloads the components.</li>
+<li>~10 GB of free space on drive <code>C:</code>.</li>
+<li>Free ports: 3000, 3100, 3200, 4317, 4318, 7947, 9090, 9096, 9097, 12345, 14317 (the installer checks them and reports any conflict).</li>
+</ul>
+<p>Details and SQL Server preparation: <a href="../02-requirements-and-preparation/">Requirements and preparation</a>.</p>
+<h2 id="step-1-download-the-installation-files">Step 1. Download the installation files<a class="headerlink" href="#step-1-download-the-installation-files" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Download the latest <code>observability-stack-&lt;version&gt;.zip</code> package and the <code>.sha256</code> file from the <a href="https://github.com/mmbednarz/observability-stack/releases">Releases</a> page.</li>
+<li>Verify the checksum, unblock the archive (otherwise Windows blocks scripts downloaded from the internet), and extract it, e.g., to <code>C:\Install</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="p">(</span><span class="nb">Get-FileHash</span> <span class="p">.\</span><span class="n">observability-stack</span><span class="p">-</span><span class="n">0</span><span class="p">.</span><span class="n">11</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">zip</span> <span class="n">-Algorithm</span> <span class="n">SHA256</span><span class="p">).</span><span class="n">Hash</span>   <span class="c"># compare with the .sha256 file</span>
+<span class="nb">Unblock-File</span> <span class="p">.\</span><span class="n">observability-stack</span><span class="p">-</span><span class="n">0</span><span class="p">.</span><span class="n">11</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">zip</span>
+<span class="nb">Expand-Archive</span> <span class="p">.\</span><span class="n">observability-stack</span><span class="p">-</span><span class="n">0</span><span class="p">.</span><span class="n">11</span><span class="p">.</span><span class="n">0</span><span class="p">.</span><span class="n">zip</span> <span class="n">-DestinationPath</span> <span class="n">C</span><span class="p">:\</span><span class="n">Install</span>
+</code></pre></div>
+<p>Do not extract the package into the <code>C:\Observability</code> installation directory – the installer refuses (uninstalling with <code>-RemoveFiles</code> would delete it together with the data).</p>
+<p>After installation, the package is no longer needed: the installer copies the scripts to <code>C:\Observability\app</code> (smoke test, uninstall, parameter changes, <code>Set-WebconTelemetry.ps1</code>, SQL scripts).</p>
+<h2 id="step-2-prepare-the-sql-logins-recommended">Step 2. Prepare the SQL logins (recommended)<a class="headerlink" href="#step-2-prepare-the-sql-logins-recommended" title="Permanent link">&para;</a></h2>
+<p>Without this step the stack works, but <strong>without</strong> the SQL Server dashboard and without some panels of the “WEBCON – Operations” dashboard. You can skip it and come back to it later (running the installer again adds SQL).</p>
+<p>Two SQL logins are needed – details and scripts for the DBA: <a href="../02-requirements-and-preparation/#sql-server">Requirements and preparation → SQL Server</a>.</p>
+<table>
+<thead>
+<tr>
+<th>Login</th>
+<th>Purpose</th>
+<th>Script for the DBA</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>svc_obs_mssql_exporter</code></td>
+<td>SQL Server metrics (load, locks, waits)</td>
+<td><code>sql\grant-sql-exporter-permissions.sql</code></td>
+</tr>
+<tr>
+<td><code>svc_obs_grafana_reader</code></td>
+<td>reading path names and active tasks from the WEBCON content database</td>
+<td><code>sql\grant-webcon-reader-permissions.sql</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>SQL Server Express:</strong> TCP is disabled by default, and the installer connects to SQL over TCP only. Enable TCP with a static port 1433 – instructions: <a href="../02-requirements-and-preparation/#sql-server-express--enabling-tcp">Requirements → SQL Server Express</a>.</p>
+</blockquote>
+<h2 id="step-3-run-the-installer">Step 3. Run the installer<a class="headerlink" href="#step-3-run-the-installer" title="Permanent link">&para;</a></h2>
+<p>Open <strong>PowerShell as administrator</strong> (right-click → <em>Run as administrator</em>) and go to the folder with the files:</p>
+<div class="highlight"><pre><span></span><code><span class="nb">cd </span><span class="n">C</span><span class="p">:\</span><span class="n">Install</span><span class="p">\</span><span class="n">observability-stack</span><span class="p">-</span><span class="n">0</span><span class="p">.</span><span class="n">11</span><span class="p">.</span><span class="n">0</span>
+<span class="nb">Set-ExecutionPolicy</span> <span class="n">-Scope</span> <span class="k">Process</span> <span class="n">Bypass</span> <span class="n">-Force</span>
+</code></pre></div>
+<p>Choose one option:</p>
+<div class="highlight"><pre><span></span><code><span class="c"># a) without SQL Server (simplest)</span>
+<span class="p">.\</span><span class="nb">Install-ObservabilityStack</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SqlServer</span> <span class="s1">''</span>
+
+<span class="c"># b) with SQL Server metrics – the installer asks for the login and password</span>
+<span class="p">.\</span><span class="nb">Install-ObservabilityStack</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SqlServer</span> <span class="s1">'localhost,1433'</span> <span class="n">-SqlLogin</span> <span class="n">svc_obs_mssql_exporter</span>
+
+<span class="c"># c) like b) + data from the WEBCON content database for the "WEBCON – Operations" dashboard (recommended)</span>
+<span class="p">.\</span><span class="nb">Install-ObservabilityStack</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-SqlServer</span> <span class="s1">'localhost,1433'</span> <span class="n">-SqlLogin</span> <span class="n">svc_obs_mssql_exporter</span> <span class="p">`</span>
+    <span class="n">-WebconSqlReaderLogin</span> <span class="n">svc_obs_grafana_reader</span> <span class="n">-WebconContentDatabase</span> <span class="n">WEBCON_Content</span>
+</code></pre></div>
+<p><code>localhost,1433</code> is the address of the SQL instance in <code>host,port</code> format. A named instance on a dynamic port (e.g., <code>localhost\SQLEXPRESS</code>) does not work – see the SQL Express note above.</p>
+<p><strong>What you will see:</strong> successive <code>==&gt; …</code> sections with <code>[OK]</code> lines. The installer:</p>
+<ol>
+<li>checks free ports and the permissions of the SQL logins (if permissions are missing, it prints commands for the DBA and stops),</li>
+<li>downloads the components and verifies their checksums,</li>
+<li>generates the configuration and the Grafana administrator password,</li>
+<li>registers and starts the <code>obs-*</code> services.</li>
+</ol>
+<p>At the end, it prints a summary with addresses and – <strong>only on the first installation</strong> – the Grafana administrator password:</p>
+<div class="highlight"><pre><span></span><code>Summary
+    Grafana     http://localhost:3000  (admin / password: C:\Observability\secrets\grafana-admin.txt)
+                New admin password: ************************
+</code></pre></div>
+<p>Save the password in a password manager. <code>Ingester not ready</code> messages while Loki / Tempo start are normal – the installer waits until the components are ready.</p>
+<h2 id="step-4-point-webcon-telemetry-to-the-stack">Step 4. Point WEBCON telemetry to the stack<a class="headerlink" href="#step-4-point-webcon-telemetry-to-the-stack" title="Permanent link">&para;</a></h2>
+<p>By default, WEBCON does not send metrics, traces, or logs. The <code>Set-WebconTelemetry.ps1</code> script enables this in the <code>appsettings</code> files of the Portal and the Service. Preview first:</p>
+<div class="highlight"><pre><span></span><code><span class="p">.\</span><span class="n">scripts</span><span class="p">\</span><span class="nb">Set-WebconTelemetry</span><span class="p">.</span><span class="n">ps1</span> <span class="n">-WhatIf</span>
+</code></pre></div>
+<p>The script finds the files in <code>C:\Program Files\WEBCON</code> and <code>C:\Program Files (x86)\WEBCON</code> and lists what it will change. Then make the actual change:</p>
+<div class="highlight"><pre><span></span><code><span class="p">.\</span><span class="n">scripts</span><span class="p">\</span><span class="nb">Set-WebconTelemetry</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
+<p>After you confirm (<code>Y</code>), the script backs up the files (<code>*.bak-&lt;timestamp&gt;</code>), changes the configuration, and <strong>restarts the WEBCON WorkFlow Service and the Portal application</strong> – schedule this outside users' working hours. Details and rolling back the changes: <a href="../03-webcon-configuration/">WEBCON configuration</a>.</p>
+<h2 id="step-5-check-that-everything-works">Step 5. Check that everything works<a class="headerlink" href="#step-5-check-that-everything-works" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="p">.\</span><span class="nb">Test-ObservabilityStack</span><span class="p">.</span><span class="n">ps1</span>
+</code></pre></div>
+<p>The smoke test sends a test trace, log, and metric and checks that they reached the data stores. Expected result (excerpt):</p>
+<div class="highlight"><pre><span></span><code>==&gt; End-to-end OTLP flow
+    [OK]   Tempo: test trace found
+    [OK]   Loki: test log found
+    [OK]   Prometheus: test metric found
+==&gt; WEBCON and host data (informational)
+    [OK]   OTLP source: WebCon.WorkFlow
+    [OK]   OTLP source: Portal
+    [OK]   webcon_* metrics present
+    [OK]   mssql exporter: up
+==&gt; Alerts
+    [OK]   Alert rules loaded: 30
+Result: OK
+</code></pre></div>
+<ul>
+<li><code>OTLP source: Portal</code> appears only after the first visit to the Portal after the restart (IIS starts the application on the first request). Open the Portal in a browser and repeat the test after 2 minutes – WEBCON sends metrics every 60 s.</li>
+<li>A <code>[WARN]</code> about the Loki “pattern ingester” is only a warning – it can last up to 2 h after startup.</li>
+<li>Other problems: <a href="../07-troubleshooting/">Troubleshooting</a>.</li>
+</ul>
+<h2 id="step-6-sign-in-to-grafana">Step 6. Sign in to Grafana<a class="headerlink" href="#step-6-sign-in-to-grafana" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Open <a href="http://localhost:3000">http://localhost:3000</a>.</li>
+<li>User <code>admin</code>, password from step 3. If you do not have it, read it in PowerShell as administrator:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="nb">Get-Content</span> <span class="n">C</span><span class="p">:\</span><span class="n">Observability</span><span class="p">\</span><span class="n">secrets</span><span class="p">\</span><span class="n">grafana-admin</span><span class="p">.</span><span class="n">txt</span>
+</code></pre></div>
+<ol>
+<li>You will see the <strong>Start</strong> home screen – WEBCON status at a glance, links, and firing alerts. All dashboards: menu (☰) → <strong>Dashboards</strong>, in folders:</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>Folder</th>
+<th>Dashboard</th>
+<th>Where to start</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>webcon</code></td>
+<td><strong>WEBCON – Performance</strong></td>
+<td>current performance: Portal, forms, paths, business rules, SQL, Service</td>
+</tr>
+<tr>
+<td><code>webcon</code></td>
+<td><strong>WEBCON – Operations</strong></td>
+<td>weekly overview: most frequent actions and paths, tasks, external APIs</td>
+</tr>
+<tr>
+<td><code>webcon</code></td>
+<td><strong>WEBCON – Availability and backlog</strong></td>
+<td>Portal availability (<code>/health</code> probe) and backlog in the content database</td>
+</tr>
+<tr>
+<td><code>sql</code></td>
+<td><strong>SQL Server – WEBCON</strong></td>
+<td>database load and problems</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td><strong>Windows – Host load</strong></td>
+<td>CPU, memory, disks, processes</td>
+</tr>
+</tbody>
+</table>
+<p>The first meaningful charts appear after users have worked in WEBCON for a dozen or so minutes. How to read the dashboards: <a href="../../user-guide/01-grafana-in-10-minutes/">Grafana in 10 minutes</a>.</p>
+<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Other Grafana users: menu → <strong>Administration → Users and access → Users → New user</strong> (the <em>Viewer</em> role is enough for viewing).</li>
+<li>Access to Grafana from other computers: reinstall with <code>-GrafanaListenAll</code> (<a href="../05-upgrade/#changing-parameters">Upgrade</a>).</li>
+<li>After a WEBCON upgrade: run <code>C:\Observability\app\scripts\Set-WebconTelemetry.ps1</code> again (<a href="../05-upgrade/#after-a-webcon-upgrade">Upgrade</a>).</li>
+<li>New stack version: <a href="../05-upgrade/">Upgrade</a>.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Unofficial project – not a WEBCON product; no support or warranty (MIT license).
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
