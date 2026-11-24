@@ -101,7 +101,9 @@ groups:
             model:
               refId: A
               instant: true
-              expr: sum by (route) (increase(tempo_request_duration_seconds_count{status_code=~"5..",route!="ready"}[15m]))
+              # only external routes (Grafana, smoke test): internal querier_* sub-requests are retried by the query-frontend
+              # (e.g. a gRPC health check timeout under heavy 7-day TraceQL metrics queries) - the user gets a correct response
+              expr: sum by (route) (increase(tempo_request_duration_seconds_count{status_code=~"5..",route!~"ready|querier_.*"}[15m]))
           - refId: B
             datasourceUid: __expr__
             model: { refId: B, type: reduce, expression: A, reducer: last }
@@ -114,7 +116,7 @@ groups:
         labels: { severity: warning }
         annotations:
           summary: "Tempo {{ $labels.route }}: {{ humanize $values.B.Value }} 5xx responses in 15 min"
-          description: Tempo query errors. “reading parquet file metadata” = corrupted block index - repair procedure in the README (delete index.json.gz and index.pb.zst). Run Test-ObservabilityStack.ps1.
+          description: Tempo query errors (trace panels, TraceQL metrics). Check logs\tempo in the installation directory and run Test-ObservabilityStack.ps1; “reading parquet file metadata” = block index error - procedure in docs\installation\07-troubleshooting.md.
 
       - uid: stack-o5-tempo-series-near-limit
         title: O5 Tempo - spanmetrics near series limit

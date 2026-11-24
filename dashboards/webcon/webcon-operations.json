@@ -84,23 +84,23 @@
         "name": "exclude_ports",
         "label": "Exclude ports",
         "type": "textbox",
-        "query": "4317|4318",
+        "query": "4317|4318|8983",
         "current": {
-          "value": "4317|4318",
-          "text": "4317|4318"
+          "value": "4317|4318|8983",
+          "text": "4317|4318|8983"
         },
-        "description": "Regex of ports excluded from the external API panels (by default OTLP export to Alloy – the stack's own telemetry)."
+        "description": "Regex of ports excluded from the external API panels. Default: OTLP export to Alloy (the stack's own telemetry) and Solr (8983 - WEBCON search index, also on a separate server)."
       },
       {
         "name": "exclude_hosts",
         "label": "Exclude hosts",
         "type": "textbox",
-        "query": "localhost",
+        "query": "localhost{{WEBCON_SELF_IPS}}",
         "current": {
-          "text": "localhost",
-          "value": "localhost"
+          "text": "localhost{{WEBCON_SELF_IPS}}",
+          "value": "localhost{{WEBCON_SELF_IPS}}"
         },
-        "description": "Case-insensitive regex of hosts excluded from the external API panels. Default: localhost - internal WEBCON communication (Solr, Service modules). WEBCON host names (self_host variable) are always excluded."
+        "description": "Case-insensitive regex of hosts excluded from the external API panels. Default: localhost and the WEBCON host IP addresses (set by the installer) - internal WEBCON communication (Solr, Service modules). WEBCON host names (self_host variable) are always excluded."
       },
       {
         "name": "self_host",

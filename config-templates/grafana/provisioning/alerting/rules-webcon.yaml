@@ -270,9 +270,9 @@ groups:
             model:
               refId: A
               instant: true
-              # excluding internal WEBCON calls (localhost, own host: Solr, Service modules, Portal -> Service) and OTLP
+              # excluding internal WEBCON calls (localhost, own host name and IP addresses: Solr, Service modules, Portal -> Service), Solr (8983) and OTLP
               expr: |-
-                sum by (server_address, server_port) (increase(http_client_request_duration_seconds_count{job=~"Portal|WebCon.WorkFlow",error_type!="",server_port!~"4317|4318",server_address!~"(?i)(localhost|127[.]0[.]0[.]1|{{WEBCON_SELF_HOSTS}})([.].*)?"}[15m]))
+                sum by (server_address, server_port) (increase(http_client_request_duration_seconds_count{job=~"Portal|WebCon.WorkFlow",error_type!="",server_port!~"4317|4318|8983",server_address!~"(?i)(localhost|127[.]0[.]0[.]1|{{WEBCON_SELF_HOSTS}})([.].*)?"}[15m]))
           - refId: B
             datasourceUid: __expr__
             model: { refId: B, type: reduce, expression: A, reducer: last }
@@ -535,11 +535,11 @@ groups:
             model: { refId: C, type: threshold, expression: B, conditions: [ { evaluator: { type: lt, params: [300] } } ] }
         noDataState: OK
         execErrState: Error
-        for: 15m
+        for: 30m
         labels: { severity: warning }
         annotations:
           summary: "SQL {{ $labels.instance }}: Page Life Expectancy {{ humanize $values.B.Value }} s (threshold 300 s)"
-          description: Pages have been leaving the buffer pool in under 5 min for 15 min - not enough memory for SQL Server or heavy scans.
+          description: Pages have been leaving the buffer pool in under 5 min for 30 min - not enough memory for SQL Server or heavy scans (short drops during nightly maintenance - index rebuilds, DBCC, backups - are expected).
           __dashboardUid__: sqlserver-webcon
           __panelId__: "26"
 

@@ -36,7 +36,7 @@ Severity (the `severity` label): **critical** – respond immediately; **warning
 | W6 | Service queue errors | a Service queue item was not processed | warning | *Performance → WEBCON WorkFlow Service*, `WebCon.WorkFlow` logs |
 | W7 | Growing Solr indexing backlog | > 1000 backlog items within 30 min and growing | warning | *Solr – indexing queues*; the Solr service |
 | W8 | Data source errors | ≥ 5 data retrieval errors from a single data source in 15 min | warning | *Operations → Data sources with errors*; [scenario](08-scenarios.md#3-data-source-or-rest-action-returns-errors) |
-| W9 | External API call errors | ≥ 10 HTTP errors to a single server in 15 min | warning | *Operations → External APIs called by WEBCON* |
+| W9 | External API call errors | ≥ 10 HTTP errors to a single server in 15 min (without the WEBCON host, Solr and OTLP) | warning | *Operations → External APIs called by WEBCON* |
 | W10 | Spike in log errors | ≥ 50 errors in a service's logs in 10 min | warning | *Performance → Logs* |
 
 ## Availability and database backlog rules
@@ -57,7 +57,7 @@ Dashboard: [WEBCON – Availability and backlog](09-availability-and-backlog.md)
 |---|---|---|---|---|
 | S1 | SQL deadlocks | a deadlock occurred (15 min) | warning | [SQL Server → Locks](05-sql-server.md#locks) |
 | S2 | Long SQL blocking | sessions blocked for 10 min | warning | as above; [scenario](08-scenarios.md#5-database-slows-down) |
-| S3 | SQL memory pressure (Page Life Expectancy) | Page Life Expectancy < 300 s for 15 min | warning | [SQL Server → Memory](05-sql-server.md#memory) |
+| S3 | SQL memory pressure (Page Life Expectancy) | Page Life Expectancy < 300 s for 30 min | warning | [SQL Server → Memory](05-sql-server.md#memory) |
 | H1 | High host CPU utilization | > 90 % for 15 min | warning | [Host → Processes](06-windows-host.md#processes-webcon-iis-sql-server-stack) – which process |
 | H2 | Low host free memory | > 90 % for 15 min | warning | [Host → Memory](06-windows-host.md#memory) |
 | H3 / H4 | Low disk space / Critically low disk space | < 10 % (H3, warning) / < 5 % (H4, critical) | warning / **critical** | free up space; logs, backups, temporary files |

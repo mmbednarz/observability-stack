@@ -247,6 +247,40 @@ function Install-StackComponent {
     return $installedExe.FullName
 }
 
+function Get-InstalledComponentVersion {
+    # Version from bin\<Name>\.version (written by Install-StackComponent); empty = not installed
+    param([Parameter(Mandatory)]$Layout, [Parameter(Mandatory)][string]$Name)
+    $marker = Join-Path (Join-Path $Layout.Bin $Name) '.version'
+    if (Test-Path -LiteralPath $marker) { return (Get-Content -LiteralPath $marker -Raw).Trim() }
+    return ''
+}
+
+function Invoke-TempoFlush {
+    <#
+        Tempo 2.x before the upgrade to 3.x: writes the ingester WAL blocks to storage (POST /flush) and waits until
+        every block from the WAL is in storage (meta.json). 3.x does not read the 2.x WAL - without this the last
+        minutes of traces are lost. Call it after Alloy is stopped (no new traces). Returns $null or a warning text.
+    #>
+    param([Parameter(Mandatory)][string]$DataDir, [string]$BaseUrl = 'http://127.0.0.1:3200', [int]$TimeoutSec = 90)
+    $wal = Join-Path $DataDir 'tempo\wal'
+    $ids = @()
+    $ids += @(Get-ChildItem -LiteralPath $wal -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^[0-9a-f-]{36}\+' } |
+        ForEach-Object { $_.Name -replace '\+.*$', '' })
+    $ids += @(Get-ChildItem -Path (Join-Path $wal 'blocks\*') -Directory -ErrorAction SilentlyContinue | Get-ChildItem -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^[0-9a-f-]{36}$' } | ForEach-Object { $_.Name })
+    if (-not $ids) { return $null }
+    try { $null = Invoke-WebRequest -Uri "$BaseUrl/flush" -Method Post -UseBasicParsing -TimeoutSec 30 }
+    catch { return "Tempo /flush failed: $($_.Exception.Message)" }
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    do {
+        # meta.compacted.json: the block is in storage and was already compacted (blocks kept in wal\blocks after the flush)
+        $missing = @($ids | Where-Object { -not (Test-Path -Path (Join-Path $DataDir "tempo\blocks\*\$_\meta*.json")) })
+        if (-not $missing) { return $null }
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+    return "$($missing.Count) of $($ids.Count) Tempo WAL blocks not in storage after $TimeoutSec s - the last minutes of traces may be lost"
+}
+
 function Invoke-NativeTool {
     <#
         Runs a native tool and returns @{ ExitCode; Output }.
@@ -869,6 +903,18 @@ function New-BlackboxConfig {
 }
 
 # windows_exporter collectors as an Alloy list; "iis" only when IIS is installed (otherwise success=0 on every scrape)
+function Get-HostIPv4Address {
+    # IPv4 addresses of a host (DNS) or of this machine (no -ComputerName), without loopback / APIPA.
+    # WEBCON calls its own components (Solr :8983, Service) by IP as well - those calls are excluded from the external API panels and alert W9.
+    param([string]$ComputerName)
+    try {
+        if ($ComputerName) { $ips = [Net.Dns]::GetHostAddresses($ComputerName) }
+        else { $ips = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction Stop | ForEach-Object { [Net.IPAddress]::Parse($_.IPAddress) } }
+    } catch { return @() }
+    $ips | Where-Object { $_.AddressFamily -eq [Net.Sockets.AddressFamily]::InterNetwork } |
+        ForEach-Object { $_.IPAddressToString } | Where-Object { $_ -notmatch '^(127\.|169\.254\.)' } | Sort-Object -Unique
+}
+
 function Get-WindowsCollectorList {
     $c = @('cpu', 'logical_disk', 'memory', 'net', 'os', 'system', 'process', 'tcp')
     if (Get-Service -Name 'W3SVC' -ErrorAction SilentlyContinue) { $c += 'iis' }

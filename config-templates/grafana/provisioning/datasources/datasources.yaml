@@ -38,10 +38,11 @@ datasources:
         datasourceUid: prometheus
       search:
         hide: false
+      # Trace by ID without a time range: links from exemplars (and from logs) open Explore with "now-1h" instead of the
+      # exemplar time - with the shift enabled, Tempo returned an empty trace for traces older than ~1 h ("trace not found").
+      # Trace by ID over the whole retention takes ~0.1-0.2 s.
       traceQuery:
-        timeShiftEnabled: true
-        spanStartTimeShift: -10m
-        spanEndTimeShift: 10m
+        timeShiftEnabled: false
       tracesToLogsV2:
         datasourceUid: loki
         spanStartTimeShift: -5m

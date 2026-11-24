@@ -155,6 +155,19 @@ try {
     if ($msg -match 'parquet') { Fail "Tempo: TraceQL metrics - $($msg.Trim()). Corrupted block index - fix: docs\installation\07-troubleshooting.md, section 'Corrupted Tempo index'" }
     else { Fail "Tempo: TraceQL metrics - $($msg.Trim())" }
 }
+# Tempo version = the one recorded by the installer (a service still running the old binary after an upgrade)
+try {
+    $tempoBuild = Invoke-RestMethod 'http://127.0.0.1:3200/api/status/buildinfo' -TimeoutSec 10
+    $tempoWant = ''
+    if ($installed -and $installed.Versions) { $tempoWant = [string]$installed.Versions.Tempo }
+    if ($tempoWant -and $tempoBuild.version -ne $tempoWant) { Fail "Tempo: running version $($tempoBuild.version), installed $tempoWant - restart obs-tempo" }
+    else { Write-Ok "Tempo: version $($tempoBuild.version)" }
+} catch { Write-Warn "Tempo: version unknown ($($_.Exception.Message))" }
+# Tempo 3.x: all working directories are under the data directory; the defaults (/var/tempo) would land in C:\var\tempo
+$varTempo = Join-Path $env:SystemDrive 'var\tempo'
+if (Test-Path -LiteralPath $varTempo) {
+    Write-Warn "Tempo: $varTempo exists - a Tempo working directory outside the stack data directory (tempo.yaml: live_store / backend_scheduler paths)"
+}
 
 $startNs = $nowNs - 600000000000
 $lokiQuery = [Uri]::EscapeDataString('{service_name="obs-smoketest"}')

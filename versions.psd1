@@ -26,8 +26,9 @@
     }
 
     Tempo = @{
-        # 2.10.x on purpose: 3.0 changes the architecture and configuration (ingester/compactor sections removed).
-        Version     = '2.10.7'
+        # 3.x: live-store instead of ingester / metrics-generator local_blocks (2.x corrupted blocks on Windows - grafana/tempo#5588).
+        # No way back to 2.x: 2.x cannot read 3.x blocks (vParquet5).
+        Version     = '3.1.1'
         Url         = 'https://github.com/grafana/tempo/releases/download/v{0}/tempo_{0}_windows_amd64.tar.gz'
         Exe         = 'tempo.exe'
         ChecksumUrl = 'https://github.com/grafana/tempo/releases/download/v{0}/SHA256SUMS'

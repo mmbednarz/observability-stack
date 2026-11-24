@@ -71,7 +71,7 @@ Remove-Item C:\Observability\data\tempo\blocks\single-tenant\index.json.gz, `
 Start-Service obs-tempo, obs-alloy
 ```
 
-Tempo rebuilds the index from the blocks; no data is lost.
+Tempo rebuilds the index from the blocks; no data is lost. In versions up to 0.10.0 (Tempo 2.10) the index was corrupted repeatedly on Windows (a Tempo 2.x bug) – the upgrade to 0.11.0 (Tempo 3) removes the cause; the procedure remains for any other index error.
 
 ## Components directly (diagnostics)
 

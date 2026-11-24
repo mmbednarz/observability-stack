@@ -265,11 +265,20 @@ Write-Step 'Stopping existing stack services (upgrade)'
 # Reverse order (Grafana first): if Grafana is still running after Prometheus / Loki stop, it evaluates alert rules
 # with a "connection refused" error, saves that state and restores it after start ("Warming state cache") - false
 # evaluation errors in the smoke test until the next evaluation (1 min).
+# Tempo 2.x -> 3.x (docs/projekt/projekt-tempo-3.md): checked before the binaries are replaced (bin\Tempo\.version)
+$TempoFrom = Get-InstalledComponentVersion -Layout $Layout -Name 'Tempo'
+$TempoMigrate = ($TempoFrom -match '^2\.') -and ($Versions.Tempo.Version -notmatch '^2\.')
+if ($TempoMigrate) { Write-Info "Tempo $TempoFrom -> $($Versions.Tempo.Version): live-store replaces the ingester; there is no way back to Tempo 2.x." }
 $stopOrder = @($ServiceIds.Values)
 [array]::Reverse($stopOrder)
 foreach ($id in $stopOrder) {
     $svc = Get-Service -Name $id -ErrorAction SilentlyContinue
     if ($svc -and $svc.Status -ne 'Stopped') {
+        # Alloy is already stopped (reverse order) - no new traces; 3.x does not read the 2.x WAL
+        if ($id -eq $ServiceIds.Tempo -and $TempoMigrate -and $svc.Status -eq 'Running') {
+            $flushWarn = Invoke-TempoFlush -DataDir $Layout.Data
+            if ($flushWarn) { Write-Warn $flushWarn } else { Write-Ok 'Tempo 2.x: WAL written to storage (/flush)' }
+        }
         Stop-Service -Name $id -Force
         $null = $svc.WaitForStatus('Stopped', [TimeSpan]::FromSeconds(60))
         Write-Ok "Stopped $id"
@@ -572,6 +581,14 @@ $vars = @{
     WEBCON_SELF_HOSTS  = $env:COMPUTERNAME
 }
 if ($RemoteMode -and $WebconHost) { $vars.WEBCON_SELF_HOSTS = $WebconHost.Split('.')[0] }
+# WEBCON host IP addresses (Solr / Service called by IP) - excluded like the host name (alert W9, WEBCON – Operations dashboard)
+$selfIps = @()
+if (-not $RemoteMode) { $selfIps = @(Get-HostIPv4Address) } elseif ($WebconHost) { $selfIps = @(Get-HostIPv4Address -ComputerName $WebconHost) }
+$selfIpRegex = ($selfIps | ForEach-Object { $_.Replace('.', '[.]') }) -join '|'
+if ($selfIpRegex) {
+    $vars.WEBCON_SELF_HOSTS += "|$selfIpRegex"
+    Write-Info "WEBCON host addresses excluded from the external API panels and alert W9: $($selfIps -join ', ')"
+}
 $removeBlocks = @('AGENT')
 if (-not $RemoteMode) { $removeBlocks += 'RECEIVE' }
 if (-not $EnableMssql) { $removeBlocks += 'MSSQL' }
@@ -631,6 +648,19 @@ foreach ($r in $rendered) {
     Write-Ok "config\$($r.O)"
 }
 foreach ($d in 'prometheus', 'loki', 'tempo', 'alloy', 'grafana') { New-Directory (Join-Path $Layout.Data $d) }
+if ($TempoMigrate) {
+    # Tempo 2.x leftovers: ingester WAL (written to storage by /flush) and metrics-generator local_blocks (already in storage).
+    # Blocks in storage stay - 3.x reads them (TraceQL metrics over the history from before the upgrade).
+    foreach ($old in 'tempo\wal', 'tempo\generator\traces') {
+        $p = Join-Path $Layout.Data $old
+        if (Test-Path -LiteralPath $p) { Remove-Item -LiteralPath $p -Recurse -Force; Write-Ok "Removed Tempo 2.x directory: $old" }
+    }
+    # Empty block directories left by Tempo 2.x retention on Windows ("failed to remove keypath" - files deleted, directory kept)
+    $emptyBlocks = @(Get-ChildItem -Path (Join-Path $Layout.Data 'tempo\blocks\*') -Directory -ErrorAction SilentlyContinue |
+        Get-ChildItem -Directory -ErrorAction SilentlyContinue | Where-Object { -not (Get-ChildItem -LiteralPath $_.FullName -Force) })
+    foreach ($d in $emptyBlocks) { Remove-Item -LiteralPath $d.FullName -Force }
+    if ($emptyBlocks) { Write-Ok "Removed $($emptyBlocks.Count) empty Tempo 2.x block directories" }
+}
 
 # ---------------------------------------------------------------------
 Write-Step 'Validating configuration'
@@ -667,12 +697,15 @@ foreach ($f in Get-ChildItem -LiteralPath $dashRoot -Recurse -File -Filter '*.js
     }
 }
 # {{DOCS_URL}} in the documentation links = documentation of the installed version in the public repository
+# {{WEBCON_SELF_IPS}} - WEBCON host IP addresses appended to the default of the "Exclude hosts" variable
 $docsUrl = Get-StackDocsUrl -Release $Release
+$selfIpsDash = ''
+if ($selfIpRegex) { $selfIpsDash = "|$selfIpRegex" }
 foreach ($f in Get-ChildItem -LiteralPath $repoDashRoot -Recurse -File -Filter '*.json') {
     $rel = $f.FullName.Substring($repoDashRoot.Length).TrimStart('\')
     $dst = Join-Path $dashRoot $rel
     New-Directory (Split-Path -Parent $dst)
-    Write-Utf8NoBom -Path $dst -Content ([IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8).Replace('{{DOCS_URL}}', $docsUrl))
+    Write-Utf8NoBom -Path $dst -Content ([IO.File]::ReadAllText($f.FullName, [Text.Encoding]::UTF8).Replace('{{DOCS_URL}}', $docsUrl).Replace('{{WEBCON_SELF_IPS}}', $selfIpsDash))
 }
 Write-Ok "Package dashboards copied (documentation: $docsUrl)."
 if (-not $SkipCommunityDashboards) {

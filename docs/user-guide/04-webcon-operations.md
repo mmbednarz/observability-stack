@@ -11,8 +11,8 @@ Unlike “Performance” (current, technical diagnostics), this dashboard answer
 | Variable | Meaning |
 |---|---|
 | *Service* | `Portal`, `WebCon.WorkFlow` (Service) |
-| *Exclude ports* | ports excluded from the external API panels (default `4317|4318` – WEBCON's own telemetry) |
-| *Exclude hosts* | excluded hosts (default `localhost` – Solr, Service modules) |
+| *Exclude ports* | ports excluded from the external API panels (default `4317|4318|8983` – WEBCON's own telemetry and Solr) |
+| *Exclude hosts* | excluded hosts (default `localhost` and the WEBCON host IP addresses set by the installer – Solr, Service modules) |
 | *WEBCON hosts* | names of WEBCON servers – Portal → Service calls are not “external” |
 
 Panels based on the content database (path names, tasks) require the **WEBCON SQL** data source – without it they show an error or only IDs ([installation](../installation/01-quick-start.md#step-3-run-the-installer), option c).

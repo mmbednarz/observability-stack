@@ -2,6 +2,23 @@
 
 Format: one section per version – **Changes** and **Requires action** (manual steps when upgrading from the previous version). Numbering follows [SemVer](https://semver.org/): major = a change that requires manual migration, minor = new features, patch = fixes.
 
+## [0.11.0] – 2026-11-24
+
+### Changes
+
+- **Tempo 3.1.1** (previously 2.10.7): the upgrade fixes the repeatedly corrupted Tempo block index on Windows (TraceQL panels: `reading parquet file metadata: missing required field`; a Tempo 2.x bug – grafana/tempo#5588) and the growing Tempo memory use. Traces and TraceQL metrics from before the upgrade remain available. The installer migrates automatically: it writes the last traces to storage, removes the Tempo 2.x working directories (`data\tempo\wal`, `data\tempo\generator\traces`) and starts Tempo 3 (live-store).
+- Fix: “trace not found” after clicking an exemplar (e.g. *Portal response time*) or a trace link for a trace older than ~1 h – the Tempo data source no longer limits a trace-by-ID lookup to the Explore time range (`traceQuery.timeShiftEnabled: false`).
+- Alert O4 (*Tempo – query errors*) counts only errors returned to Grafana (`api_*` routes) – internal sub-requests are retried by Tempo and the user gets a correct response.
+- Smoke test: checks the running Tempo version and warns about Tempo working directories outside the data directory (`C:\var\tempo`).
+- *WEBCON – Operations*, external API panels and alert W9: calls to Solr (port `8983`) and to the WEBCON host by IP address (resolved by the installer) are excluded as internal WEBCON communication – previously Solr called by IP (e.g. `10.0.0.5:8983`) appeared as an external API.
+- Alert S3 (*SQL memory pressure*): `for` 15 → 30 min – short Page Life Expectancy drops during nightly SQL maintenance no longer raise the alert.
+
+### Requires action
+
+- None – the installer updates Tempo, the dashboard and the rules. Remote mode: the agents do not need to be updated.
+- As with every upgrade, repeat the switches that are not saved (`-GrafanaListenAll`, `-OtlpListenAll`, retention, see *Upgrade*) – otherwise e.g. Grafana becomes available only locally.
+- **No way back below 0.11.0** without deleting the trace data – Tempo 2.10 cannot read Tempo 3 blocks (see *Upgrade*). Copy `data\tempo` before the upgrade if you may need to return.
+
 ## [0.10.0] – 2026-11-23
 
 ### Changes
