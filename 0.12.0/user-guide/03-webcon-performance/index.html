@@ -1,0 +1,1711 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Metrics, traces and logs for WEBCON performance analysis">
+      
+      
+      
+        <link rel="canonical" href="https://mmbednarz.github.io/observability-stack/0.12.0/user-guide/03-webcon-performance/">
+      
+      
+        <link rel="prev" href="../02-concepts/">
+      
+      
+        <link rel="next" href="../04-webcon-operations/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
+    
+    
+      
+        <title>“WEBCON – Performance” dashboard - Observability Stack (WEBCON)</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#webcon--performance-dashboard" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-header__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Observability Stack (WEBCON)
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              “WEBCON – Performance” dashboard
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Observability Stack (WEBCON)" class="md-nav__button md-logo" aria-label="Observability Stack (WEBCON)" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Observability Stack (WEBCON)
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/mmbednarz/observability-stack" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    observability-stack
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Installation
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/01-quick-start/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quick start – installation on a single machine (all-in-one)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/02-requirements-and-preparation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Requirements and preparation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/03-webcon-configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    WEBCON configuration (Set-WebconTelemetry.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/04-remote-mode/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Remote mode – stack on a separate machine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/05-upgrade/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Upgrade
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/06-uninstall/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uninstall
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/07-troubleshooting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../installation/08-installer-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installer parameters (Install-ObservabilityStack.ps1)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-grafana-in-10-minutes/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Grafana in 10 minutes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Performance” dashboard
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Performance” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portal--user-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Portal – user experience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forms-and-path-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forms and path transitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-time-goes-paths-rules-data-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the time goes (paths, rules, data sources)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sql-from-the-webcon-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL from the WEBCON perspective
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webcon-workflow-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WEBCON WorkFlow Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#net-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .NET runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-webcon-operations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Operations” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-sql-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “SQL Server – WEBCON” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../06-windows-host/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “Windows – Host load” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../07-alerts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Alerts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../08-scenarios/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scenarios – from symptom to cause
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../09-availability-and-backlog/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    “WEBCON – Availability and backlog” dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Status
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#portal--user-experience" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Portal – user experience
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#forms-and-path-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Forms and path transitions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#where-the-time-goes-paths-rules-data-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Where the time goes (paths, rules, data sources)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sql-from-the-webcon-perspective" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SQL from the WEBCON perspective
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#webcon-workflow-service" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WEBCON WorkFlow Service
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#net-runtime" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .NET runtime
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#logs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Logs
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="webcon--performance-dashboard">“WEBCON – Performance” dashboard<a class="headerlink" href="#webcon--performance-dashboard" title="Permanent link">&para;</a></h1>
+<p><strong>Folder:</strong> <code>webcon</code> · <strong>Default range:</strong> last 6 h · <strong>Refresh:</strong> every 1 min</p>
+<p><strong>Purpose:</strong> current diagnostics – is WEBCON running fast, and if not, <strong>where</strong> is it losing time: Portal, form, rule, data source, action, SQL, or Service.</p>
+<p><strong>Filters:</strong> <em>Service</em> (<code>Portal</code>, <code>WebCon.WorkFlow</code> = Service), <em>Database (DB ID)</em> (content database). <strong>Links</strong> (top right corner): <em>Windows – Host load</em>, <em>SQL Server</em>, <em>Traces (Explore)</em>, <em>Documentation</em>.</p>
+<p><strong>Annotations</strong> (toggles next to the filters) – vertical lines on all charts:</p>
+<table>
+<thead>
+<tr>
+<th>Toggle</th>
+<th>Color</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>WEBCON process start</em> (enabled by default)</td>
+<td>orange</td>
+<td>start of a Portal / Service process (restart, IIS pool recycling, start after inactivity). Response time spikes right after the line are a “cold start” – cache loading</td>
+</tr>
+<tr>
+<td><em>Cache marked for refresh</em></td>
+<td>purple</td>
+<td>WEBCON marked the configuration cache for refresh (e.g. application publishing in Designer Studio) – subsequent requests reload the configuration</td>
+</tr>
+</tbody>
+</table>
+<p>Rows from general to detailed:</p>
+<table>
+<thead>
+<tr>
+<th>Row</th>
+<th>Question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#status">Status</a></td>
+<td>Is there a problem? (at a glance)</td>
+</tr>
+<tr>
+<td><a href="#portal--user-experience">Portal – user experience</a></td>
+<td>How fast does the Portal respond, and which pages are slow?</td>
+</tr>
+<tr>
+<td><a href="#forms-and-path-transitions">Forms and path transitions</a></td>
+<td>How many transitions, how long do they take, which form stage is slow?</td>
+</tr>
+<tr>
+<td><a href="#where-the-time-goes-paths-rules-data-sources">Where the time goes</a></td>
+<td>Which specific path / rule / data source / action?</td>
+</tr>
+<tr>
+<td><a href="#sql-from-the-webcon-perspective">SQL from the WEBCON perspective</a></td>
+<td>Which SQL queries are slow?</td>
+</tr>
+<tr>
+<td><a href="#webcon-workflow-service">WEBCON WorkFlow Service</a></td>
+<td>Is the Service keeping up with queues, timers, indexing?</td>
+</tr>
+<tr>
+<td><a href="#net-runtime">.NET runtime</a></td>
+<td>Are WEBCON processes short on CPU / memory / threads?</td>
+</tr>
+<tr>
+<td><a href="#logs">Logs</a></td>
+<td>What errors and warnings does WEBCON write?</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="status">Status<a class="headerlink" href="#status" title="Permanent link">&para;</a></h2>
+<p>Tiles – the status at a glance. Start with the colors.</p>
+<table>
+<thead>
+<tr>
+<th>Tile</th>
+<th>What it shows</th>
+<th>Thresholds</th>
+<th>What to do when it is not green</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Portal requests /s</strong></td>
+<td>how many HTTP requests the Portal handles (excluding health check)</td>
+<td>– (informational)</td>
+<td>a reference point: a slow Portal under heavy traffic ≠ a slow Portal without traffic</td>
+</tr>
+<tr>
+<td><strong>Portal HTTP p95</strong></td>
+<td>95% of Portal requests are faster than this value</td>
+<td>🟢 &lt; 1 s · 🟡 1–3 s · 🔴 &gt; 3 s</td>
+<td><em>Portal</em> row → <em>Routes by total time</em> table</td>
+</tr>
+<tr>
+<td><strong>5xx errors</strong></td>
+<td>% of responses with a server error (selected services)</td>
+<td>🟢 &lt; 1% · 🟡 1–5% · 🔴 &gt; 5%</td>
+<td><em>HTTP errors by route</em>, <em>Logs</em> row</td>
+</tr>
+<tr>
+<td><strong>Path transitions /min</strong></td>
+<td>all path transitions (Portal + Service), including failed ones</td>
+<td>–</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Successful transitions</strong></td>
+<td>successful / all transitions in the range</td>
+<td>🔴 &lt; 95% · 🟡 95–99% · 🟢 ≥ 99%</td>
+<td>a failed transition = a validation, rule, or action error; <em>Logs</em> row, transition traces</td>
+</tr>
+<tr>
+<td><strong>Path transition p95</strong></td>
+<td>95% of transitions are faster than this value</td>
+<td>🟢 &lt; 2 s · 🟡 2–5 s · 🔴 &gt; 5 s</td>
+<td><em>Paths – longest transitions</em> table</td>
+</tr>
+<tr>
+<td><strong>Users (since start)</strong></td>
+<td>unique Portal users since the last start of the Portal process</td>
+<td>–</td>
+<td>with nightly IIS application pool recycling = users of the current day; a Portal restart (recycling, WEBCON upgrade) resets the counter</td>
+</tr>
+<tr>
+<td><strong>Service queue /min</strong></td>
+<td>items taken from Service queues</td>
+<td>–</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Service queue errors</strong></td>
+<td>queue items whose processing failed (range)</td>
+<td>🟢 0 · 🔴 ≥ 1</td>
+<td><em>WEBCON WorkFlow Service</em> row, <em>Logs</em> (service <code>WebCon.WorkFlow</code>)</td>
+</tr>
+<tr>
+<td><strong>Solr – backlog growth</strong></td>
+<td>added to indexing minus processed (range)</td>
+<td>🟢 ≤ 0 · 🟡 1–99 · 🔴 ≥ 100</td>
+<td>&gt; 0 = indexing is falling behind; <em>Solr – indexing queues</em></td>
+</tr>
+<tr>
+<td><strong>Service alive</strong></td>
+<td>whether the Service sent a “heartbeat” in the last 5 min</td>
+<td>🟢 YES · 🔴 NO</td>
+<td>the Service is stopped or hung – check the <code>WebCon WorkFlow Service</code> service</td>
+</tr>
+<tr>
+<td><strong>Process starts</strong></td>
+<td>how many times WEBCON processes started in the range</td>
+<td>🟡 ≥ 1</td>
+<td>restart = cache loss, slower first requests; unplanned restarts – logs, event log</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="portal--user-experience">Portal – user experience<a class="headerlink" href="#portal--user-experience" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>How to read it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Requests /s by route group</strong></td>
+<td>Portal traffic in groups: home page / navigation, form, reports / dashboards, tasks, other API</td>
+<td>which part of the Portal is used most often; a spike in one group = e.g. a report opened en masse</td>
+</tr>
+<tr>
+<td><strong>Portal response time (p50 / p95 / p99)</strong></td>
+<td>typical (p50), slow (p95), and extreme (p99) response time</td>
+<td>p50 rises = everything is slow (server, SQL); only p95/p99 rise = selected pages are slow. <strong>Points = exemplars</strong> – click a point high on the chart to open the trace of a slow request</td>
+</tr>
+<tr>
+<td><strong>Portal response time distribution</strong></td>
+<td>heatmap: how many requests took how long at a given moment</td>
+<td>bright cells high up = many slow requests; a single “streak” at the top = a recurring slow operation</td>
+</tr>
+<tr>
+<td><strong>HTTP errors by route</strong></td>
+<td>number of 4xx and 5xx responses per route</td>
+<td><strong>5xx</strong> = WEBCON error; <strong>401</strong> after a session expires is normal; <strong>404</strong> = missing resource / wrong link</td>
+</tr>
+<tr>
+<td><strong>Routes by total time (dashboard time range)</strong></td>
+<td>table of routes: count, p95, total time (count × average time), % of 5xx errors</td>
+<td><strong>total time</strong> shows what loads the Portal the most – a route called 10,000 times at 0.2 s weighs more than one called 10 times at 5 s. Clicking a route opens the <em>ASP.NET Core Endpoint</em> dashboard</td>
+</tr>
+<tr>
+<td><strong>Active requests and connection queue</strong></td>
+<td>requests being handled and connections waiting in the server queue</td>
+<td>a growing queue = the Portal is not keeping up (not enough threads / CPU) – see <em>.NET runtime</em></td>
+</tr>
+<tr>
+<td><strong>Portal and form opens</strong></td>
+<td>home page and instance form opens /s</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Portal users</strong></td>
+<td>unique users since the last start of the Portal process</td>
+<td>the counter drops to zero at a Portal restart; with nightly IIS application pool recycling the peak before the drop = users of that day</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Routes (<code>http.route</code>)</strong> are Portal address templates with parameters in curly braces (e.g. <code>{controller=Home}/{action=Index}/{id?}</code>), not specific addresses – all form opens of different instances go to one route. The specific instance ID and user are in the request trace.</p>
+<hr />
+<h2 id="forms-and-path-transitions">Forms and path transitions<a class="headerlink" href="#forms-and-path-transitions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>How to read it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Path transitions</strong></td>
+<td>all, successful, and failed transitions /min</td>
+<td>failed &gt; 0 – check the logs and the traces of failed transitions</td>
+</tr>
+<tr>
+<td><strong>Successful transitions by kind</strong></td>
+<td>breakdown: new instance (<code>element_new</code>), save only (<code>only_save</code>), call source (Portal, Service, API)</td>
+<td>whether the load comes from creating new instances, saves, or transitions from the Service (e.g. timers, “Start workflow”)</td>
+</tr>
+<tr>
+<td><strong>Path transition time (p50 / p95 / p99)</strong></td>
+<td>transition time (WEBCON histogram)</td>
+<td>points = exemplars – the trace of a specific transition</td>
+</tr>
+<tr>
+<td><strong>Path transition time distribution</strong></td>
+<td>heatmap of transition times</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Transitions in progress, history, model cache</strong></td>
+<td>transitions in progress at a given moment, history writes /s, instance models in cache</td>
+<td>a growing number of transitions in progress = transitions are blocking (e.g. SQL locks)</td>
+</tr>
+<tr>
+<td><strong>Form handling stages – p95</strong></td>
+<td>p95 of successive stages: model retrieval / loading, rules and default values, JS model build, save, transition, actions, data sources</td>
+<td>which form <strong>stage</strong> is slow</td>
+</tr>
+<tr>
+<td><strong>Form handling stages (dashboard time range)</strong></td>
+<td>table of stages: count, p95, total time</td>
+<td>the stage with the largest total time is the best candidate for optimization. Nested stages are counted multiple times (a rule in model loading increases both)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="where-the-time-goes-paths-rules-data-sources">Where the time goes (paths, rules, data sources)<a class="headerlink" href="#where-the-time-goes-paths-rules-data-sources" title="Permanent link">&para;</a></h2>
+<p>The most important row for application optimization. The tables are calculated from <strong>traces</strong> (TraceQL metrics) or spanmetrics, for the entire dashboard time range (up to 7 days). Columns are usually: <strong>p95</strong>, <strong>Calls</strong>, <strong>Total time</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>Identifier</th>
+<th>Drill-down</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>WEBCON spans by total time</strong></td>
+<td>all WEBCON operations (<code>webcon.*</code>) sorted by total time</td>
+<td>span name</td>
+<td>the overall picture – what WEBCON spends the most time on in total</td>
+</tr>
+<tr>
+<td><strong>Portal MVC pipeline (filters)</strong></td>
+<td>authorization and Portal request filters</td>
+<td>span name</td>
+<td>long <code>on_authorization</code> = permission / application checks</td>
+</tr>
+<tr>
+<td><strong>Paths – longest transitions</strong></td>
+<td>transitions by path ID</td>
+<td><code>webcon.path.id</code> (path ID in Designer Studio)</td>
+<td>click the ID → traces of this path's transitions → what takes time (actions, rules, SQL)</td>
+</tr>
+<tr>
+<td><strong>Business rules</strong></td>
+<td>rule executions by ID</td>
+<td><code>webcon.rule.id</code></td>
+<td>click the ID → traces; the rule name is not sent in WEBCON 2026.2.5 – find the ID in Designer Studio</td>
+</tr>
+<tr>
+<td><strong>Data sources</strong></td>
+<td>data loads from data sources by ID and type (SQL, REST, …)</td>
+<td><code>webcon.data_source.id</code>, type</td>
+<td>a slow REST data source = a slow external API; a slow SQL data source = a query to optimize</td>
+</tr>
+<tr>
+<td><strong>Actions</strong></td>
+<td>action executions by ID and name</td>
+<td><code>webcon.action.id</code>, name</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Form loading by process and step</strong></td>
+<td>form open time per process and step</td>
+<td><code>webcon.process.id</code>, <code>webcon.step.id</code></td>
+<td>which form (step) opens slowly</td>
+</tr>
+<tr>
+<td><strong>Form JS model build – steps</strong></td>
+<td>stages of the server-side form model build</td>
+<td>step name</td>
+<td>details for advanced users</td>
+</tr>
+<tr>
+<td><strong>Slowest requests (traces &gt; 2 s)</strong></td>
+<td>recent Portal / Service requests longer than 2 s: route, status, user login</td>
+<td>Trace ID</td>
+<td>click the Trace ID → the whole trace</td>
+</tr>
+</tbody>
+</table>
+<p><strong>How to read the rankings:</strong></p>
+<ul>
+<li><strong>High p95, low count</strong> – a rare but slow operation (e.g. a monthly report). Affects few users.</li>
+<li><strong>Medium p95, huge count</strong> – “death by a thousand cuts”: the most total time, the biggest gain from optimization.</li>
+<li><strong>Total time</strong> = count × average time – the best column for setting priorities.</li>
+<li>p95 in these tables is approximate (buckets = powers of 2: 0.5 s, 1 s, 2 s, 4 s…) – compare orders of magnitude, and check exact durations in the traces.</li>
+</ul>
+<p><strong>Example:</strong> the <em>Data sources</em> table shows data source ID 66 (REST type), p95 = 21 s, count 40. Clicking the ID → trace → under the <code>webcon.data_source.data.load</code> span there is an HTTP span to <code>10.255.255.1</code> lasting 21 s with the error status <code>connection_error</code> – the target server does not respond, and WEBCON waits until the connection timeout. Solution on the application side: a correct address / timeout in the data source configuration.</p>
+<hr />
+<h2 id="sql-from-the-webcon-perspective">SQL from the WEBCON perspective<a class="headerlink" href="#sql-from-the-webcon-perspective" title="Permanent link">&para;</a></h2>
+<p>SQL queries executed by WEBCON – from its point of view (how long it waited for the database).</p>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>How to read it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Slow SQL queries (above the Alloy filter threshold)</strong></td>
+<td>recent SQL queries longer than the threshold (1 s by default): table, database, <strong>full query text</strong></td>
+<td>click the Trace ID → in which WEBCON operation (form, report, data source) the query was run</td>
+</tr>
+<tr>
+<td><strong>Slow queries by operation</strong></td>
+<td>slow queries grouped by name, e.g. <code>SELECT [WFElements]</code></td>
+<td>which table / operation is most often slow</td>
+</tr>
+<tr>
+<td><strong>SQL Server – load</strong></td>
+<td>queries (batch requests), transactions, compilations /s</td>
+<td>details: <a href="../05-sql-server/">SQL Server</a></td>
+</tr>
+<tr>
+<td><strong>SQL Server – waits (top 5 categories)</strong></td>
+<td>what SQL Server waits for the longest</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>SQL Server – locks and memory</strong></td>
+<td>blocked sessions, longest lock wait, deadlocks, Page Life Expectancy</td>
+<td>locks during slow transitions = transitions are waiting for each other</td>
+</tr>
+</tbody>
+</table>
+<p>Queries shorter than the threshold <strong>are not recorded</strong> – no slow queries in the table is good news, not an error.</p>
+<hr />
+<h2 id="webcon-workflow-service">WEBCON WorkFlow Service<a class="headerlink" href="#webcon-workflow-service" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>How to read it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Service queues – dequeued items by role</strong></td>
+<td>items processed by Service roles (e.g. <code>SolrElementQueue</code>, <code>UserSynchronization</code>) /s</td>
+<td>which role is working; unknown roles = “role <id>”</td>
+</tr>
+<tr>
+<td><strong>Service queues – errors by role</strong></td>
+<td>failed processing of queue items</td>
+<td>any value &gt; 0 requires checking the Service logs</td>
+</tr>
+<tr>
+<td><strong>Service work time by role – p95</strong></td>
+<td>how long a unit of work of a role takes</td>
+<td>rising time = the role is not keeping up</td>
+</tr>
+<tr>
+<td><strong>Timers and cyclical actions</strong></td>
+<td>timers and cyclical actions in progress, and executions /min</td>
+<td>a large number of executions = a looping timer or a bulk operation</td>
+</tr>
+<tr>
+<td><strong>Solr – indexing queues</strong></td>
+<td>added (solid line) vs processed (dashed) elements, attachments, activities /min</td>
+<td>solid line permanently above the dashed one = the backlog is growing</td>
+</tr>
+<tr>
+<td><strong>Solr – durations (p95)</strong></td>
+<td>Solr queries, indexing, text extraction from attachments</td>
+<td>slow extraction = large / unusual attachments</td>
+</tr>
+<tr>
+<td><strong>Database cache – refreshes</strong></td>
+<td>configuration cache refreshes</td>
+<td>a spike after application publishing is normal; frequent refreshes = response time spikes</td>
+</tr>
+<tr>
+<td><strong>Database cache – duration (p95)</strong></td>
+<td>cache refresh duration</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Heartbeat and health check</strong></td>
+<td>Portal / Service heartbeat and health check duration; errors on the right axis</td>
+<td>heartbeat errors = a problem with the database or with Portal ↔ Service communication</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="net-runtime">.NET runtime<a class="headerlink" href="#net-runtime" title="Permanent link">&para;</a></h2>
+<p>The state of WEBCON processes (Portal, Service) from the .NET side. Useful when everything is slow at once.</p>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>When to react</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>WEBCON process CPU</strong></td>
+<td>CPU usage in cores (1 = one full core)</td>
+<td>close to the number of server cores = not enough CPU</td>
+</tr>
+<tr>
+<td><strong>Memory: working set and GC heap</strong></td>
+<td>process memory and .NET object memory</td>
+<td>steady growth without drops = possible leak / growing cache</td>
+</tr>
+<tr>
+<td><strong>GC pauses</strong></td>
+<td>% of time the application was paused by garbage collection</td>
+<td>&gt; 5% = memory pressure</td>
+</tr>
+<tr>
+<td><strong>GC collections by generation</strong></td>
+<td>garbage collection frequency</td>
+<td>frequent gen2 = many long-lived objects (cache, large models)</td>
+</tr>
+<tr>
+<td><strong>Thread pool</strong></td>
+<td>threads and work items waiting in the pool queue</td>
+<td>a growing queue with a constant thread count = thread pool starvation (everything slows down)</td>
+</tr>
+<tr>
+<td><strong>Exceptions and lock contention</strong></td>
+<td>.NET exceptions /s and lock contentions /s</td>
+<td>a spike in exceptions = check the logs</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="logs">Logs<a class="headerlink" href="#logs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Panel</th>
+<th>What it shows</th>
+<th>How to read it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Logs by level</strong></td>
+<td>number of log records by service and level</td>
+<td>an <code>error</code> spike = an event to investigate</td>
+</tr>
+<tr>
+<td><strong>Errors and warnings</strong></td>
+<td>Warning / Error / Fatal records</td>
+<td>expand a record – fields <code>exception_message</code>, <code>RequestPath</code>, <code>AuthenticatedUserLogin</code>; the <strong>Open trace</strong> button next to <code>trace_id</code></td>
+</tr>
+</tbody>
+</table>
+<p>Searching the logs: panel menu <strong>⋮ → Explore</strong> and add a filter, e.g. <code>|= "DataSource"</code> (contains text).</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Unofficial project – not a WEBCON product; no support or warranty (MIT license).
+    </div>
+  
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.a5f9d56c.min.js"></script>
+      
+    
+  </body>
+</html>
