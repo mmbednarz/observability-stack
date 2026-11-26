@@ -1352,6 +1352,38 @@ function Save-InstallSettings {
     Write-Utf8NoBom -Path $path -Content ($Settings | ConvertTo-Json -Depth 5)
 }
 
+# Values of installer parameters that installations <= 0.11.0 did not save in install-settings.json,
+# read from the generated configuration (docs/projekt/projekt-zapamietywanie-parametrow.md, Z6).
+# Returns only the values that could be read.
+function Get-LegacyInstallSettings {
+    param([Parameter(Mandatory)]$Layout, [bool]$RemoteMode)
+    $result = @{}
+    $read = {
+        param([string]$Path, [string]$Pattern)
+        if (-not (Test-Path -LiteralPath $Path)) { return $null }
+        $m = [regex]::Match([IO.File]::ReadAllText($Path), $Pattern, 'Multiline')
+        if ($m.Success) { return $m.Groups[1].Value }
+        return $null
+    }
+    $v = & $read (Join-Path $Layout.Config 'grafana\grafana.ini') '^\s*http_addr\s*=\s*(\S+)'
+    if ($v) { $result.GrafanaListenAll = ($v -eq '0.0.0.0') }
+    if ($RemoteMode) {
+        # remote mode: OTLP always listens on 0.0.0.0 - only the firewall rule shows -OtlpListenAll
+        $rule = Get-NetFirewallRule -DisplayName 'Observability - OTLP' -ErrorAction SilentlyContinue
+        $result.OtlpListenAll = [bool]$rule
+    } else {
+        $v = & $read (Join-Path $Layout.Config 'alloy\config.alloy') 'endpoint\s*=\s*"([0-9.]+):4318"'
+        if ($v) { $result.OtlpListenAll = ($v -eq '0.0.0.0') }
+    }
+    $v = & $read (Join-Path $Layout.Services 'obs-prometheus\obs-prometheus.xml') '--storage\.tsdb\.retention\.time=(\d+)d'
+    if ($v) { $result.RetentionMetricsDays = [int]$v }
+    $v = & $read (Join-Path $Layout.Config 'loki\loki.yaml') '^\s*retention_period:\s*(\d+)h'
+    if ($v -and ([int]$v % 24) -eq 0) { $result.RetentionLogsDays = [int]$v / 24 }
+    $v = & $read (Join-Path $Layout.Config 'alloy\config.alloy') '^\s*limit\s*=\s*"([^"]+)"'
+    if ($v) { $result.AlloyMemoryLimit = $v }
+    return $result
+}
+
 function Get-InstallSettings {
     param([Parameter(Mandatory)][string]$Root)
     $path = Join-Path (Join-Path $Root 'config') 'install-settings.json'

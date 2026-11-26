@@ -716,7 +716,7 @@
       "id": 10,
       "gridPos": {
         "h": 4,
-        "w": 6,
+        "w": 8,
         "x": 0,
         "y": 13
       }
@@ -780,15 +780,15 @@
       "id": 11,
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 8,
+        "x": 8,
         "y": 13
       }
     },
     {
       "type": "stat",
-      "title": "Unique users (7 days)",
-      "description": "webcon.portal.request.user.unique.recently: users from the last 7 days, but not earlier than the application start (a Portal restart resets the counter). Last value in the time range – an idle Portal (IIS) does not export metrics. WEBCON does not provide a daily unique user count.",
+      "title": "Users since Portal start",
+      "description": "Unique Portal users since the last start of the Portal process (webcon.portal.request.user.unique.since_start). With nightly IIS application pool recycling (e.g. at 03:00) = users of the current day. A Portal restart (recycling, WEBCON upgrade) resets the counter. Several Portal nodes: the largest node (users repeat, so the values are not added up). Current value - an idle Portal (IIS) does not export metrics, so the last value in the time range is shown.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -799,68 +799,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(last_over_time(webcon_portal_request_user_unique_recently{job=\"Portal\"}[$__range]))",
-          "legendFormat": "",
-          "refId": "A",
-          "instant": true,
-          "range": false
-        }
-      ],
-      "fieldConfig": {
-        "overrides": [],
-        "defaults": {
-          "unit": "short",
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "decimals": 0
-        }
-      },
-      "options": {
-        "justifyMode": "center",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "colorMode": "background",
-        "textMode": "auto",
-        "graphMode": "none"
-      },
-      "id": 12,
-      "gridPos": {
-        "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 13
-      }
-    },
-    {
-      "type": "stat",
-      "title": "Unique since Portal start",
-      "description": "webcon.portal.request.user.unique.since_start – since the last Portal process start.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "max(last_over_time(webcon_portal_request_user_unique_since_start{job=\"Portal\"}[$__range]))",
+          "expr": "last_over_time(max(webcon_portal_request_user_unique_since_start{job=\"Portal\"})[$__range:5m])",
           "legendFormat": "",
           "refId": "A",
           "instant": true,
@@ -902,8 +841,8 @@
       "id": 13,
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
+        "w": 8,
+        "x": 16,
         "y": 13
       }
     },

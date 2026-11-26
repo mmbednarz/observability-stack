@@ -9,6 +9,11 @@
     (except Grafana with -GrafanaListenAll). The script is idempotent - running it again
     updates versions (versions.psd1) and configurations (config-templates).
 
+    Parameters describing the state of the stack (network access, retention, labels, data sources) are kept
+    between runs: an explicitly specified value > the value from the previous installation > the default.
+    A switch is disabled with -Name:$false (e.g. -GrafanaListenAll:$false). Not kept: -NonInteractive,
+    -ForceDownload, -AllowDowngrade, -ConfigureWebcon, -Root and passwords (stored as secrets).
+
 .PARAMETER Root
     Installation directory (bin, config, data, logs, services, secrets).
 
@@ -252,6 +257,44 @@ if ($WebconHost -or $SqlHost) {
     if ($SqlHost)    { Write-Ok "SQL host:    $SqlHost (instance $SqlInstanceName, port $SqlPort)" }
     Write-Ok "Stack address for agents: $CentralAddress; firewall allows: $($AgentAddress -join ', ')"
     $Ports.Add($ReceivePort, 'Alloy remote write (agents)')
+}
+
+# ---------------------------------------------------------------------
+# Parameters kept between runs (docs/projekt/projekt-zapamietywanie-parametrow.md):
+# explicit parameter > value saved in install-settings.json > default. A switch is disabled with -Name:$false.
+# Installations <= 0.11.0 did not save some of them - read from the generated configuration.
+$RememberedParameters = @(
+    'GrafanaListenAll', 'OtlpListenAll', 'RetentionMetricsDays', 'RetentionTracesDays', 'RetentionLogsDays',
+    'SqlSpanThresholdSeconds', 'AlloyMemoryLimit', 'EnvironmentName', 'ServiceLogPath',
+    'WebconPortalServiceName', 'WebconServiceServiceName', 'SkipCommunityDashboards'
+)
+if ($previous) {
+    $legacy = $null
+    $kept = @()
+    foreach ($k in $RememberedParameters) {
+        if ($PSBoundParameters.ContainsKey($k)) { continue }
+        $value = $null
+        if ($previous.PSObject.Properties[$k]) {
+            $value = $previous.$k
+        } else {
+            if ($null -eq $legacy) { $legacy = Get-LegacyInstallSettings -Layout $Layout -RemoteMode $RemoteMode }
+            if ($legacy.ContainsKey($k)) { $value = $legacy[$k] }
+        }
+        if ($null -eq $value -or ($value -is [string] -and $value -eq '')) { continue }
+        $current = Get-Variable -Name $k -ValueOnly
+        if ($current -is [Management.Automation.SwitchParameter]) {
+            if ([bool]$value -ne $current.IsPresent) { Set-Variable -Name $k -Value ([switch][bool]$value) }
+            if ([bool]$value) { $kept += "-$k" }
+        } else {
+            # JSON numbers: PS 5.1 = decimal (1.0), pwsh = double / int64 - compare in the parameter type
+            $value = [Management.Automation.LanguagePrimitives]::ConvertTo($value, $current.GetType())
+            if ($value -ne $current) {
+                Set-Variable -Name $k -Value $value
+                $kept += "-$k $value"
+            }
+        }
+    }
+    if ($kept) { Write-Info "Kept from the previous installation: $($kept -join ', ')" }
 }
 
 # ---------------------------------------------------------------------
@@ -611,7 +654,6 @@ if ($ServiceLogPath) { $vars.SERVICE_LOG_GLOB = ConvertTo-AlloyPath $ServiceLogP
 
 # Fallback mapping of WEBCON service names without the webcon.component marker (docs/projekt/projekt-nazwy-uslug-webcon.md)
 foreach ($k in 'WebconPortalServiceName', 'WebconServiceServiceName') {
-    if (-not $PSBoundParameters.ContainsKey($k) -and $previous -and $previous.$k) { Set-Variable -Name $k -Value $previous.$k }
     $v = Get-Variable -Name $k -ValueOnly
     if ($v -and $v -notmatch '^[A-Za-z0-9_.:\-]+$') { throw "-$k contains invalid characters: '$v' (allowed: letters, digits, _ . : -)." }
 }
@@ -800,6 +842,15 @@ Write-Step 'Firewall'
 $rules = @()
 if ($GrafanaListenAll) { $rules += @{ Name = 'Observability - Grafana'; Port = 3000 } }
 if ($OtlpListenAll)    { $rules += @{ Name = 'Observability - OTLP'; Port = '4317,4318' } }
+# Firewall state = service state: rules of disabled switches are removed
+foreach ($off in @(@{ Name = 'Observability - Grafana'; On = [bool]$GrafanaListenAll }, @{ Name = 'Observability - OTLP'; On = [bool]$OtlpListenAll })) {
+    if ($off.On) { continue }
+    $stale = Get-NetFirewallRule -DisplayName $off.Name -ErrorAction SilentlyContinue
+    if ($stale) {
+        $stale | Remove-NetFirewallRule
+        Write-Ok "Removed rule '$($off.Name)' (switch disabled)"
+    }
+}
 # Agents: no TLS or authentication - the only protection is restricting access to the agent host addresses
 if ($RemoteMode) { $rules += @{ Name = 'Observability - Agenci'; Port = "4317,4318,$ReceivePort"; RemoteAddress = $AgentAddress } }
 Get-NetFirewallRule -DisplayName 'Observability - Agenci' -ErrorAction SilentlyContinue | Remove-NetFirewallRule
@@ -867,7 +918,13 @@ Save-InstallSettings -Layout $Layout -Settings @{
     WebconSqlReaderLogin    = $WebconSqlReaderLogin
     WebconSqlServer         = $WebconSqlServer
     WebconContentDatabase   = $WebconContentDatabase
+    GrafanaListenAll        = [bool]$GrafanaListenAll
+    OtlpListenAll           = [bool]$OtlpListenAll
+    SkipCommunityDashboards = [bool]$SkipCommunityDashboards
+    RetentionMetricsDays    = $RetentionMetricsDays
     RetentionTracesDays     = $RetentionTracesDays
+    RetentionLogsDays       = $RetentionLogsDays
+    AlloyMemoryLimit        = $AlloyMemoryLimit
     SqlSpanThresholdSeconds = $SqlSpanThresholdSeconds
     ServiceLogPath          = $ServiceLogPath
     WebconPortalServiceName  = [string]$WebconPortalServiceName

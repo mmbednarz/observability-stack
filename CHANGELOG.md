@@ -2,6 +2,18 @@
 
 Format: one section per version – **Changes** and **Requires action** (manual steps when upgrading from the previous version). Numbering follows [SemVer](https://semver.org/): major = a change that requires manual migration, minor = new features, patch = fixes.
 
+## [0.12.0] – 2026-11-26
+
+### Changes
+
+- **The installer keeps all settings of the stack between runs**: an upgrade with `-NonInteractive` alone (or a change of one parameter) no longer resets `-GrafanaListenAll`, `-OtlpListenAll`, retention (`-RetentionMetricsDays`, `-RetentionTracesDays`, `-RetentionLogsDays`), `-SqlSpanThresholdSeconds`, `-AlloyMemoryLimit`, `-EnvironmentName`, `-ServiceLogPath` and `-SkipCommunityDashboards` to the defaults. Previously e.g. Grafana silently became available only locally, and a shorter default retention deleted older metrics. Rule: explicit parameter > previous value > default; the installer lists the values it took over. A switch is disabled with `-Name:$false` (e.g. `-GrafanaListenAll:$false`).
+- The firewall rules `Observability - Grafana` / `Observability - OTLP` are removed when the switch is disabled (previously they stayed open).
+- Portal user counters: the *Users (7 days)* panels are removed – WEBCON counts users in the memory of the Portal process, so with IIS application pool recycling (e.g. nightly) the 7-day value was always equal to the value since the Portal start. One counter remains: **Users since Portal start** (with nightly recycling = users of the current day). *WEBCON – Operations*: the tile showed the largest daily value from the time range instead of the current one – fixed.
+
+### Requires action
+
+- None – on the upgrade from 0.11.0 or older the installer reads the values that were not saved (network access, metrics and logs retention, Alloy memory limit) from the current configuration. Check the `Kept from the previous installation` line in the installer output.
+
 ## [0.11.0] – 2026-11-24
 
 ### Changes

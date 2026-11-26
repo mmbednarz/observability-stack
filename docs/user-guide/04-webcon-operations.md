@@ -41,8 +41,7 @@ Host details: [Windows – Host load](06-windows-host.md).
 |---|---|---|
 | **Home page opens – today** | Portal home page opens since midnight | |
 | **Sign-ins – today** | sign-ins since midnight | sign-in ≠ visit: a user with a remembered session does not sign in again |
-| **Unique users (7 days)** | unique users over 7 days, but not earlier than since Portal start | a Portal restart (e.g. IIS application pool recycling, upgrade) resets the counter. WEBCON does not expose a daily unique user count |
-| **Unique since Portal start** | since the last process start | |
+| **Users since Portal start** | unique users since the last start of the Portal process | with nightly IIS application pool recycling = users of the current day; a Portal restart (recycling, WEBCON upgrade) resets the counter. Several Portal nodes: the largest node |
 | **Opens and sign-ins per day** | bars per day (UTC days) | usage trend – working days vs weekend, rollout of a new application |
 
 ---

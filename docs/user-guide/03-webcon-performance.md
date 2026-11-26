@@ -40,7 +40,7 @@ Tiles – the status at a glance. Start with the colors.
 | **Path transitions /min** | all path transitions (Portal + Service), including failed ones | – | |
 | **Successful transitions** | successful / all transitions in the range | 🔴 < 95% · 🟡 95–99% · 🟢 ≥ 99% | a failed transition = a validation, rule, or action error; *Logs* row, transition traces |
 | **Path transition p95** | 95% of transitions are faster than this value | 🟢 < 2 s · 🟡 2–5 s · 🔴 > 5 s | *Paths – longest transitions* table |
-| **Users (7 days)** | unique Portal users in the last 7 days (since the application start) | – | a Portal restart resets the counter |
+| **Users (since start)** | unique Portal users since the last start of the Portal process | – | with nightly IIS application pool recycling = users of the current day; a Portal restart (recycling, WEBCON upgrade) resets the counter |
 | **Service queue /min** | items taken from Service queues | – | |
 | **Service queue errors** | queue items whose processing failed (range) | 🟢 0 · 🔴 ≥ 1 | *WEBCON WorkFlow Service* row, *Logs* (service `WebCon.WorkFlow`) |
 | **Solr – backlog growth** | added to indexing minus processed (range) | 🟢 ≤ 0 · 🟡 1–99 · 🔴 ≥ 100 | > 0 = indexing is falling behind; *Solr – indexing queues* |
@@ -60,7 +60,7 @@ Tiles – the status at a glance. Start with the colors.
 | **Routes by total time (dashboard time range)** | table of routes: count, p95, total time (count × average time), % of 5xx errors | **total time** shows what loads the Portal the most – a route called 10,000 times at 0.2 s weighs more than one called 10 times at 5 s. Clicking a route opens the *ASP.NET Core Endpoint* dashboard |
 | **Active requests and connection queue** | requests being handled and connections waiting in the server queue | a growing queue = the Portal is not keeping up (not enough threads / CPU) – see *.NET runtime* |
 | **Portal and form opens** | home page and instance form opens /s | |
-| **Portal users** | unique users since the application start and in the last 7 days | |
+| **Portal users** | unique users since the last start of the Portal process | the counter drops to zero at a Portal restart; with nightly IIS application pool recycling the peak before the drop = users of that day |
 
 **Routes (`http.route`)** are Portal address templates with parameters in curly braces (e.g. `{controller=Home}/{action=Index}/{id?}`), not specific addresses – all form opens of different instances go to one route. The specific instance ID and user are in the request trace.
 

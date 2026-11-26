@@ -4,7 +4,7 @@ The installer is **idempotent**: running it again on an installed stack upgrades
 
 ## Upgrading to a new version
 
-1. Download the new package from [Releases](https://github.com/mmbednarz/observability-stack/releases), unblock it and extract it **to a new directory** (e.g. `C:\Install\observability-stack-0.11.0`) – as in [Quick start, step 1](01-quick-start.md#step-1-download-the-installation-files).
+1. Download the new package from [Releases](https://github.com/mmbednarz/observability-stack/releases), unblock it and extract it **to a new directory** (e.g. `C:\Install\observability-stack-0.12.0`) – as in [Quick start, step 1](01-quick-start.md#step-1-download-the-installation-files).
 2. Read the section of the new version in `CHANGELOG.md` (in the package) – **Requires action** lists the manual steps (e.g. new SQL permissions, running `Set-WebconTelemetry.ps1` again).
 3. PowerShell as administrator, in the new package directory:
 
@@ -14,7 +14,7 @@ The installer is **idempotent**: running it again on an installed stack upgrades
    C:\Observability\app\Test-ObservabilityStack.ps1
    ```
 
-The installer shows the version change (`Upgrading 0.10.0 -> 0.11.0`), keeps the settings and data, and replaces `C:\Observability\app` with the scripts of the new version. You can delete the old and the new package afterwards. The installed version is shown by the smoke test (the “Version” section).
+The installer shows the version change (`Upgrading 0.11.0 -> 0.12.0`), keeps the settings and data, and replaces `C:\Observability\app` with the scripts of the new version. You can delete the old and the new package afterwards. The installed version is shown by the smoke test (the “Version” section).
 
 **A version older** than the installed one – the installer stops (the configuration and alert rules of the newer version may not match the older one). Deliberate return to an older version: `-AllowDowngrade`.
 
@@ -23,21 +23,19 @@ The installer shows the version change (`Upgrading 0.10.0 -> 0.11.0`), keeps the
 
 ### Which settings are kept
 
-| Kept automatically (from `C:\Observability\config\install-settings.json`) | **Must be specified again** on every upgrade |
-|---|---|
-| SQL exporter instance and login (`-SqlServer`, `-SqlLogin`) + password | `-GrafanaListenAll`, `-OtlpListenAll` |
-| login, instance and database of the “WEBCON SQL” data source + password | `-RetentionMetricsDays`, `-RetentionTracesDays`, `-RetentionLogsDays` (when different from the defaults) |
-| remote mode: hosts, instance, port, addresses, login passwords | `-SqlSpanThresholdSeconds`, `-ServiceLogPath`, `-AlloyMemoryLimit`, `-EnvironmentName` |
-| Grafana administrator password | `-SkipCommunityDashboards` |
-| Portal probe: `-PortalProbe`, address `-PortalUrl`, `-ProbeUrl`; database metrics `-WebconDbMetrics` | |
+All settings of the stack are kept (saved in `C:\Observability\config\install-settings.json`). Rule: **a parameter specified explicitly > the value from the previous installation > the default value**. An upgrade with `-NonInteractive` alone keeps the whole configuration:
 
-Example – a stack with Grafana available on the network and longer trace retention:
+- SQL exporter instance and login (`-SqlServer`, `-SqlLogin`) + password; login, instance and database of the “WEBCON SQL” data source + password,
+- network access (`-GrafanaListenAll`, `-OtlpListenAll`) and the firewall rules,
+- retention (`-RetentionMetricsDays`, `-RetentionTracesDays`, `-RetentionLogsDays`), `-SqlSpanThresholdSeconds`, `-AlloyMemoryLimit`, `-EnvironmentName`, `-ServiceLogPath`, service name mapping, `-SkipCommunityDashboards`,
+- Portal probe (`-PortalProbe`, `-PortalUrl`, `-ProbeUrl`), database metrics (`-WebconDbMetrics`),
+- remote mode: hosts, instance, port, addresses, login passwords; the Grafana administrator password.
 
-```powershell
-.\Install-ObservabilityStack.ps1 -GrafanaListenAll -RetentionTracesDays 14
-```
+The installer lists the values different from the defaults that it took over, e.g. `Kept from the previous installation: -GrafanaListenAll, -RetentionMetricsDays 90`. The full list with the **Kept** column: [Installer parameters](08-installer-parameters.md).
 
-> Save your installation command (e.g. in an `install.cmd.txt` file next to the packages) so that you can repeat the same parameters during an upgrade.
+Not kept (actions for a single run): `-NonInteractive`, `-ForceDownload`, `-AllowDowngrade`, `-ConfigureWebcon`. Always specify the same `-Root` (the settings file is in it).
+
+Upgrade from 0.11.0 or older: the values that these versions did not save (network access, metrics and logs retention, Alloy memory limit) are read from the current configuration of the stack.
 
 ### What an upgrade overwrites
 
@@ -65,6 +63,10 @@ Examples:
 | disable SQL metrics | `.\Install-ObservabilityStack.ps1 -SqlServer ''` |
 | disable the “WEBCON SQL” data source | `.\Install-ObservabilityStack.ps1 -WebconSqlReaderLogin ''` |
 | Grafana accessible from the network | `.\Install-ObservabilityStack.ps1 -GrafanaListenAll` (adds a firewall rule for port 3000) |
+| Grafana accessible only locally again | `.\Install-ObservabilityStack.ps1 -GrafanaListenAll:$false` (removes the firewall rule) |
+| longer trace retention | `.\Install-ObservabilityStack.ps1 -RetentionTracesDays 14` |
+
+The other settings stay unchanged – specify only the parameter you change.
 
 Full list: [Installer parameters](08-installer-parameters.md).
 

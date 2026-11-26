@@ -598,8 +598,8 @@
     },
     {
       "type": "stat",
-      "title": "Users (7 days)",
-      "description": "Unique Portal users in the last 7 days (not earlier than the application start).",
+      "title": "Users (since start)",
+      "description": "Unique Portal users since the last start of the Portal process (webcon.portal.request.user.unique.since_start). With nightly IIS application pool recycling (e.g. at 03:00) = users of the current day. A Portal restart (recycling, WEBCON upgrade) resets the counter. Several Portal nodes: the largest node (users repeat, so the values are not added up).",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -610,7 +610,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(webcon_portal_request_user_unique_recently)",
+          "expr": "max(webcon_portal_request_user_unique_since_start{job=\"Portal\"})",
           "legendFormat": "",
           "refId": "A",
           "range": true,
@@ -1697,7 +1697,7 @@
     {
       "type": "timeseries",
       "title": "Portal users",
-      "description": "Unique users since the application start and in the last 7 days.",
+      "description": "Unique users since the last start of the Portal process. The counter grows during the day and drops to zero at a Portal restart; with nightly IIS application pool recycling the peak before the drop = users of that day.",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1708,21 +1708,9 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "max(webcon_portal_request_user_unique_since_start)",
-          "legendFormat": "since start",
+          "expr": "max(webcon_portal_request_user_unique_since_start{job=\"Portal\"})",
+          "legendFormat": "since Portal start",
           "refId": "A",
-          "range": true,
-          "instant": false,
-          "interval": "1m"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "max(webcon_portal_request_user_unique_recently)",
-          "legendFormat": "7 days",
-          "refId": "B",
           "range": true,
           "instant": false,
           "interval": "1m"

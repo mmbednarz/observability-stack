@@ -2,19 +2,19 @@
 
 The parameters are also described in the script header (`.PARAMETER`); syntax list: `Get-Help .\Install-ObservabilityStack.ps1`.
 
-The **Kept** column – whether the installer uses the previous value when run again without the parameter ([Upgrade](05-upgrade.md#which-settings-are-kept)). “No” = the default value is restored.
+The **Kept** column – whether the installer uses the previous value when run again without the parameter ([Upgrade](05-upgrade.md#which-settings-are-kept)). “No” = the default value is restored. A kept switch is disabled with `-Name:$false` (e.g. `-GrafanaListenAll:$false`).
 
 ## Basic
 
 | Parameter | Default | Kept | Description |
 |---|---|---|---|
 | `-Root` | `C:\Observability` | – | installation directory (always specify the same one) |
-| `-EnvironmentName` | computer name | no | environment label in telemetry |
+| `-EnvironmentName` | computer name | yes | environment label in telemetry |
 | `-NonInteractive` | – | – | no prompts – missing values = error (automated scripts) |
 | `-ConfigureWebcon` | – | – | after installation, runs `scripts\Set-WebconTelemetry.ps1` (OpenTelemetry configuration in WEBCON appsettings) |
 | `-AllowDowngrade` | – | – | allows installing a version older than the installed one (without this switch, a downgrade stops the installation) |
 | `-ForceDownload` | – | – | downloads the components again (instead of using `C:\Observability\downloads`) |
-| `-SkipCommunityDashboards` | – | no | no ASP.NET Core dashboards from grafana.com |
+| `-SkipCommunityDashboards` | – | yes | no ASP.NET Core dashboards from grafana.com |
 
 ## SQL Server – metrics
 
@@ -47,20 +47,20 @@ The **Kept** column – whether the installer uses the previous value when run a
 
 | Parameter | Default | Kept | Description |
 |---|---|---|---|
-| `-SqlSpanThresholdSeconds` | `1` | no | SQL query spans shorter than the threshold are dropped; `0` = keep all (high volume) |
-| `-RetentionMetricsDays` | `15` | no | how many days to keep metrics |
-| `-RetentionTracesDays` | `8` | no | traces (the “WEBCON – Operations” dashboard shows 7 days) |
-| `-RetentionLogsDays` | `7` | no | logs |
-| `-AlloyMemoryLimit` | `1GiB` | no | Alloy memory limit |
+| `-SqlSpanThresholdSeconds` | `1` | yes | SQL query spans shorter than the threshold are dropped; `0` = keep all (high volume) |
+| `-RetentionMetricsDays` | `15` | yes | how many days to keep metrics |
+| `-RetentionTracesDays` | `8` | yes | traces (the “WEBCON – Operations” dashboard shows 7 days) |
+| `-RetentionLogsDays` | `7` | yes | logs |
+| `-AlloyMemoryLimit` | `1GiB` | yes | Alloy memory limit |
 | `-WebconPortalServiceName` / `-WebconServiceServiceName` | – | yes | **fallback** service name mapping: the name (`ServiceName` from WEBCON appsettings) under which the Portal / Service sends telemetry without the `webcon.component` marker; Alloy replaces it with `Portal` / `WebCon.WorkFlow`. Not needed after `Set-WebconTelemetry.ps1`; the values must differ; `''` = no mapping |
-| `-ServiceLogPath` | – | no | glob pattern of the Service log files (e.g. `D:\WEBCON\Service\Logs\*.log`) – only for a Service without OTLP log export (WEBCON 2026.2 exports logs, do not use) |
+| `-ServiceLogPath` | – | yes | glob pattern of the Service log files (e.g. `D:\WEBCON\Service\Logs\*.log`) – only for a Service without OTLP log export (WEBCON 2026.2 exports logs, do not use) |
 
 ## Network
 
 | Parameter | Default | Kept | Description |
 |---|---|---|---|
-| `-GrafanaListenAll` | – | no | Grafana on all interfaces + firewall rule `Observability - Grafana` (TCP 3000, Domain/Private profiles) |
-| `-OtlpListenAll` | – | no | OTLP reception from the network (WEBCON on another machine **without** an agent) + rule `Observability - OTLP` |
+| `-GrafanaListenAll` | – | yes | Grafana on all interfaces + firewall rule `Observability - Grafana` (TCP 3000, Domain/Private profiles); `-GrafanaListenAll:$false` = localhost only, the rule is removed |
+| `-OtlpListenAll` | – | yes | OTLP reception from the network (WEBCON on another machine **without** an agent) + rule `Observability - OTLP`; `-OtlpListenAll:$false` = disable, the rule is removed |
 
 ## Remote mode
 
