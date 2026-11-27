@@ -14,7 +14,7 @@ Navigation basics (time range, exemplars, trace view): [Grafana in 10 minutes](0
 2. **Status** row: is *Portal HTTP p95* yellow / red? If so, the problem affects many users. If it is green, the problem is isolated (one form / user).
 3. **Portal – user experience → Portal response time (p50 / p95 / p99)** row: is **p50** rising (everything is slow → step 7) or only **p95 / p99** (selected operations are slow → step 4)?
 4. **Forms and path transitions → Form handling stages (dashboard time range)** row: which stage has the highest p95 – business rules and default values (`rules_and_defaults.apply`), JS model build, data sources?
-5. **Where the time goes → Form loading by process and step** row: find the process and step with the highest p95 (process / step ID = Designer Studio). Click the ID → traces.
+5. **Where the time goes → Form loading by process and step** row: find the process and step with the highest average or total time (process / step ID = Designer Studio). Click the ID → spans → trace.
 6. In the trace, look for the longest bar deepest in the tree:
    - `webcon.data_source.data.load` – data source (attribute `webcon.data_source.id`) → scenario 3 if there is a slow HTTP span underneath; slow SQL span → the data source query needs optimizing,
    - `webcon.rule.execute` – business rule (`webcon.rule.id`) – e.g. a rule executed for every row of an item list,
@@ -30,7 +30,7 @@ Navigation basics (time range, exemplars, trace view): [Grafana in 10 minutes](0
 **Symptom:** “After clicking »Approve« it spins for a long time”. Alert W1.
 
 1. **WEBCON – Performance → Status**: *Path transition p95*.
-2. **Where the time goes → Paths – longest transitions**: the path ID with the highest p95 or total time. The name of the path, step, and process is shown on the **WEBCON – Operations → Paths – top 10** dashboard (from the database).
+2. **Where the time goes → Paths – longest transitions**: the path ID with the highest average or total time. The name of the path, step, and process is shown on the **WEBCON – Operations → Paths – top 10** dashboard (from the database).
 3. Click the path ID → transition traces → select the longest one.
 4. In the trace: under `webcon.elements_management.path.transitions` there are actions (`webcon.action.execute`, attribute `webcon.action.name`), business rules, and saving (SQL). The longest item is the candidate:
    - REST / SOAP action – time spent in the external system (HTTP span under the action),
@@ -57,7 +57,7 @@ Navigation basics (time range, exemplars, trace view): [Grafana in 10 minutes](0
 5. **Actions with HTTP call errors**: action ID and name. **Show traces** – the trace contains the HTTP span with the address and response code.
 6. **Errors per hour by server and type**: since when? A sudden start = a change on the external system side or an application publication.
 
-**Example (dev test data):** data source 66 – p95 21 s, `connection_error` to `10.255.255.1` (an address that does not respond). Every opening of a form with this data source waits 21 s. Action 6 (`httpbin.org/status/500`) – 100 % `500` errors; WEBCON completes the transition despite the error, so the user does not see it.
+**Example (dev test data):** data source 66 – average 21 s, `connection_error` to `10.255.255.1` (an address that does not respond). Every opening of a form with this data source waits 21 s. Action 6 (`httpbin.org/status/500`) – 100 % `500` errors; WEBCON completes the transition despite the error, so the user does not see it.
 
 ---
 

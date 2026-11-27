@@ -82,14 +82,14 @@ Tiles – the status at a glance. Start with the colors.
 
 ## Where the time goes (paths, rules, data sources)
 
-The most important row for application optimization. The tables are calculated from **traces** (TraceQL metrics) or spanmetrics, for the entire dashboard time range (up to 7 days). Columns are usually: **p95**, **Calls**, **Total time**.
+The most important row for application optimization. The tables are calculated from **traces** (TraceQL metrics) or spanmetrics, for the entire dashboard time range (up to 7 days). Columns: **Calls**, **Total time** and the duration – in tables calculated from traces **Average** (Total time / Calls) and **Max**, both exact; in spanmetrics tables **p95** (approximate). Clicking an ID in a table calculated from traces opens the spans of this object in Explore: **Show spans slower than average** or **Show all spans** (the list is not sorted by duration – click the *Duration* column header).
 
 | Panel | What it shows | Identifier | Drill-down |
 |---|---|---|---|
 | **WEBCON spans by total time** | all WEBCON operations (`webcon.*`) sorted by total time | span name | the overall picture – what WEBCON spends the most time on in total |
 | **Portal MVC pipeline (filters)** | authorization and Portal request filters | span name | long `on_authorization` = permission / application checks |
-| **Paths – longest transitions** | transitions by path ID | `webcon.path.id` (path ID in Designer Studio) | click the ID → traces of this path's transitions → what takes time (actions, rules, SQL) |
-| **Business rules** | rule executions by ID | `webcon.rule.id` | click the ID → traces; the rule name is not sent in WEBCON 2026.2.5 – find the ID in Designer Studio |
+| **Paths – longest transitions** | transitions by path ID | `webcon.path.id` (path ID in Designer Studio) | click the ID → spans of this path's transitions → trace → what takes time (actions, rules, SQL) |
+| **Business rules** | rule executions by ID | `webcon.rule.id` | click the ID → spans; the rule name is not sent in WEBCON 2026.2.5 – find the ID in Designer Studio |
 | **Data sources** | data loads from data sources by ID and type (SQL, REST, …) | `webcon.data_source.id`, type | a slow REST data source = a slow external API; a slow SQL data source = a query to optimize |
 | **Actions** | action executions by ID and name | `webcon.action.id`, name | |
 | **Form loading by process and step** | form open time per process and step | `webcon.process.id`, `webcon.step.id` | which form (step) opens slowly |
@@ -98,12 +98,13 @@ The most important row for application optimization. The tables are calculated f
 
 **How to read the rankings:**
 
-- **High p95, low count** – a rare but slow operation (e.g. a monthly report). Affects few users.
-- **Medium p95, huge count** – “death by a thousand cuts”: the most total time, the biggest gain from optimization.
+- **High average, low count** – a rare but slow operation (e.g. a monthly report). Affects few users.
+- **Medium average, huge count** – “death by a thousand cuts”: the most total time, the biggest gain from optimization.
+- **Max much higher than average** – single slow executions (e.g. a lock, a slow external system at one moment), not a constantly slow object. Open the spans slower than average.
 - **Total time** = count × average time – the best column for setting priorities.
-- p95 in these tables is approximate (buckets = powers of 2: 0.5 s, 1 s, 2 s, 4 s…) – compare orders of magnitude, and check exact durations in the traces.
+- Tables calculated from traces show no p95: Tempo calculates percentiles from buckets that are powers of 2 (… 2.1 s, 4.3 s, 8.6 s), so p95 could be almost twice the real value (e.g. 8.59 s when the slowest execution took 6.3 s).
 
-**Example:** the *Data sources* table shows data source ID 66 (REST type), p95 = 21 s, count 40. Clicking the ID → trace → under the `webcon.data_source.data.load` span there is an HTTP span to `10.255.255.1` lasting 21 s with the error status `connection_error` – the target server does not respond, and WEBCON waits until the connection timeout. Solution on the application side: a correct address / timeout in the data source configuration.
+**Example:** the *Data sources* table shows data source ID 66 (REST type), average = 21 s, count 40. Clicking the ID → span → trace → under the `webcon.data_source.data.load` span there is an HTTP span to `10.255.255.1` lasting 21 s with the error status `connection_error` – the target server does not respond, and WEBCON waits until the connection timeout. Solution on the application side: a correct address / timeout in the data source configuration.
 
 ---
 

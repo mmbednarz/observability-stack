@@ -17,7 +17,7 @@
 | **Attribute** | additional information in a span | `webcon.path.id = 11`, `db.query.text = SELECT …` |
 | **Exemplar** | a point on a metric chart linked to a specific trace – a bridge from the chart to the details | a diamond on the response time chart |
 | **Spanmetrics** | metrics (count, duration) calculated automatically from spans – this is why there are charts for rules, actions, and form stages even though WEBCON does not send such metrics | `traces_spanmetrics_latency_bucket{span_name="webcon.action.execute"}` |
-| **TraceQL metrics** | statistics calculated directly from traces in Tempo (“Where the time goes” tables) – they work for a range of up to 7 days, p95 is approximate | path ranking |
+| **TraceQL metrics** | statistics calculated directly from traces in Tempo (“Where the time goes” tables) – they work for a range of up to 7 days; count, total time, average and max are exact | path ranking |
 | **Log** | a message written by WEBCON (Serilog), with a level and often with a `trace_id` | `Error getting data for DataSource …` |
 | **Log level** | `Information`, `Warning`, `Error`, `Fatal` | |
 | **Service** (`job`, `service`) | telemetry source: `Portal` (web application under IIS) or `WebCon.WorkFlow` (WEBCON WorkFlow Service) | |
@@ -51,7 +51,7 @@ The identifiers (`path.id`, `rule.id`, `data_source.id`, `action.id`, `process.i
 
 ## Limitations worth knowing
 
-- **p95 is approximate** – calculated from a histogram (duration buckets). For tables based on traces (TraceQL metrics), the buckets are powers of 2, so p95 = 1.07 s or 2.15 s, not 1.52 s. It is enough for comparing what is slower; for exact measurements – see min / max and individual traces.
+- **p95 is approximate** – calculated from a histogram (duration buckets), so it can be up to the width of a bucket off (spanmetrics: 1, 2.5, 5, 15 s). For exact measurements – see average / min / max and individual traces. Tables based on traces (TraceQL metrics) show **average and max** instead of p95: Tempo's buckets are powers of 2 (… 4.3 s, 8.6 s), so p95 = 8.59 s could mean a slowest execution of 6.3 s.
 - **Little traffic = unreliable percentiles.** p95 of 10 operations is practically the slowest of them. Always look at the “Calls” column.
 - **Nested spans are counted multiple times** in the “Total time” tables – a rule executed during form loading increases the total time of both the rule and the loading.
 - **Tables based on traces cover up to 7 days** (Tempo query limit and trace retention); a longer range = an error or truncated results. Over long ranges they are calculated more slowly.

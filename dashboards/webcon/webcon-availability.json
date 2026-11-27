@@ -1037,7 +1037,8 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": "auto"
+            "align": "auto",
+            "minWidth": 60
           }
         },
         "overrides": []
@@ -1241,7 +1242,8 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": "auto"
+            "align": "auto",
+            "minWidth": 60
           }
         },
         "overrides": []

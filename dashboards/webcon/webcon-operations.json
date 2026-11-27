@@ -1307,7 +1307,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "noValue": "–"
         }
@@ -1793,7 +1794,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "noValue": "–"
         }
@@ -2064,7 +2066,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "noValue": "–"
         }
@@ -2277,7 +2280,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           }
         }
       },
@@ -2371,7 +2375,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           }
         }
       },
@@ -2594,7 +2599,7 @@
     {
       "type": "table",
       "title": "Data sources by total time",
-      "description": "Span webcon.data_source.data.load by data source ID and type. TraceQL metrics, dashboard time range. The trace shows the HTTP call and the target server.",
+      "description": "Span webcon.data_source.data.load by data source ID and type. TraceQL metrics, dashboard time range. The trace shows the HTTP call and the target server. Average = Total time / Calls; Average and Max are exact. Click an ID to open the spans: slower than average or all.",
       "datasource": {
         "type": "tempo",
         "uid": "tempo"
@@ -2606,7 +2611,7 @@
             "uid": "tempo"
           },
           "queryType": "traceql",
-          "query": "{ name = \"webcon.data_source.data.load\" } | quantile_over_time(duration, .95) by (span.webcon.data_source.id, span.webcon.data_source.type.name)",
+          "query": "{ name = \"webcon.data_source.data.load\" } | max_over_time(duration) by (span.webcon.data_source.id, span.webcon.data_source.type.name, instrumentation:name)",
           "refId": "A",
           "metricsQueryType": "instant",
           "limit": 50,
@@ -2644,23 +2649,23 @@
         {
           "filter": {
             "id": "byRefId",
-            "options": "/p=0\\.95/"
+            "options": "/instrumentation:name=/"
           },
           "options": {
             "mode": "columns",
             "keepLabels": [
               "span.webcon.data_source.id",
               "span.webcon.data_source.type.name",
-              "p"
+              "instrumentation:name"
             ],
-            "valueLabel": "p"
+            "valueLabel": "instrumentation:name"
           },
           "id": "labelsToFields"
         },
         {
           "filter": {
             "id": "byRefId",
-            "options": "/^\\{(?!.*p=0\\.95)name=|^\\{(?!.*p=0\\.95)[a-z]+=.*, name=/"
+            "options": "/^\\{(?!.*instrumentation:name=)name=|^\\{(?!.*instrumentation:name=)[a-z]+=.*, name=/"
           },
           "options": {
             "mode": "columns",
@@ -2676,7 +2681,7 @@
         {
           "filter": {
             "id": "byRefId",
-            "options": "/^(?!.*p=0\\.95)(?!.*[{ ]name=)/"
+            "options": "/^(?!.*instrumentation:name=)(?!.*[{ ]name=)/"
           },
           "options": {
             "mode": "columns",
@@ -2700,6 +2705,13 @@
           "options": {}
         },
         {
+          "options": {
+            "regex": "^\"(WebCon|OpenTelemetry)\\.[^\"]*\"$",
+            "renamePattern": "Max"
+          },
+          "id": "renameByRegex"
+        },
+        {
           "id": "renameByRegex",
           "options": {
             "renamePattern": "Total time",
@@ -2710,11 +2722,32 @@
           "id": "organize",
           "options": {
             "renameByName": {
-              "0.95": "p95",
               "value": "Calls",
               "span.webcon.data_source.id": "Data source ID",
               "span.webcon.data_source.type.name": "Type"
             }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Total time"
+                }
+              },
+              "operator": "/",
+              "right": {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Calls"
+                }
+              }
+            },
+            "alias": "Average"
           }
         },
         {
@@ -2724,8 +2757,9 @@
               "Data source ID": 0,
               "Type": 1,
               "Calls": 2,
-              "p95": 3,
-              "Total time": 4
+              "Average": 3,
+              "Max": 4,
+              "Total time": 5
             }
           }
         },
@@ -2745,8 +2779,8 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byName",
-              "options": "p95"
+              "id": "byRegexp",
+              "options": "^(Average|Max)$"
             },
             "properties": [
               {
@@ -2828,8 +2862,12 @@
                 "id": "links",
                 "value": [
                   {
-                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"Data source ID\"]:percentencode}%20%7D%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
-                    "title": "Show traces"
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"Data source ID\"]:percentencode}%20%26%26%20duration%20%3E%3D%20${__data.fields[\"Average\"].numeric}s%20%7D%22%2C%22tableType%22%3A%22spans%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show spans slower than average"
+                  },
+                  {
+                    "url": "/explore?schemaVersion=1&orgId=1&panes=%7B%22a%22%3A%7B%22datasource%22%3A%22tempo%22%2C%22queries%22%3A%5B%7B%22refId%22%3A%22A%22%2C%22datasource%22%3A%7B%22type%22%3A%22tempo%22%2C%22uid%22%3A%22tempo%22%7D%2C%22queryType%22%3A%22traceql%22%2C%22limit%22%3A50%2C%22query%22%3A%22%7B%20name%20%3D%20%5C%22webcon.data_source.data.load%5C%22%20%26%26%20span.webcon.data_source.id%20%3D%20${__data.fields[\"Data source ID\"]:percentencode}%20%7D%22%2C%22tableType%22%3A%22spans%22%7D%5D%2C%22range%22%3A%7B%22from%22%3A%22${__from}%22%2C%22to%22%3A%22${__to}%22%7D%7D%7D",
+                    "title": "Show all spans"
                   }
                 ]
               }
@@ -2839,7 +2877,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "mappings": [
             {
@@ -2938,7 +2977,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "noValue": "–"
         },
@@ -3086,7 +3126,8 @@
         "defaults": {
           "custom": {
             "align": "auto",
-            "filterable": true
+            "filterable": true,
+            "minWidth": 60
           },
           "noValue": "–"
         },

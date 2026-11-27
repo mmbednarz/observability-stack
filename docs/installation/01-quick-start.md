@@ -36,9 +36,9 @@ Details and SQL Server preparation: [Requirements and preparation](02-requiremen
 2. Verify the checksum, unblock the archive (otherwise Windows blocks scripts downloaded from the internet), and extract it, e.g., to `C:\Install`:
 
    ```powershell
-   (Get-FileHash .\observability-stack-0.12.0.zip -Algorithm SHA256).Hash   # compare with the .sha256 file
-   Unblock-File .\observability-stack-0.12.0.zip
-   Expand-Archive .\observability-stack-0.12.0.zip -DestinationPath C:\Install
+   (Get-FileHash .\observability-stack-0.12.1.zip -Algorithm SHA256).Hash   # compare with the .sha256 file
+   Unblock-File .\observability-stack-0.12.1.zip
+   Expand-Archive .\observability-stack-0.12.1.zip -DestinationPath C:\Install
    ```
 
 Do not extract the package into the `C:\Observability` installation directory – the installer refuses (uninstalling with `-RemoveFiles` would delete it together with the data).
@@ -63,7 +63,7 @@ Two SQL logins are needed – details and scripts for the DBA: [Requirements and
 Open **PowerShell as administrator** (right-click → *Run as administrator*) and go to the folder with the files:
 
 ```powershell
-cd C:\Install\observability-stack-0.12.0
+cd C:\Install\observability-stack-0.12.1
 Set-ExecutionPolicy -Scope Process Bypass -Force
 ```
 

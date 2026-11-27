@@ -2,6 +2,21 @@
 
 Format: one section per version – **Changes** and **Requires action** (manual steps when upgrading from the previous version). Numbering follows [SemVer](https://semver.org/): major = a change that requires manual migration, minor = new features, patch = fixes.
 
+## [0.12.1] – 2026-11-27
+
+### Changes
+
+- *WEBCON – Performance* (*Where the time goes* tables: paths, business rules, data sources, actions, form loading, form JS model build, slow SQL queries) and *WEBCON – Operations* (*Data sources by total time*): the approximate **p95** column is replaced by exact **Average** (Total time / Calls) and **Max**. Tempo calculated p95 from buckets that are powers of 2 and returned the upper bucket bound – e.g. p95 = 8.59 s for a path whose slowest transition took 6.3 s.
+- Clicking an ID in these tables offers **Show spans slower than average** and **Show all spans** (a list of spans with their own duration instead of a list of traces).
+- *WEBCON – Performance*: the rows *Where the time goes*, *SQL from the WEBCON perspective*, *WEBCON WorkFlow Service*, *.NET runtime* and *Logs* can be collapsed again – their panels were not assigned to the rows and were always displayed.
+- *WEBCON – Performance*, *Where the time goes* row: new layout – tables with names (spans, data source types, actions, form steps) take the full width, *Paths* and *Business rules* side by side; ID and number columns have fixed widths, so all columns are visible without horizontal scrolling (previously three narrow tables per line).
+- All dashboards: tables no longer need horizontal scrolling – the minimum column width is reduced (Grafana's default of 150 px per column made e.g. *Actions – top 10* and *Paths – top 10* in *WEBCON – Operations* wider than the screen), ID and number columns have fixed widths. *WEBCON – Performance*: *Routes by total time*, *Slow SQL queries* and *Slow queries by operation* take the full width. *Slow SQL queries* (*WEBCON – Performance*, *SQL Server – WEBCON*): narrower trace / span columns, technical columns hidden, more space for the query text.
+- Charts in narrow panels (three in a line) show the legend as a list of series names instead of a table with mean / max / last – the table did not fit and needed horizontal scrolling; the values are in the tooltip. Wider charts keep the table legend.
+
+### Requires action
+
+- None – the installer updates the dashboards.
+
 ## [0.12.0] – 2026-11-26
 
 ### Changes

@@ -66,7 +66,7 @@ The drop-down lists below the title filter all panels at once, e.g.:
 | Type | Appearance | How to read it |
 |---|---|---|
 | **Tile (stat)** | large number, background color | **green** = OK, **yellow / orange** = warning, **red** = problem. Color thresholds are described for each dashboard |
-| **Line chart** | lines over time | hover to see the values at a point; click a name in the legend to show only that series (Ctrl+click = add another one) |
+| **Line chart** | lines over time | hover to see the values at a point; click a name in the legend to show only that series (Ctrl+click = add another one). Wider charts show mean / max / last values in the legend; narrow charts (three in a line) show only the series names – the values are in the tooltip |
 | **Heatmap** | colored rectangles | vertical axis = duration, color = how many operations took that long at a given moment; a bright cell high up = many slow operations |
 | **Table** | rows and columns | click a header to sort; blue (underlined) values are **links** – usually to traces |
 | **Logs** | list of records | click a record to expand its details (fields, `trace_id`) |

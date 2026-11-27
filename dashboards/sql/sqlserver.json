@@ -569,12 +569,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -628,12 +624,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -691,12 +683,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -826,12 +814,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -887,12 +871,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -990,12 +970,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1059,12 +1035,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1118,12 +1090,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1190,12 +1158,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1249,12 +1213,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1308,12 +1268,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1400,12 +1356,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1459,12 +1411,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1549,12 +1497,8 @@
       "options": {
         "legend": {
           "placement": "bottom",
-          "displayMode": "table",
-          "calcs": [
-            "mean",
-            "max",
-            "lastNotNull"
-          ]
+          "displayMode": "list",
+          "calcs": []
         },
         "tooltip": {
           "mode": "multi",
@@ -1925,13 +1869,99 @@
         }
       ],
       "fieldConfig": {
-        "overrides": [],
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trace Service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 110
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Trace Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 170
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Span ID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Start time"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 150
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "db.namespace"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 130
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duration"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 80
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^(Spans traceIdHidden|traceIdHidden|Name|db\\.system|db\\.system\\.name)$"
+            },
+            "properties": [
+              {
+                "id": "custom.hidden",
+                "value": true
+              }
+            ]
+          }
+        ],
         "defaults": {
           "custom": {
             "align": "auto",
             "cellOptions": {
               "type": "auto"
-            }
+            },
+            "minWidth": 60
           }
         }
       },

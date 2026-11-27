@@ -99,7 +99,7 @@ Outgoing HTTP calls from Portal and Service: REST / SOAP data sources and action
 | **Calls per hour by server (top 10)** | traffic over time | |
 | **Errors per hour by server and type** | errors over time | since when the external system has been returning errors |
 | **p95 response time by server (top 10)** | response time in hourly windows | slowdown on the API provider's side |
-| **Data sources by total time** | data sources (ID, type): p95, count, total time | click the ID → trace with the HTTP call and the target server |
+| **Data sources by total time** | data sources (ID, type): count, average, max (exact, from traces), total time | click the ID → spans slower than average or all spans → trace with the HTTP call and the target server |
 | **Data sources with errors** | errors fetching data from a data source (from logs): data source ID and name, service, count | a data source to fix in Designer Studio or an unavailable external system. **Show logs** button – the error message |
 | **Actions with HTTP call errors** | actions in which an HTTP call returned an error | WEBCON can complete an action “successfully” despite an HTTP error – this is where you see it. Approximate count. **Show traces** button |
 
